@@ -1,3 +1,4 @@
+import 'popup_surface.dart';
 import '../utils/refined_finish.dart';
 import 'dart:async';
 
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
 import '../services/app_preferences.dart';
+import '../models/sports.dart';
 import '../services/goals_alerts.dart';
 import '../services/viewer_profile_service.dart';
 import 'game_reminder_overlay.dart';
@@ -13,6 +15,10 @@ import 'game_reminder_overlay.dart';
 /// App-wide, non-interactive score card. Never requests focus or touches playback.
 class GoalsAlertOverlay extends StatefulWidget {
   const GoalsAlertOverlay({super.key});
+
+  /// Settings' "Show a test popup": each bump shows a sample goal card for
+  /// 8 s, so the look (e.g. Transparent popups) can be checked any time.
+  static final ValueNotifier<int> previewRequests = ValueNotifier(0);
   @override
   State<GoalsAlertOverlay> createState() => _GoalsAlertOverlayState();
 }
@@ -29,10 +35,12 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
   Timer? _hide;
   final _queue = <GoalAlertNotice>[];
   GoalAlertNotice? _notice;
+  bool _preview = false;
 
   @override
   void initState() {
     super.initState();
+    GoalsAlertOverlay.previewRequests.addListener(_showPreview);
     WidgetsBinding.instance.addObserver(this);
     final state = WidgetsBinding.instance.lifecycleState;
     _active = state == null || state == AppLifecycleState.resumed;
@@ -90,8 +98,43 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
     }
   }
 
+  void _showPreview() {
+    if (!mounted) return;
+    _hide?.cancel();
+    const home = SportsTeam(
+        id: 'preview-home',
+        name: 'Montreal',
+        shortName: 'Montreal',
+        abbreviation: 'MTL',
+        score: '2');
+    const away = SportsTeam(
+        id: 'preview-away',
+        name: 'Toronto',
+        shortName: 'Toronto',
+        abbreviation: 'TOR',
+        score: '1');
+    final game = SportsGame(
+        id: 'preview',
+        league: kSportsLeagues.first,
+        start: DateTime.now(),
+        state: GameState.live,
+        statusText: '2nd',
+        home: home,
+        away: away);
+    setState(() {
+      _preview = true;
+      _notice = GoalAlertNotice(
+          viewerId: _viewer ?? '',
+          game: game,
+          team: home,
+          observedAt: DateTime.now());
+    });
+    _hide = Timer(const Duration(seconds: 8), _showNext);
+  }
+
   void _showNext() {
     _hide?.cancel();
+    _preview = false;
     GoalAlertNotice? next;
     while (_queue.isNotEmpty) {
       final item = _queue.removeAt(0);
@@ -118,6 +161,7 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
     _poll?.cancel();
     _hide?.cancel();
     _service?.reset();
+    GoalsAlertOverlay.previewRequests.removeListener(_showPreview);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -125,7 +169,9 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
   @override
   Widget build(BuildContext context) {
     final notice = _notice;
-    if (!_active || notice == null || !_service!.isCurrent(notice)) {
+    if (!_active ||
+        notice == null ||
+        (!_preview && !_service!.isCurrent(notice))) {
       return const SizedBox.shrink();
     }
     final game = notice.game;
@@ -152,15 +198,20 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
                     liveRegion: true,
                     child: Material(
                       key: const ValueKey('goal-alert'),
-                      color: RefinedFinish.surface(
-                          context, const Color(0xFA15171C)),
-                      elevation: 12,
+                      color: transparentPopups(context)
+                          ? Colors.transparent
+                          : RefinedFinish.surface(
+                              context, const Color(0xFA15171C)),
+                      elevation: transparentPopups(context) ? 0 : 12,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
-                        side: BorderSide(color: accent.withValues(alpha: 0.55)),
+                        side: transparentPopups(context)
+                            ? BorderSide.none
+                            : BorderSide(color: accent.withValues(alpha: 0.55)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Stack(children: [
+                      child: PopupTextShadow(
+                          child: Stack(children: [
                         if (notice.team.logoUrl?.isNotEmpty == true)
                           Positioned(
                               top: -12,
@@ -245,7 +296,7 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
                                 ]),
                               ]),
                         ),
-                      ]),
+                      ])),
                     ),
                   ),
                 ),

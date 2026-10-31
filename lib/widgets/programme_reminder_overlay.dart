@@ -1,3 +1,4 @@
+import 'popup_surface.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -115,46 +116,51 @@ class _ProgrammeReminderOverlayState extends State<ProgrammeReminderOverlay>
                 child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
                     child: Material(
-                      color: RefinedFinish.surface(
-                          context, const Color(0xFA15171C)),
-                      elevation: 12,
-                      borderRadius: BorderRadius.circular(16),
-                      child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(children: [
-                            Icon(Icons.notifications_active, color: accent),
-                            const SizedBox(width: 12),
-                            Expanded(
-                                child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                  Text(
-                                      notice.atStart
-                                          ? tr('On now')
-                                          : tr('Starts in 5 minutes'),
-                                      style: TextStyle(color: accent)),
-                                  const SizedBox(height: 6),
-                                  Text(reminder.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 17)),
-                                  Text(
-                                      '${reminder.channelName} · ${TimeFormat.hm.format(reminder.start.toLocal())}',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis),
-                                ])),
-                            ExcludeFocus(
-                                child: Semantics(
-                                    label: tr('Close'),
-                                    button: true,
-                                    child: IconButton(
-                                        onPressed: _next,
-                                        icon: const Icon(Icons.close)))),
-                          ])),
+                      color: transparentPopups(context)
+                          ? Colors.transparent
+                          : RefinedFinish.surface(
+                              context, const Color(0xFA15171C)),
+                      elevation: transparentPopups(context) ? 0 : 12,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: PopupTextShadow(
+                          child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(children: [
+                                Icon(Icons.notifications_active, color: accent),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                    child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                      Text(
+                                          notice.atStart
+                                              ? tr('On now')
+                                              : tr('Starts in 5 minutes'),
+                                          style: TextStyle(color: accent)),
+                                      const SizedBox(height: 6),
+                                      Text(reminder.title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 17)),
+                                      Text(
+                                          '${reminder.channelName} · ${TimeFormat.hm.format(reminder.start.toLocal())}',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis),
+                                    ])),
+                                ExcludeFocus(
+                                    child: Semantics(
+                                        label: tr('Close'),
+                                        button: true,
+                                        child: IconButton(
+                                            onPressed: _next,
+                                            icon: const Icon(Icons.close)))),
+                              ]))),
                     )))));
   }
 }

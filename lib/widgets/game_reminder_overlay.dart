@@ -1,3 +1,4 @@
+import 'popup_surface.dart';
 import '../utils/refined_finish.dart';
 import 'dart:async';
 
@@ -161,14 +162,19 @@ class _GameReminderOverlayState extends State<GameReminderOverlay>
             key: _cardKey,
             constraints: const BoxConstraints(maxWidth: 420),
             child: Material(
-              color: RefinedFinish.surface(context, const Color(0xFA15171C)),
-              elevation: 12,
+              color: transparentPopups(context)
+                  ? Colors.transparent
+                  : RefinedFinish.surface(context, const Color(0xFA15171C)),
+              elevation: transparentPopups(context) ? 0 : 12,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
-                side: BorderSide(color: accent.withValues(alpha: 0.55)),
+                side: transparentPopups(context)
+                    ? BorderSide.none
+                    : BorderSide(color: accent.withValues(alpha: 0.55)),
               ),
               clipBehavior: Clip.antiAlias,
-              child: Stack(children: [
+              child: PopupTextShadow(
+                  child: Stack(children: [
                 if (hasLogo)
                   Positioned(
                     top: -24,
@@ -287,7 +293,7 @@ class _GameReminderOverlayState extends State<GameReminderOverlay>
                     ]),
                   ]),
                 ),
-              ]),
+              ])),
             ),
           ),
         ),

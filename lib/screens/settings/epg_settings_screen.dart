@@ -9,6 +9,9 @@ import '../../services/storage_service.dart';
 import '../../utils/time_format.dart';
 import '../../utils/constants.dart';
 import '../../utils/tv_theme.dart';
+import '../../utils/xtream.dart';
+import '../../models/playlist_profile.dart';
+import '../../widgets/tv_text_field_gate.dart';
 import '../../widgets/settings_scaffold.dart';
 import '../catalog_sync_screen.dart';
 import 'channel_linking_screen.dart';
@@ -230,6 +233,8 @@ class _EpgSettingsScreenState extends State<EpgSettingsScreen>
                               onPressed: epg.isLoading ? null : _updateNow,
                             ),
                             const Divider(height: 32),
+                            const _CustomEpgSection(),
+                            const Divider(height: 32),
                             OutlinedButton(
                               onPressed: _clearCache,
                               child: Text(tr('Clear Cache')),
@@ -310,6 +315,135 @@ class _TabIntro extends StatelessWidget {
           Text(body, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
+    );
+  }
+}
+
+/// Custom EPG (XMLTV) URL for one chosen playlist — the same per-playlist
+/// `epgUrl` Add Playlist edits, reachable from here. Blank on an Xtream
+/// playlist re-derives the panel's own xmltv.php (see `_save` in
+/// `add_playlist_screen.dart`); blank on an M3U playlist clears it.
+class _CustomEpgSection extends StatefulWidget {
+  const _CustomEpgSection();
+
+  @override
+  State<_CustomEpgSection> createState() => _CustomEpgSectionState();
+}
+
+class _CustomEpgSectionState extends State<_CustomEpgSection> {
+  final _controller = TextEditingController();
+  final _fieldFocus = FocusNode(debugLabel: 'custom-epg-field');
+  String? _playlistId;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _fieldFocus.dispose();
+    super.dispose();
+  }
+
+  /// The URL worth pre-filling: an Xtream profile's auto-derived link is not
+  /// something the user typed, so it shows as blank (same rule as Add Playlist).
+  String _customUrlOf(PlaylistProfile p) {
+    if (p.mode == 'xtream') {
+      final auto = XtreamHelper.buildEpgUrl(
+          server: p.xtreamServer ?? '',
+          username: p.xtreamUsername ?? '',
+          password: p.xtreamPassword ?? '');
+      if (p.epgUrl == auto) return '';
+    }
+    return p.epgUrl ?? '';
+  }
+
+  void _select(PlaylistProfile? p) {
+    setState(() => _playlistId = p?.id);
+    _controller.text = p == null ? '' : _customUrlOf(p);
+  }
+
+  Future<void> _save(PlaylistProfile p) async {
+    final manager = context.read<PlaylistManager>();
+    final epg = context.read<EpgService>();
+    final custom = _controller.text.trim();
+    final url = custom.isNotEmpty
+        ? custom
+        : p.mode == 'xtream'
+            ? XtreamHelper.buildEpgUrl(
+                server: p.xtreamServer ?? '',
+                username: p.xtreamUsername ?? '',
+                password: p.xtreamPassword ?? '')
+            : '';
+    await manager.updatePlaylist(p.copyWith(epgUrl: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(custom.isEmpty && url.isEmpty
+            ? tr('Custom EPG URL cleared.')
+            : tr('Custom EPG URL saved.'))));
+    if (url.isNotEmpty && p.enabled) {
+      // refreshAll walks every enabled playlist's source, this one included.
+      await epg.refreshAll();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profiles = context.watch<PlaylistManager>().profiles;
+    PlaylistProfile? selected;
+    for (final p in profiles) {
+      if (p.id == _playlistId) selected = p;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(tr('Custom EPG (XMLTV) URL — optional'),
+            style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: selected?.id,
+          decoration: InputDecoration(
+            labelText: tr('Use with playlist'),
+            border: const OutlineInputBorder(),
+          ),
+          items: profiles
+              .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
+              .toList(),
+          onChanged: (id) {
+            PlaylistProfile? pick;
+            for (final p in profiles) {
+              if (p.id == id) pick = p;
+            }
+            _select(pick);
+          },
+        ),
+        if (selected != null) ...[
+          const SizedBox(height: 12),
+          TvTextFieldGate(
+            focusNode: _fieldFocus,
+            builder: (context, readOnly) => TextField(
+              controller: _controller,
+              focusNode: _fieldFocus,
+              readOnly: readOnly,
+              decoration: InputDecoration(
+                labelText: tr('Custom EPG (XMLTV) URL — optional'),
+                border: const OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => FocusScope.of(context).nextFocus(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.save_outlined),
+            label: Text(tr('Save EPG URL')),
+            onPressed: () => _save(selected!),
+          ),
+        ],
+        const SizedBox(height: 4),
+        Text(
+          tr('Pick a playlist, then paste a third-party XMLTV link. Leave it blank to use the guide of that playlist. A channel is only filled in when the ids in the feed match the playlist.'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }

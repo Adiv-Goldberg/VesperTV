@@ -2167,22 +2167,10 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
       _leftFromContent();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowRight) {
-      if (event is KeyDownEvent && selected != null) {
-        unawaited(_feedFullScreen(selected));
-      }
-      return KeyEventResult.handled;
-    }
+    // Right no longer opens full screen (owner, 2026-10-31): OK plays in
+    // the player, OK again goes full screen.
+    if (key == LogicalKeyboardKey.arrowRight) return KeyEventResult.handled;
     return KeyEventResult.ignored;
-  }
-
-  /// Right on a feed row: that game full screen (the playing stream when
-  /// it's the one in the video).
-  Future<void> _feedFullScreen(SportsGame game) async {
-    if (_isPreviewing(game)) return _play(_previewChannel!, game: game);
-    final best = _matches[_gameKey(game)]?.firstOrNull;
-    if (best == null) return _openGame(game);
-    await _play(best.channel, game: game);
   }
 
   /// Down past the feed: the card rows under a small hero.
@@ -2277,7 +2265,7 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(4, 6, 4, 4),
               child: _KeyHintText(
-                  tr('OK: watch  ·  →: full screen  ·  Hold OK: stats  ·  ▼ all games'),
+                  tr('OK: watch  ·  OK again: full screen  ·  Hold OK: stats  ·  ▼ all games'),
                   style: const TextStyle(fontSize: 12, color: Colors.white54)),
             ),
           ),
@@ -3822,7 +3810,7 @@ class _Hero extends StatelessWidget {
       final videoHint = touch || _desktopSports || showingOther
           ? hint
           // Sports Mode: Back opens the rail, the player keeps playing.
-          : _KeyHintText(tr('→ on a game: full screen  ·  ▶❚❚: stop'),
+          : _KeyHintText(tr('OK again on a game: full screen  ·  ▶❚❚: stop'),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12, color: Colors.white54));
       return Column(

@@ -361,6 +361,7 @@ class AppConstants {
   static const String keySportsMode = 'vesper_sports_mode';
   static const String keySportsChannelPicks = 'vesper_sports_channel_picks';
   static const String keyGoalsAlert = 'vesper_goals_alert';
+  static const String keyTransparentPopups = 'vesper_transparent_popups';
   static const String keyMatchScoreAlerts = 'vesper_match_score_alerts';
   static const String keySportsFollowedTeams = 'vesper_sports_followed_teams';
   static const String keyGameReminders = 'vesper_game_reminders';
@@ -423,6 +424,8 @@ class AppConstants {
   static const String keyGuideFullVideo = 'vesper_guide_full_video';
 
   static const String keyGuideExpanded = 'vesper_guide_expanded';
+  static const String keyGuideCompact = 'vesper_guide_compact';
+  static const String keyExpandedBrowse = 'vesper_expanded_browse';
 
   /// LEGACY global scalar — "enable/disable playlist" (freeing a
   /// provider's connection slot for another device without touching

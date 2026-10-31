@@ -18,6 +18,7 @@ import 'profiles_screen.dart';
 import 'recording_settings_screen.dart';
 import 'send_log_screen.dart';
 import 'transfer_screen.dart';
+import 'guide_settings_screen.dart';
 import 'theme_screen.dart';
 import 'addons_screen.dart';
 import 'archive_posters_screen.dart';
@@ -27,6 +28,7 @@ import 'tmdb_settings_screen.dart';
 import 'debrid_settings_screen.dart';
 import 'remote_tips_screen.dart';
 import 'support_screen.dart';
+import 'community_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/sports_mode_toggle.dart';
 import '../../utils/constants.dart';
@@ -180,6 +182,11 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
                 tr('Debrid accounts'),
                 tr('Optional keys for the "Ready" tag'),
                 (_) => const DebridSettingsScreen()),
+            _general(
+                'streamselection',
+                Icons.video_library_outlined,
+                tr('Media Hub playback'),
+                tr('Default stream selection for movies and episodes')),
           ],
         ),
         _Category(
@@ -189,6 +196,11 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
           [
             _Entry(Icons.palette_outlined, tr('Theme'),
                 tr('Clock, accent color, layout'), (_) => const ThemeScreen()),
+            _Entry(
+                Icons.view_timeline_outlined,
+                tr('Guide'),
+                tr('Live TV guide layout, full-screen video, compact rows'),
+                (_) => const GuideSettingsScreen()),
             _general('tabs', Icons.tab_outlined, tr('Tabs'),
                 tr('Hide Movies, TV Shows, Media Hub, Recordings or Multiview')),
             _general('goals', Icons.sports_score, tr('Goals alert'),
@@ -228,11 +240,6 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
                   tr('Skip intros and credits on TV show episodes')),
             _general('trailers', Icons.movie_outlined, tr('Trailers'),
                 tr('Play trailers automatically on movie and show pages')),
-            _general(
-                'streamselection',
-                Icons.video_library_outlined,
-                tr('Media Hub playback'),
-                tr('Default stream selection for movies and episodes')),
             if (!Platform.isWindows)
               _general('multiview', Icons.grid_view, tr('Multiview'),
                   tr('The connections tip when opening Multiview')),
@@ -294,11 +301,6 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
                 tr('Remote tips'),
                 tr('Every hold menu and shortcut, on your phone'),
                 (_) => const RemoteTipsScreen()),
-            _Entry(
-                Icons.local_cafe_outlined,
-                tr('Support VesperTV'),
-                tr('Buy a coffee or become a Supporter'),
-                (_) => const SupportScreen()),
           ],
         ),
         _Category(
@@ -333,6 +335,23 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
                 tr('Send log'),
                 tr('Send the app\'s log to the developer'),
                 (_) => const SendLogScreen()),
+            _Entry(
+                Icons.forum_outlined,
+                tr('Discord'),
+                tr('Direct support through Discord'),
+                (_) => const CommunityScreen()),
+          ],
+        ),
+        _Category(
+          Icons.local_cafe_outlined,
+          tr('Support VesperTV'),
+          tr('VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.'),
+          [
+            _Entry(
+                Icons.local_cafe_outlined,
+                tr('Support VesperTV'),
+                tr('Buy a coffee or become a Supporter'),
+                (_) => const SupportScreen()),
           ],
         ),
       ];

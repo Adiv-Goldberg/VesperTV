@@ -529,6 +529,21 @@ class _TvHomeScreenState extends State<TvHomeScreen>
     }
   }
 
+  /// Settings > Interface > Tabs > "Open groups as expanded catalog": a
+  /// Movies / TV Shows group opens the Expand catalog grid directly, and
+  /// Back returns to the groups column (same as the hold menu's Expand).
+  void _openExpandedCatalog(String category, String playlistId, String title) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+            builder: (_) => GroupCatalogScreen(
+                category: category, playlistId: playlistId, title: title)))
+        .then((_) {
+      if (!mounted) return;
+      setState(() => _focusDepth = 1);
+      _col1Scope.requestFocus();
+    });
+  }
+
   /// Stands in for a playlist id on the viewer's own groups' rows: they
   /// belong to no playlist (see `UserGroups`), so a playlist's hidden
   /// groups or a Playlists-menu hide never touch them.
@@ -4369,8 +4384,11 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                 playlist.isGroupFavorited(group.playlistId, group.title),
             isPendingHide: _pendingHideGroups
                 .contains(_groupKey(group.playlistId, group.title)),
-            onTap: () => _leaveWhatsNewThen(
-                () => _scrollToBrowseGroup(group.playlistId, group.title)),
+            onTap: () => context.read<AppPreferences>().expandedBrowse
+                ? _openExpandedCatalog(_tab == 'Movies' ? 'vod' : 'series',
+                    group.playlistId, group.title)
+                : _leaveWhatsNewThen(
+                    () => _scrollToBrowseGroup(group.playlistId, group.title)),
             onLongPress: () => _showGroupOptions(group.playlistId, group.title,
                 category: _tab == 'Movies' ? 'vod' : 'series'),
             moving: _movingGroupKey == _groupKey(group.playlistId, group.title),
@@ -4981,7 +4999,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                             SizedBox(
                               height: _TimelineGuideState._rulerHeight +
                                   1 +
-                                  3 * _TimelineGuideState._rowHeight,
+                                  // Same height in Compact guide: shorter
+                                  // rows fit 4 channels instead of 3.
+                                  3 * _TimelineGuideState._normalRowHeight,
                               child: _fullVideoScrim(guide),
                             ),
                           ]
@@ -7991,7 +8011,10 @@ class _TimelineGuideState extends State<_TimelineGuide> with RouteAware {
   static const double _pixelsPerMinute = 6;
   static const Duration _windowBefore = Duration(hours: 1);
   static const Duration _windowAfter = Duration(hours: 5);
-  static const double _rowHeight = 64;
+
+  /// 64 normally, shorter with Theme > Compact guide (set each build).
+  static double _rowHeight = _normalRowHeight;
+  static const double _normalRowHeight = 64;
   static const double _channelColumnWidth = 160;
   static const double _rulerHeight = 32;
 
@@ -8703,6 +8726,7 @@ class _TimelineGuideState extends State<_TimelineGuide> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    _rowHeight = context.watch<AppPreferences>().guideCompact ? 48 : _normalRowHeight;
     if (widget.channels.isEmpty) {
       return Center(child: Text(tr('No channels found.')));
     }

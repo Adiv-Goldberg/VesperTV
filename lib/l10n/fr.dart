@@ -5,6 +5,46 @@
 /// Keep every `{placeholder}` exactly as in the key. `{s}` is the plural "s"
 /// the code fills in ("chaîne{s}").
 const Map<String, String> kFr = {
+  "Discord":
+      "Discord",
+  "Direct support through Discord":
+      "Aide directe sur Discord",
+  "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
+      "Questions, aide à la configuration, idées et nouvelles versions : rejoignez la communauté VesperTV sur Discord.",
+  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
+      "VesperTV est gratuit et sans publicité. Un café ou un abonnement Supporter aide à couvrir ses frais.",
+  "Show a test popup":
+      "Afficher une fenêtre test",
+  "A sample goal alert for 8 seconds.":
+      "Un exemple d'alerte de but pendant 8 secondes.",
+  "Guide":
+      "Guide",
+  "Live TV guide layout, full-screen video, compact rows":
+      "Disposition du guide, vidéo plein écran, lignes compactes",
+  "{n} titles":
+      "{n} titres",
+  "Open groups as expanded catalog":
+      "Ouvrir les groupes en catalogue étendu",
+  "Movies and TV Shows groups open the full poster grid instead of the rows.":
+      "Les groupes Films et Séries s'ouvrent en grille d'affiches complète plutôt qu'en rangées.",
+  "Compact guide":
+      "Guide compact",
+  "Shorter Timeline rows so more channels fit in the same space.":
+      "Lignes de la grille plus courtes pour afficher plus de chaînes.",
+  "Transparent popups":
+      "Fenêtres transparentes",
+  "Reminders and goal alerts lose their background and outline, keeping only the logo and text.":
+      "Les rappels et alertes de but perdent leur fond et leur contour, il ne reste que le logo et le texte.",
+  "Use with playlist":
+      "Utiliser avec la playlist",
+  "Save EPG URL":
+      "Enregistrer l'URL du guide",
+  "Custom EPG URL saved.":
+      "URL du guide perso enregistrée.",
+  "Custom EPG URL cleared.":
+      "URL du guide perso supprimée.",
+  "Pick a playlist, then paste a third-party XMLTV link. Leave it blank to use the guide of that playlist. A channel is only filled in when the ids in the feed match the playlist.":
+      "Choisissez une playlist, puis collez un lien XMLTV tiers. Laissez vide pour utiliser le guide de la playlist. Une chaîne n'est remplie que si les identifiants de la source correspondent à ceux de la playlist.",
   // Sports Trak quality preference (moved from the league bar).
   "Prefer higher-quality channels among game matches":
       "Privilégier les chaînes de meilleure qualité parmi les correspondances du match",
@@ -487,10 +527,10 @@ const Map<String, String> kFr = {
   'Yesterday': "Hier",
   'Today': "Aujourd'hui",
   'Day': "Jour",
-  'OK: watch  ·  →: full screen  ·  Hold OK: stats  ·  ▼ all games':
-      "OK : regarder  ·  → : plein écran  ·  Maintenir OK : stats  ·  ▼ tous les matchs",
-  '→ on a game: full screen  ·  ▶❚❚: stop':
-      "→ sur un match : plein écran  ·  ▶❚❚ : arrêter",
+  'OK: watch  ·  OK again: full screen  ·  Hold OK: stats  ·  ▼ all games':
+      "OK : regarder  ·  OK de nouveau : plein écran  ·  Maintenir OK : stats  ·  ▼ tous les matchs",
+  'OK again on a game: full screen  ·  ▶❚❚: stop':
+      "OK de nouveau sur un match : plein écran  ·  ▶❚❚ : arrêter",
   'Standings': "Classement",
   '{name} standings': "Classement {name}",
   '{name} championship': "Championnat {name}",

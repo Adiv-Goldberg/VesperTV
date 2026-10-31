@@ -309,7 +309,16 @@ class SportsModeLivePanelState extends State<SportsModeLivePanel> {
       focusGroups();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowRight) return KeyEventResult.handled;
+    // Right from a channel: into the sports page, like Right on a group
+    // (owner, 2026-10-31: the guide collapses and the page takes focus).
+    if (key == LogicalKeyboardKey.arrowRight) {
+      if (event is KeyDownEvent) {
+        // Close the guide first (as Back does), then hand focus to the page.
+        setState(() => _openKey = null);
+        widget.onRight?.call();
+      }
+      return KeyEventResult.handled;
+    }
     if (_isActivate(key)) {
       if (event is KeyDownEvent) _play(_channelIndex);
       return KeyEventResult.handled;

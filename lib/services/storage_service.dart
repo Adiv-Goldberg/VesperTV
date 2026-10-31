@@ -439,7 +439,7 @@ class StorageService {
   Future<void> setLaunchWithProfiles(bool value) =>
       _prefs.setBool(AppConstants.keyLaunchWithProfiles, value);
 
-  bool getFastStartup() => _prefs.getBool(AppConstants.keyFastStartup) ?? false;
+  bool getFastStartup() => _prefs.getBool(AppConstants.keyFastStartup) ?? true;
   Future<void> setFastStartup(bool value) =>
       _prefs.setBool(AppConstants.keyFastStartup, value);
 
@@ -543,7 +543,7 @@ class StorageService {
   /// Settings > General: the "Hold > to resume" reminder pill (Android and
   /// Windows). Off hides only the pill; hold-Right still resumes.
   bool getShowResumePill() =>
-      _prefs.getBool(AppConstants.keyShowResumePill) ?? true;
+      _prefs.getBool(AppConstants.keyShowResumePill) ?? false;
   Future<void> setShowResumePill(bool value) =>
       _prefs.setBool(AppConstants.keyShowResumePill, value);
 
@@ -641,6 +641,12 @@ class StorageService {
   Future<void> setGoalsAlert(bool value) =>
       _prefs.setBool(_vk(AppConstants.keyGoalsAlert), value);
 
+  /// Reminder and goal-alert popups without their fill (outline only).
+  bool getTransparentPopups() =>
+      _prefs.getBool(AppConstants.keyTransparentPopups) ?? false;
+  Future<void> setTransparentPopups(bool value) =>
+      _prefs.setBool(AppConstants.keyTransparentPopups, value);
+
   /// My Teams, in follow order, as `leagueId|teamId`.
   List<String> getSportsFollowedTeams() =>
       _prefs.getStringList(_vk(AppConstants.keySportsFollowedTeams)) ??
@@ -713,6 +719,14 @@ class StorageService {
       _prefs.getBool(AppConstants.keyGuideExpanded) ?? false;
   Future<void> setGuideExpanded(bool value) =>
       _prefs.setBool(AppConstants.keyGuideExpanded, value);
+  bool getExpandedBrowse() =>
+      _prefs.getBool(AppConstants.keyExpandedBrowse) ?? false;
+  Future<void> setExpandedBrowse(bool value) =>
+      _prefs.setBool(AppConstants.keyExpandedBrowse, value);
+  bool getGuideCompact() =>
+      _prefs.getBool(AppConstants.keyGuideCompact) ?? false;
+  Future<void> setGuideCompact(bool value) =>
+      _prefs.setBool(AppConstants.keyGuideCompact, value);
 
   // --- Favorites (per viewer, shared across every playlist) -----------------
   // Favorites aren't namespaced by playlist (a favorited channel is just a

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
+import 'de.dart';
 import 'el.dart';
 import 'es.dart';
 import 'fr.dart';
@@ -11,7 +12,7 @@ import 'it.dart';
 
 /// App-wide UI language. English strings in the code are the keys
 /// (`tr('Settings')`); [_dictionaries] maps them to each other language
-/// ([kFr], [kEs], [kIt], [kEl]). A missing entry falls back to the English text, so
+/// ([kFr], [kEs], [kIt], [kEl], [kDe]). A missing entry falls back to the English text, so
 /// a forgotten string shows in English, never blank.
 ///
 /// Deliberately not Flutter's gen-l10n: many strings live in services and
@@ -28,7 +29,7 @@ class L10n {
   /// The setting: 'auto' (follow the device) or a language code.
   static String setting = 'auto';
 
-  /// The resolved language actually in use: 'en', 'fr', 'es', 'it' or 'el'.
+  /// The resolved language actually in use: 'en', 'fr', 'es', 'it', 'el' or 'de'.
   static String code = 'en';
 
   static Locale get locale => Locale(code);
@@ -39,6 +40,7 @@ class L10n {
     Locale('es'),
     Locale('it'),
     Locale('el'),
+    Locale('de'),
   ];
 
   static bool _supported(String c) => c == 'en' || _dictionaries.containsKey(c);
@@ -59,6 +61,7 @@ const Map<String, Map<String, String>> _dictionaries = {
   'es': kEs,
   'it': kIt,
   'el': kEl,
+  'de': kDe,
 };
 
 /// Translate [en] into the current language. `{name}` placeholders are filled
@@ -93,6 +96,7 @@ String _esOrdinal(String n) => '$n.º';
 String _itOrdinal(String n) => '$nº';
 // Neuter ("1ο ημίχρονο", "7ο – …"); the status words below are neuter too.
 String _elOrdinal(String n) => '$nο';
+String _deOrdinal(String n) => '$n.';
 
 const Map<String, _SportsLanguage> _sportsLanguages = {
   'fr': _SportsLanguage(
@@ -265,6 +269,49 @@ const Map<String, _SportsLanguage> _sportsLanguages = {
       'Play Complete': 'Ο γύρος ολοκληρώθηκε',
       'Scheduled': 'Προγραμματισμένο',
       'Lap': 'Γύρος',
+    },
+  ),
+  'de': _SportsLanguage(
+    ordinal: _deOrdinal,
+    overtime: 'Verl.',
+    shootout: 'n. P.',
+    words: {
+      'Final': 'Endstand',
+      'Halftime': 'Halbzeit',
+      'Half': 'Halbzeit',
+      'Delayed': 'Verzögert',
+      'Rain Delay': 'Regenpause',
+      'Postponed': 'Verschoben',
+      'Canceled': 'Abgesagt',
+      'Cancelled': 'Abgesagt',
+      'Suspended': 'Unterbrochen',
+      'Forfeit': 'Forfait',
+      'End of': 'Ende',
+      'End': 'Ende',
+      'Top': 'Oben',
+      'Bot': 'Unten',
+      'Bottom': 'Unten',
+      'Mid': 'Mitte',
+      'Middle': 'Mitte',
+      'OT': 'Verl.',
+      'SO': 'n. P.',
+      'FT': 'Endstand',
+      'HT': 'Halbzeit',
+      'AET': 'n. V.',
+      'Pens': 'Elfm.',
+      'Intermission': 'Pause',
+      'Quarter': 'Viertel',
+      'Period': 'Drittel',
+      'Inning': 'Inning',
+      // Golf / racing.
+      'Round': 'Runde',
+      'Race': 'Rennen',
+      'Qualifying': 'Qualifying',
+      'Complete': 'Beendet',
+      'In Progress': 'Läuft',
+      'Play Complete': 'Runde beendet',
+      'Scheduled': 'Angesetzt',
+      'Lap': 'Runde',
     },
   ),
 };

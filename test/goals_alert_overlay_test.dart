@@ -252,8 +252,8 @@ void main() {
         page: const GeneralSettingsScreen(
             sections: {'goals'}, title: 'Goals alert'));
     expect(storage.getGoalsAlert(), isFalse);
-    expect(find.byType(Switch), findsOneWidget);
-    await tester.tap(find.byType(Switch));
+    expect(find.byType(Switch), findsNWidgets(2));
+    await tester.tap(find.byType(Switch).first);
     await tester.pump();
     expect(storage.getGoalsAlert(), isTrue);
     final reopened = StorageService();

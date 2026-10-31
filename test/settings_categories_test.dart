@@ -60,6 +60,7 @@ void main() {
       expect(find.text(row), findsOneWidget);
     }
     expect(find.text('Playlist Manager'), findsNothing);
+    expect(find.text('Media Hub playback'), findsOneWidget);
 
     // Right: into the pane, first row.
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -87,7 +88,7 @@ void main() {
     expect(focusedLabel(), 'Playback');
     expect(find.text('Resume reminder'), findsOneWidget);
     expect(find.text('Trailers'), findsOneWidget);
-    expect(find.text('Media Hub playback'), findsOneWidget);
+    expect(find.text('Media Hub playback'), findsNothing);
     expect(find.text('Tabs'), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();

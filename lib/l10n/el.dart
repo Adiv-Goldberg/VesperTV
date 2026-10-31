@@ -6,6 +6,46 @@
 /// English-style plural "s" filled in by the code; Greek plurals don't
 /// work that way, so those strings are phrased without it.
 const Map<String, String> kEl = {
+  "Discord":
+      "Discord",
+  "Direct support through Discord":
+      "Άμεση υποστήριξη μέσω Discord",
+  "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
+      "Ερωτήσεις, βοήθεια με τη ρύθμιση, ιδέες και νέα εκδόσεων: μπες στην κοινότητα του VesperTV στο Discord.",
+  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
+      "Το VesperTV είναι δωρεάν, χωρίς διαφημίσεις. Ένας καφές ή μια συνδρομή Supporter βοηθά να καλυφθούν τα έξοδά του.",
+  "Show a test popup":
+      "Δοκιμαστικό αναδυόμενο",
+  "A sample goal alert for 8 seconds.":
+      "Ένα δείγμα ειδοποίησης γκολ για 8 δευτερόλεπτα.",
+  "Guide":
+      "Οδηγός",
+  "Live TV guide layout, full-screen video, compact rows":
+      "Διάταξη οδηγού, βίντεο πλήρους οθόνης, συμπαγείς γραμμές",
+  "{n} titles":
+      "{n} τίτλοι",
+  "Open groups as expanded catalog":
+      "Άνοιγμα ομάδων ως εκτεταμένος κατάλογος",
+  "Movies and TV Shows groups open the full poster grid instead of the rows.":
+      "Οι ομάδες Ταινιών και Σειρών ανοίγουν το πλήρες πλέγμα αφισών αντί για σειρές.",
+  "Compact guide":
+      "Συμπαγής οδηγός",
+  "Shorter Timeline rows so more channels fit in the same space.":
+      "Πιο χαμηλές γραμμές στο χρονοδιάγραμμα για περισσότερα κανάλια.",
+  "Transparent popups":
+      "Διάφανα αναδυόμενα",
+  "Reminders and goal alerts lose their background and outline, keeping only the logo and text.":
+      "Οι υπενθυμίσεις και οι ειδοποιήσεις γκολ χάνουν φόντο και περίγραμμα, κρατώντας μόνο το λογότυπο και το κείμενο.",
+  "Use with playlist":
+      "Χρήση με τη λίστα",
+  "Save EPG URL":
+      "Αποθήκευση URL οδηγού",
+  "Custom EPG URL saved.":
+      "Το προσαρμοσμένο URL οδηγού αποθηκεύτηκε.",
+  "Custom EPG URL cleared.":
+      "Το προσαρμοσμένο URL οδηγού αφαιρέθηκε.",
+  "Pick a playlist, then paste a third-party XMLTV link. Leave it blank to use the guide of that playlist. A channel is only filled in when the ids in the feed match the playlist.":
+      "Διάλεξε μια λίστα και επικόλλησε έναν σύνδεσμο XMLTV τρίτου. Άφησέ το κενό για τον οδηγό της λίστας. Ένα κανάλι συμπληρώνεται μόνο αν τα ids της πηγής ταιριάζουν με της λίστας.",
   // Sports Trak quality preference (moved from the league bar).
   "Prefer higher-quality channels among game matches":
       "Προτίμηση καναλιών υψηλότερης ποιότητας που αντιστοιχούν στον αγώνα",
@@ -620,10 +660,10 @@ const Map<String, String> kEl = {
       "Σήμερα",
   "Day":
       "Ημέρα",
-  'OK: watch  ·  →: full screen  ·  Hold OK: stats  ·  ▼ all games':
-      "OK: παρακολούθηση  ·  →: πλήρης οθόνη  ·  Κράτημα OK: στατιστικά  ·  ▼ όλοι οι αγώνες",
-  '→ on a game: full screen  ·  ▶❚❚: stop':
-      "→ σε αγώνα: πλήρης οθόνη  ·  ▶❚❚: διακοπή",
+  'OK: watch  ·  OK again: full screen  ·  Hold OK: stats  ·  ▼ all games':
+      "OK: παρακολούθηση  ·  OK ξανά: πλήρης οθόνη  ·  Κράτημα OK: στατιστικά  ·  ▼ όλοι οι αγώνες",
+  'OK again on a game: full screen  ·  ▶❚❚: stop':
+      "OK ξανά σε αγώνα: πλήρης οθόνη  ·  ▶❚❚: διακοπή",
   "Standings":
       "Βαθμολογίες",
   "{name} standings":

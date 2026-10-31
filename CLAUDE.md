@@ -225,7 +225,7 @@ context-less sink above. Texture players (Multiview, Compatibility video) never 
   there is an **opt-in, device-only Fast startup** (Settings > General > Startup,
   `AppPreferences.fastStartup`): the splash loads Movies/TV Shows for at most 3.5 s, then the UI
   opens and the rest loads behind it (owner timed Formuler 30 s → 4 s, Fire Stick 4K 14 s → 5 s,
-  stable). Never make it the default, never transfer it. The
+  stable). **On by default since 1.0.51+541 (owner, 2026-10-31: tested on several devices, they handle it);** an explicit user choice is kept. Never transfer it. The
   Android last-channel auto-resume after the splash was once removed (decoder start + the old ~25 s
   EPG decode made cold start sluggish); since the SQLite EPG it's back, **on by default** behind
   Settings > General > Startup: "Resume last channel in full screen" or "…with the guide open"
@@ -367,6 +367,11 @@ old ~50 s EPG delay is **fixed** by the SQLite EPG store (0.5 s on the Formuler)
 Timeline/Live guide, player secondary row + badges, Multiview, welcome prompt, hide channels, Expand catalog, backup servers, palettes, **viewer profiles** (never rewrite Main's storage keys), **languages** (EN/FR/ES/IT/EL), **Transfer to another device** (Wi-Fi + internet vault, built to grow into cloud sync). Read the file before changing any of these.
 
 ## 13. Status & open items (as of 2026-10-24)
+- **Claude, 2026-10-31 - release 1.0.51 (beta), +541 (latest):** owner tested +540 on the Formuler and asked for the
+  release and announcement. Android only; Windows stays 1.0.45. German (lib/l10n/de.dart, machine-translated), expanded
+  catalog spotlight design + opt-in "Open groups as expanded catalog", Interface > Guide page (+ Compact guide, custom
+  EPG URL in EPG > General), transparent popups (+ test popup), Support and Discord entries, Fast startup now ON by
+  default, resume pill off by default, Sports Mode Right/OK key changes. Notes: dev-notes/releases/1.0.51.md.
 - **cdx, 2026-10-30 - release 1.0.50 (beta), +534:** owner requested push and a new
   release after +533 acceptance. Android only; Windows stays at1.0.45 with its
   existing website links. Includes Plex/server streams from tracker lists,

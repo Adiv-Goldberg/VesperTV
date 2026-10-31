@@ -12,6 +12,7 @@ import '../../services/storage_service.dart';
 import '../../services/subtitle_tracks.dart';
 import '../../utils/constants.dart';
 import '../../utils/tv_theme.dart';
+import '../../widgets/goals_alert_overlay.dart';
 import '../../widgets/native_video_hole.dart';
 import '../../widgets/live_resume_hint.dart';
 import '../../widgets/settings_scaffold.dart';
@@ -108,6 +109,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     ('es', 'Español'),
     ('it', 'Italiano'),
     ('el', 'Ελληνικά'),
+    ('de', 'Deutsch'),
   ];
 
   String _languageLabel(String setting) => setting == 'auto'
@@ -349,8 +351,33 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                               .read<AppPreferences>()
                               .setGoalsAlert(value),
                         ),
+                        TvSwitchListTile(
+                          title: Text(tr('Transparent popups')),
+                          subtitle: Text(tr(
+                              'Reminders and goal alerts lose their background and outline, keeping only the logo and text.')),
+                          value:
+                              context.watch<AppPreferences>().transparentPopups,
+                          onChanged: (value) => context
+                              .read<AppPreferences>()
+                              .setTransparentPopups(value),
+                        ),
+                        TvMenuTile(
+                          icon: Icons.visibility_outlined,
+                          title: tr('Show a test popup'),
+                          subtitle: tr('A sample goal alert for 8 seconds.'),
+                          onTap: () =>
+                              GoalsAlertOverlay.previewRequests.value++,
+                        ),
                       ]),
                   _section('tabs', Icons.tab_outlined, tr('Tabs'), children: [
+                    TvSwitchListTile(
+                      title: Text(tr('Open groups as expanded catalog')),
+                      subtitle: Text(tr(
+                          'Movies and TV Shows groups open the full poster grid instead of the rows.')),
+                      value: context.watch<AppPreferences>().expandedBrowse,
+                      onChanged: (v) =>
+                          context.read<AppPreferences>().setExpandedBrowse(v),
+                    ),
                     TvSwitchListTile(
                       title: Text(tr('Hide profiles')),
                       subtitle: Text(tr('Hides the profiles row on Home.')),

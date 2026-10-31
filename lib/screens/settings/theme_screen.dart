@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -94,53 +92,6 @@ class ThemeScreen extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const Divider(height: 32),
-                  SectionLabel(tr('Live TV guide')),
-                  const SizedBox(height: 4),
-                  Text(
-                    tr('Timeline shows every channel at once, on a scrollable schedule grid, instead of one channel\'s now/next at a time.'),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      for (final option in const [
-                        ('live', 'Live'),
-                        ('timeline', 'Timeline')
-                      ]) ...[
-                        Expanded(
-                          child: ModeButton(
-                            label: tr(option.$2),
-                            selected: prefs.guideViewMode == option.$1,
-                            onTap: () => prefs.setGuideViewMode(option.$1),
-                          ),
-                        ),
-                        if (option.$1 != 'timeline') const SizedBox(width: 12),
-                      ],
-                    ],
-                  ),
-                  // Android only for now — Windows' preview runs on its
-                  // own media_kit player and isn't wired for this yet.
-                  if (prefs.guideViewMode == 'timeline' &&
-                      !Platform.isWindows) ...[
-                    const SizedBox(height: 8),
-                    TvSwitchListTile(
-                      title: Text(tr('Full-screen video behind the guide')),
-                      subtitle: Text(tr(prefs.guideExpanded
-                          ? 'The live channel fills the screen behind a see-through guide'
-                          : 'The live channel fills the screen behind a see-through guide showing 3 rows')),
-                      value: prefs.guideFullVideo,
-                      onChanged: prefs.setGuideFullVideo,
-                    ),
-                    if (prefs.guideFullVideo)
-                      TvSwitchListTile(
-                        title: Text(tr('Expand')),
-                        subtitle:
-                            Text(tr('Fill the screen with the Timeline guide')),
-                        value: prefs.guideExpanded,
-                        onChanged: prefs.setGuideExpanded,
-                      ),
-                  ],
                 ],
               ),
             ));

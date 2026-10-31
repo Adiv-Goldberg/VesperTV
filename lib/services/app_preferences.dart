@@ -35,6 +35,8 @@ class AppPreferences extends ChangeNotifier {
 
   /// Fill the full-video Timeline area instead of limiting it to three rows.
   late bool guideExpanded;
+  late bool guideCompact;
+  late bool expandedBrowse;
 
   /// Movies / TV Shows tabs (and their search results) hidden, each on its
   /// own switch (Settings > General > Tabs).
@@ -288,6 +290,12 @@ class AppPreferences extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get transparentPopups => _storage.getTransparentPopups();
+  void setTransparentPopups(bool value) {
+    _storage.setTransparentPopups(value);
+    notifyListeners();
+  }
+
   bool get goalsAlert => _storage.getGoalsAlert();
   void setGoalsAlert(bool value) {
     _storage.setGoalsAlert(value);
@@ -327,6 +335,8 @@ class AppPreferences extends ChangeNotifier {
     guideViewMode = _storage.getGuideViewMode();
     guideFullVideo = _storage.getGuideFullVideo();
     guideExpanded = _storage.getGuideExpanded();
+    guideCompact = _storage.getGuideCompact();
+    expandedBrowse = _storage.getExpandedBrowse();
     hideMovies = _storage.getHideMovies();
     hideShows = _storage.getHideShows();
     hideArchive = _storage.getHideArchive();
@@ -414,6 +424,18 @@ class AppPreferences extends ChangeNotifier {
 
   void setAutoTrailers(bool value) {
     _storage.setAutoTrailers(value);
+    notifyListeners();
+  }
+
+  void setExpandedBrowse(bool value) {
+    expandedBrowse = value;
+    _storage.setExpandedBrowse(value);
+    notifyListeners();
+  }
+
+  void setGuideCompact(bool value) {
+    guideCompact = value;
+    _storage.setGuideCompact(value);
     notifyListeners();
   }
 

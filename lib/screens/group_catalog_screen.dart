@@ -9,8 +9,9 @@ import '../services/storage_service.dart';
 import '../services/tmdb_enrichment_service.dart';
 import '../utils/catalog_sort.dart';
 import '../utils/tv_theme.dart';
+import '../utils/display_title.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/poster_card.dart';
-import '../widgets/settings_scaffold.dart';
 import 'movie_detail_screen.dart';
 import 'series_detail_screen.dart';
 import '../l10n/l10n.dart';
@@ -88,6 +89,11 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
   /// querying it directly is the fix, not raising the in-memory cap (which
   /// would reintroduce the memory-pressure problem that cap exists for,
   /// for every normal browse row too).
+  /// The focused title, shown in the spotlight above the grid (backdrop,
+  /// name, year, rating). A notifier, not setState: moving focus must not
+  /// rebuild the whole grid on a weak box.
+  final ValueNotifier<_Spot?> _spot = ValueNotifier(null);
+
   List<Channel> _vodItems = [];
   List<XtreamSeries> _seriesItems = [];
   bool _loading = true;
@@ -119,6 +125,7 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
         _vodItems = items;
         _loading = false;
       });
+      if (items.isNotEmpty) _spot.value = _Spot.vod(_sortedChannels(items)[0]);
       _resumeTmdbSort();
     } else {
       final items = await db.getSeriesCategory(widget.playlistId, widget.title);
@@ -127,6 +134,9 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
         _seriesItems = items;
         _loading = false;
       });
+      if (items.isNotEmpty) {
+        _spot.value = _Spot.series(_sortedSeries(items)[0]);
+      }
       _resumeTmdbSort();
     }
   }
@@ -134,6 +144,7 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
   @override
   void dispose() {
     _backButtonFocus.dispose();
+    _spot.dispose();
     super.dispose();
   }
 
@@ -143,7 +154,16 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
         context,
         (context) => Stack(
               children: [
-                const Positioned.fill(child: SettingsGradientBackground()),
+                const Positioned.fill(child: ColoredBox(color: Colors.black)),
+                // Full height: a shorter box left a visible seam where
+                // the image ended (Formuler, 2026-10-31).
+                Positioned.fill(
+                  child: ValueListenableBuilder<_Spot?>(
+                    valueListenable: _spot,
+                    builder: (context, spot, _) =>
+                        DetailBackdrop(url: spot?.backdrop, fadeLeft: true),
+                  ),
+                ),
                 Scaffold(
                   backgroundColor: Colors.transparent,
                   appBar: AppBar(
@@ -155,8 +175,32 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () => Navigator.maybePop(context),
                     ),
-                    title: Text(widget.title,
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    toolbarHeight: 64,
+                    // Group + count on top, the focused title under it: the
+                    // whole body stays a dense grid (more titles per screen).
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                            _loading
+                                ? widget.title
+                                : '${widget.title}   ·   ${tr('{n} titles', {
+                                        'n': widget.category == 'vod'
+                                            ? _vodItems.length
+                                            : _seriesItems.length
+                                      })}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.white70)),
+                        ValueListenableBuilder<_Spot?>(
+                          valueListenable: _spot,
+                          builder: (context, spot, _) =>
+                              _spotLine(context, spot),
+                        ),
+                      ],
+                    ),
                     actions: [
                       PopupMenuButton<CatalogSort>(
                         // The sort in use, beside the icon: a remembered
@@ -326,7 +370,7 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
             _toggleFavoriteWithFeedback(context, playlist, c),
         onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => MovieDetailScreen(channel: c))),
-        onFocusGained: () {},
+        onFocusGained: () => _spot.value = _Spot.vod(c),
       ),
     );
   }
@@ -344,7 +388,7 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
         onToggleFavorite: () => _toggleSeriesFavoriteWithFeedback(playlist, s),
         onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => SeriesDetailScreen(series: s))),
-        onFocusGained: () {},
+        onFocusGained: () => _spot.value = _Spot.series(s),
       ),
     );
   }
@@ -389,13 +433,64 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
       return Center(child: Text(tr('No items in this group.')));
     }
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: PosterCard.width + 12,
-        mainAxisExtent: PosterCard.height + 12,
+        mainAxisExtent: PosterCard.height + 10,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
       itemCount: items.length,
       itemBuilder: (context, i) => posterBuilder(items[i]),
     );
+  }
+
+  /// The focused title with its year and rating, one line.
+  Widget _spotLine(BuildContext context, _Spot? spot) {
+    if (spot == null) return const SizedBox.shrink();
+    final meta = [
+      if (spot.year != null) '${spot.year}',
+      if (spot.rating != null) '★ ${spot.rating}',
+    ];
+    return Row(children: [
+      Flexible(
+        child: Text(spot.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                shadows: [Shadow(color: Colors.black, blurRadius: 8)])),
+      ),
+      if (meta.isNotEmpty) ...[
+        const SizedBox(width: 14),
+        Text(meta.join('   ·   '),
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary)),
+      ],
+    ]);
+  }
+}
+
+/// What the spotlight shows for one title.
+class _Spot {
+  const _Spot(this.title, this.backdrop, this.year, this.rating);
+
+  factory _Spot.vod(Channel c) => _Spot(cleanDisplayTitle(c.name),
+      c.anyBackdropUrl, c.releaseDate?.year, _ratingOf(c.rating));
+  factory _Spot.series(XtreamSeries s) => _Spot(cleanDisplayTitle(s.name),
+      s.anyBackdropUrl, s.releaseDate?.year, _ratingOf(s.rating));
+
+  final String title;
+  final String? backdrop;
+  final int? year;
+  final String? rating;
+
+  static String? _ratingOf(String? raw) {
+    final v = double.tryParse(raw ?? '');
+    if (v == null || v <= 0) return null;
+    return v.toStringAsFixed(1);
   }
 }
