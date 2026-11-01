@@ -367,7 +367,12 @@ old ~50 s EPG delay is **fixed** by the SQLite EPG store (0.5 s on the Formuler)
 Timeline/Live guide, player secondary row + badges, Multiview, welcome prompt, hide channels, Expand catalog, backup servers, palettes, **viewer profiles** (never rewrite Main's storage keys), **languages** (EN/FR/ES/IT/EL), **Transfer to another device** (Wi-Fi + internet vault, built to grow into cloud sync). Read the file before changing any of these.
 
 ## 13. Status & open items (as of 2026-10-24)
-- **Claude, 2026-11-01 - release 1.0.52 (beta), +555 (latest):** owner tested +554 and said "cut it". Android only;
+- **Claude, 2026-11-01 - hot fix release 1.0.53 (beta), +556 (latest):** Android only, Windows stays 1.0.45. VOD
+  recovery resumes at the position (was the live path: seekToDefaultPosition = 0; a stream cut mid-episode restarted it):
+  `ExoPlayerEventListener` onDemand (from setOnDemandBuffering), `markResumePoint`, `cutShort` (early ENDED = reconnect at
+  position), HTTP 416 = real end. Google TV keyboard: an arrow reaching a gated field while typing ends typing (Gboard reports
+  no inset; not Fire OS). No device test before release (owner). Notes: dev-notes/releases/1.0.53.md.
+- **Claude, 2026-11-01 - release 1.0.52 (beta), +555:** owner tested +554 and said "cut it". Android only;
   Windows stays 1.0.45 (owner: bring Windows up to the Android version later). Media Hub redesign (title-logo hero,
   wide focused card, glass left rail with Search pull-out that folds to icons), rugby/cricket/PDC darts leagues, team
   ranks, Watch game button, league goal alerts + scorer, fight matching, Up Next setting, Google TV keyboard fix,

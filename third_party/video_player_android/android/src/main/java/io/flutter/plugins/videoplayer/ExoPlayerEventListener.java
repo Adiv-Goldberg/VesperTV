@@ -74,6 +74,7 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
     consecutiveErrors = 0;
     restartTimes.clear();
     restartReasons.clear();
+    resumeAtMs = C.TIME_UNSET;
   }
   private boolean isWaitingForValidDuration = false;
 
@@ -85,6 +86,52 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
   // and ENDED / other errors go to Dart, which continues the programme.
   private boolean finiteMode = false;
   private long resumeAtMs = C.TIME_UNSET;
+
+  // Movie / episode (set from Dart with setOnDemandBuffering). Live recoveries
+  // restart at the default position, which for a movie or episode is 0: a
+  // dropped connection or a server closing the stream restarted the episode.
+  private boolean onDemand = false;
+
+  public void setOnDemand(boolean on) {
+    onDemand = on;
+  }
+
+  /**
+   * A movie / episode that reached ENDED before its end: seekable, and either its length is
+   * unknown or the position is more than 10 s short of it. An unknown length that really ended
+   * gets HTTP 416 on the resume request, which onPlayerError reports as ENDED.
+   */
+  private boolean cutShort() {
+    if (exoPlayer.isCurrentMediaItemLive() || !exoPlayer.isCurrentMediaItemSeekable()) {
+      return false;
+    }
+    long duration = exoPlayer.getDuration();
+    return duration == C.TIME_UNSET || exoPlayer.getCurrentPosition() < duration - 10_000;
+  }
+
+  /** HTTP 416: a resume request asked for bytes past the end of the file. */
+  static boolean isPastEndError(@NonNull PlaybackException error) {
+    for (Throwable t = error.getCause(); t != null; t = t.getCause()) {
+      if (t instanceof HttpDataSource.InvalidResponseCodeException
+          && ((HttpDataSource.InvalidResponseCodeException) t).responseCode == 416) {
+        return true;
+      }
+      if (t.getCause() == t) break;
+    }
+    return false;
+  }
+
+  /** Remembers where to resume an in-place recovery of a seekable, non-live item. */
+  private void markResumePoint() {
+    if (finiteMode) return;
+    resumeAtMs = C.TIME_UNSET;
+    boolean knownLength = exoPlayer.getDuration() != C.TIME_UNSET;
+    if (!exoPlayer.isCurrentMediaItemLive()
+        && exoPlayer.isCurrentMediaItemSeekable()
+        && (knownLength || onDemand)) {
+      resumeAtMs = exoPlayer.getCurrentPosition();
+    }
+  }
 
   public void setFiniteMode(boolean on) {
     finiteMode = on;
@@ -255,7 +302,7 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
     this.events = events;
     this.recover =
         () -> {
-          if (finiteMode && resumeAtMs != C.TIME_UNSET) {
+          if (resumeAtMs != C.TIME_UNSET) {
             exoPlayer.seekTo(resumeAtMs);
           } else {
             exoPlayer.seekToDefaultPosition();
@@ -295,6 +342,7 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
               && !restartLooping("FROZEN_VIDEO")) {
             // stop() closes the connection first, so the retry delay keeps the provider's
             // connection count honest (see TextureExoPlayerEventListener.errorRetryDelayMs).
+            markResumePoint();
             exoPlayer.stop();
             scheduleRecovery();
             olderSample = null;
@@ -400,7 +448,19 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
         maybeSendInitialized();
         break;
       case Player.STATE_ENDED:
-        if (!finiteMode
+        if (!finiteMode && onDemand && cutShort() && allowRetry()) {
+          if (restartLooping("VOD_STREAM_CUT")) {
+            return;
+          }
+          // The server closed a movie / episode mid-file: ExoPlayer reads the
+          // early EOF as the end. Reconnect where it stopped (a new range
+          // request), reported to Dart as buffering, not ENDED.
+          Log.w(TAG, "vod: stream cut at " + exoPlayer.getCurrentPosition() + " ms, resuming");
+          resumeAtMs = exoPlayer.getCurrentPosition();
+          platformState = PlatformPlaybackState.BUFFERING;
+          scheduleRecovery();
+        } else if (!finiteMode
+            && !onDemand
             && reconnectWhenLiveEnds()
             && (exoPlayer.isCurrentMediaItemLive() || exoPlayer.getDuration() == C.TIME_UNSET)
             && allowRetry()) {
@@ -410,6 +470,7 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
           // Reported to Dart as buffering, not ENDED — ENDED would mark the
           // controller completed/paused on the Dart side.
           platformState = PlatformPlaybackState.BUFFERING;
+          resumeAtMs = C.TIME_UNSET;
           scheduleRecovery();
         } else {
           platformState = PlatformPlaybackState.ENDED;
@@ -442,12 +503,18 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
       }
       return;
     }
+    if (onDemand && isPastEndError(error)) {
+      // The file really ended (see cutShort): finish the title normally.
+      events.onPlaybackStateChanged(PlatformPlaybackState.ENDED);
+      return;
+    }
     if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
       if (restartLooping(error.getErrorCodeName())) {
         return;
       }
       // See
       // https://exoplayer.dev/live-streaming.html#behindlivewindowexception-and-error_code_behind_live_window
+      resumeAtMs = C.TIME_UNSET;
       exoPlayer.seekToDefaultPosition();
       exoPlayer.prepare();
       return;
@@ -463,6 +530,7 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
       // briefly blanks and resumes near the live edge instead of a full
       // widget-level reload. Delayed for Multiview — see
       // TextureExoPlayerEventListener.errorRetryDelayMs.
+      markResumePoint();
       scheduleRecovery();
     } else {
       events.onError("VideoError", "Video player had error " + error + describeCause(error), null);

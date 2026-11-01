@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../services/app_preferences.dart';
+import '../services/device_defaults.dart';
 
 /// "Press OK to type" for a text field on a TV box (remote, no touch).
 ///
@@ -147,6 +148,22 @@ class _TvTextFieldGateState extends State<TvTextFieldGate>
     final ok = key == LogicalKeyboardKey.select ||
         key == LogicalKeyboardKey.gameButtonA;
     if (_typing) {
+      final direction = _arrows[key];
+      if (direction != null && !_isFireOs) {
+        // An arrow only reaches the app when the keyboard isn't using it:
+        // a visible keyboard takes the D-pad itself. So the keyboard is
+        // closed and the field must give the remote back. Google TV
+        // (Chromecast): Gboard reports no inset, so didChangeMetrics never
+        // saw it close, and the open input connection turned the arrows
+        // into cursor moves (user report, 1.0.52). Handled here, the key
+        // never reaches the input connection. Not on Fire OS: its keyboard
+        // sends its own selector moves to the app as arrows.
+        _keyboardShown = false;
+        setState(() => _typing = false);
+        SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+        _move(direction);
+        return true;
+      }
       // Keyboard dismissed but the field kept focus (Formuler): OK raises
       // it again. Only the remote's own OK key: Fire OS turns Back on its
       // keyboard into a numpadEnter, which must not reopen it.
@@ -164,6 +181,16 @@ class _TvTextFieldGateState extends State<TvTextFieldGate>
     setState(() => _typing = true);
     return true;
   }
+
+  static final _arrows = {
+    LogicalKeyboardKey.arrowUp: TraversalDirection.up,
+    LogicalKeyboardKey.arrowDown: TraversalDirection.down,
+    LogicalKeyboardKey.arrowLeft: TraversalDirection.left,
+    LogicalKeyboardKey.arrowRight: TraversalDirection.right,
+  };
+
+  static bool get _isFireOs =>
+      DeviceDefaults.fingerprint.manufacturer.toLowerCase() == 'amazon';
 
   /// D-pad arrows on the field move focus, not the cursor. Once a field has
   /// a cursor (typed in once), EditableText's own arrow actions move it —

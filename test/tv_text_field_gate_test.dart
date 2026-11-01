@@ -71,6 +71,21 @@ void main() {
     expect(below.hasFocus, isTrue);
   });
 
+  testWidgets(
+      'TV: an arrow while typing, keyboard gone without an inset, leaves '
+      '(Google TV)', (tester) async {
+    await pump(tester, tv: true);
+    await tester.sendKeyEvent(LogicalKeyboardKey.select); // opens typing
+    await tester.pumpAndSettle();
+    TextField textField() => tester.widget<TextField>(find.byType(TextField));
+    expect(textField().readOnly, isFalse);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(below.hasFocus, isTrue);
+    expect(controller.selection.baseOffset, 3);
+    expect(textField().readOnly, isTrue);
+  });
+
   testWidgets('TV: Down leaves a typed-in field', (tester) async {
     await pump(tester, tv: true);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);

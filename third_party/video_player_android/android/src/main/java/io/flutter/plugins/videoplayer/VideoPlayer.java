@@ -249,6 +249,7 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
   void setOnDemandBuffering(boolean on) {
     if (onDemandLoadControl != null) onDemandLoadControl.setOnDemand(on);
     vodTrace.setEnabled(on);
+    if (exoPlayerEventListener != null) exoPlayerEventListener.setOnDemand(on);
   }
 
   @NonNull
