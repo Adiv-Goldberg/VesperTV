@@ -15,7 +15,8 @@ class _Feed extends SportsService {
   final requests = <String>[];
   final results = <String, Future<SportsGameSummary?> Function()>{};
   @override
-  Future<SportsGameSummary?> gameSummary(SportsGame game) async {
+  Future<SportsGameSummary?> gameSummary(SportsGame game,
+      {bool fresh = false}) async {
     requests.add(game.id);
     return results[game.id]?.call();
   }

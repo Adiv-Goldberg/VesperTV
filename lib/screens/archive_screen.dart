@@ -3,7 +3,8 @@ import '../models/archive_library.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
+import 'package:flutter/rendering.dart'
+    show ItemExtentBuilder, ScrollCacheExtent, SliverLayoutDimensions;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -12,7 +13,9 @@ import '../models/archive_models.dart';
 import '../services/archive_ready_watch.dart';
 import '../services/archive_service.dart';
 import '../services/archive_stream_session.dart';
+import '../utils/image_urls.dart';
 import '../widgets/detail_header.dart';
+import '../widgets/hd_network_image.dart';
 import '../widgets/archive_row_settings.dart';
 import '../widgets/hold_to_activate.dart';
 import '../widgets/live_resume_hint.dart';
@@ -58,7 +61,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   final _firstRailNode = FocusNode(debugLabel: 'archive-rail-first');
   final _emptyActionNode = FocusNode(debugLabel: 'archive-empty-action');
   final _barScope = FocusScopeNode(debugLabel: 'archive-bar');
-  final _barSearchNode = FocusNode(debugLabel: 'archive-bar-search');
+  final _railSearchNode = FocusNode(debugLabel: 'archive-rail-search');
   final _barClearNode = FocusNode(debugLabel: 'archive-bar-clear');
   final _barGenreNode = FocusNode(debugLabel: 'archive-bar-genre');
   final _barNewestNode = FocusNode(debugLabel: 'archive-bar-newest');
@@ -83,6 +86,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   int _focusedRow = 0;
   ArchiveMeta? _focused;
   String? _focusedLabel;
+
+  /// The focused title is a Jellyfin/Emby/Plex item: its rating is the
+  /// server's community rating, not IMDb's.
+  bool _focusedFromServer = false;
   late final VoidCallback _releaseResumeHint;
 
   @override
@@ -94,6 +101,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     // sending focus to the rail forever. Rebuild whenever that flips.
     _contentScope.addListener(_onContentFocus);
     _barScope.addListener(_onContentFocus);
+    _railScope.addListener(_onRailFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<ArchiveService>().open();
@@ -102,6 +110,28 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   bool _contentHadFocus = false;
+
+  /// The rail is open (icons + labels, over the rows) only while it has
+  /// focus; elsewhere it is a slim strip of icons (owner, 2026-11-01: the
+  /// open pill took too much of the screen).
+  bool _railOpen = true;
+
+  /// Icon + both paddings + the label gap: an entry fits even while the
+  /// rail starts to open (labels appear at once, the width animates).
+  static const double _railSlim = 80;
+  static const double _railWide = 240;
+
+  /// Search's pull-out and dialog take the focus: the rail stays open
+  /// behind them instead of closing under the menu.
+  bool _railPinned = false;
+
+  void _onRailFocus() {
+    final open = _railScope.hasFocus || _railPinned;
+    if (open == _railOpen || !mounted) return;
+    setState(() => _railOpen = open);
+  }
+
+  bool get _narrow => MediaQuery.sizeOf(context).width < 700;
 
   /// Rows or the floating bar focused: Back goes to the rail first.
   bool get _awayFromRail => _contentScope.hasFocus || _barScope.hasFocus;
@@ -117,10 +147,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   void dispose() {
     _contentScope.removeListener(_onContentFocus);
     _barScope.removeListener(_onContentFocus);
+    _railScope.removeListener(_onRailFocus);
     _releaseResumeHint();
     _progressRefresh?.cancel();
     _barScope.dispose();
-    _barSearchNode.dispose();
+    _railSearchNode.dispose();
     _barClearNode.dispose();
     _barGenreNode.dispose();
     _barNewestNode.dispose();
@@ -169,24 +200,73 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   static const _cardExtent = PosterCard.width + 12 + 8;
   static const _rowPadding = 20.0;
 
+  /// The focused card's slot when it is drawn wide (Nuvio style, owner
+  /// 2026-11-01): 16:9 backdrop + title logo, same height as a poster.
+  static const _wideExtent = PosterCard.wideCardWidth + 12 + 8;
+
+  /// Wide focused cards: TV/desktop widths only (a phone row has no room).
+  bool get _wideCards => MediaQuery.sizeOf(context).width >= 700;
+
+  /// The card of [row] drawn wide: its focused card while the rows have
+  /// focus, when that title has a backdrop. Every card before it is a
+  /// normal slot, which keeps [_focusCard]'s maths exact.
+  int? _wideIndex(ArchiveRow row) {
+    if (!_wideCards || !_contentScope.hasFocus || row.key != _focusedRowKey) {
+      return null;
+    }
+    final i = _lastIndex[row.key];
+    if (i == null || i >= row.items.length) return null;
+    return row.items[i].backgroundUrl == null ? null : i;
+  }
+
+  /// One extent builder per row, replaced only when that row's wide card
+  /// changes: the varied-extent list sums every slot to lay out, so a new
+  /// closure on each rebuild would re-measure every visible row.
+  final Map<String, (int?, ItemExtentBuilder)> _extentBuilders = {};
+
+  ItemExtentBuilder _extentBuilder(String key, int? wideAt) {
+    final cached = _extentBuilders[key];
+    if (cached != null && cached.$1 == wideAt) return cached.$2;
+    double? builder(int i, SliverLayoutDimensions _) =>
+        i == wideAt ? _wideExtent : _cardExtent;
+    _extentBuilders[key] = (wideAt, builder);
+    return builder;
+  }
+
   /// Scrolls [row] so card [i] is on screen (with a card of room past it),
   /// then focuses it — after a frame when the jump had to build it, retried
   /// for a few frames on a slow box (owner, 2026-10-21: holding Right, the
-  /// selector got lost on titles not built yet).
+  /// selector got lost on titles not built yet). Card [i] will be the wide
+  /// one once focused, and the cards before it normal slots.
   void _focusCard(ArchiveRow row, int i) {
+    _revealCard(row, i);
+    _focusWhenBuilt(_node(row.key, i));
+    // Again once the card is wide: the jump above was clamped to the row's
+    // old length, short by the wide slot near the end of a row.
+    if (_wideCards) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _revealCard(row, i);
+      });
+    }
+  }
+
+  void _revealCard(ArchiveRow row, int i) {
     final c = _rowScrolls[row.key];
-    if (c != null && c.hasClients) {
+    if (c != null && c.hasClients && i < row.items.length) {
       final pos = c.position;
       final start = _rowPadding + i * _cardExtent;
+      final extent = _wideCards && row.items[i].backgroundUrl != null
+          ? _wideExtent
+          : _cardExtent;
       double? to;
       if (start - _cardExtent < pos.pixels) {
         to = start - _cardExtent;
-      } else if (start + 2 * _cardExtent > pos.pixels + pos.viewportDimension) {
-        to = start + 2 * _cardExtent - pos.viewportDimension;
+      } else if (start + extent + _cardExtent >
+          pos.pixels + pos.viewportDimension) {
+        to = start + extent + _cardExtent - pos.viewportDimension;
       }
       if (to != null) c.jumpTo(to.clamp(0.0, pos.maxScrollExtent));
     }
-    _focusWhenBuilt(_node(row.key, i));
   }
 
   void _focusWhenBuilt(FocusNode node, [int framesLeft = 4]) {
@@ -316,7 +396,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     if (_scroll.hasClients) _scroll.jumpTo(0);
     await service.search(type, query);
     if (!mounted || type != _type) return;
-    if (!_barSearchNode.hasFocus || ModalRoute.of(context)?.isCurrent != true) {
+    if (!_railSearchNode.hasFocus ||
+        ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
     final rows = service.rows(type);
@@ -329,6 +410,58 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           content:
               Text(tr('No results for "{query}"', {'query': query.trim()}))));
     }
+  }
+
+  /// Search on a wide screen lives in the left rail: it pulls a small menu
+  /// out to its right (Movies / TV Shows), then opens that category's search.
+  /// A category no source can search isn't offered.
+  Future<void> _pickSearchType(ArchiveService service) async {
+    final types = [
+      for (final t in ArchiveType.values)
+        if (service.canSearch(t)) t,
+    ];
+    if (types.isEmpty) return;
+    _railPinned = true;
+    try {
+      await _searchFromRail(service, types);
+    } finally {
+      _railPinned = false;
+      _onRailFocus();
+    }
+  }
+
+  Future<void> _searchFromRail(
+      ArchiveService service, List<ArchiveType> types) async {
+    final anchor = rollDownAnchorOf(_railSearchNode.context);
+    final type = types.length == 1
+        ? types.first
+        : await showRollDownMenu<ArchiveType>(
+            context,
+            // Beside the button, not under it (the menu sits 8 px below its
+            // anchor's bottom).
+            anchor: anchor == null
+                ? null
+                : Rect.fromLTWH(anchor.right + 6, anchor.top - 8, 1, 0),
+            centered: false,
+            width: 220,
+            title: tr('Search'),
+            items: [
+              for (final t in types)
+                RollDownMenuItem(
+                    value: t,
+                    icon: t == ArchiveType.movie
+                        ? Icons.movie
+                        : Icons.video_library,
+                    label:
+                        t == ArchiveType.movie ? tr('Movies') : tr('TV Shows'),
+                    selected: t == _type),
+            ],
+          );
+    if (!mounted) return;
+    _railSearchNode.requestFocus();
+    if (type == null) return;
+    _setType(type);
+    await _openSearch(service);
   }
 
   Future<void> _chooseSearchSource(ArchiveService service) async {
@@ -509,8 +642,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 Positioned(
                   top: 0,
                   right: 0,
-                  left: narrow ? 0 : MediaQuery.sizeOf(context).width * 0.35,
-                  height: MediaQuery.sizeOf(context).height * 0.6,
+                  // Nuvio-style: the backdrop fills the top right and fades
+                  // into black under the hero text and the first row.
+                  left: narrow ? 0 : MediaQuery.sizeOf(context).width * 0.3,
+                  height:
+                      MediaQuery.sizeOf(context).height * (narrow ? 0.6 : 0.7),
                   child: DetailBackdrop(url: backdrop, fadeLeft: true),
                 ),
               SafeArea(
@@ -523,8 +659,15 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     : Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SizedBox(
-                              width: 190, child: _buildRail(service, rows)),
+                          // Open, the rail pushes the hero and rows aside
+                          // (owner, +553: never over the posters); closed,
+                          // they get the room back.
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOutCubic,
+                            width: _railOpen ? _railWide : _railSlim,
+                            child: ClipRect(child: _buildRail(service, rows)),
+                          ),
                           Expanded(
                             child: Column(children: [
                               _buildFloatingBar(service, rows),
@@ -559,68 +702,134 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           }
           return KeyEventResult.ignored;
         },
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.55),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(10, 16, 10, 16),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 0, 6, 12),
-                child: Row(children: [
-                  if (Platform.isWindows)
-                    ExcludeFocus(
-                      child: IconButton(
-                        tooltip: tr('Back'),
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      ),
+        // The same floating glass pill as the top bar (owner, 2026-11-01),
+        // stood up: Search (pulls out Movies / TV Shows), the two
+        // categories, then Refresh and the sources. Closed: icons only.
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(8, 16, 4, 16),
+          children: [
+            SizedBox(
+              height: 48,
+              child: Row(children: [
+                if (Platform.isWindows)
+                  ExcludeFocus(
+                    child: IconButton(
+                      tooltip: tr('Back'),
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).maybePop(),
                     ),
+                  ),
+                if (_railOpen)
                   Expanded(
-                      child: Text(tr('Media Hub'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w700))),
-                ]),
+                      child: Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Text(tr('Media Hub'),
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        softWrap: false,
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w700)),
+                  )),
+              ]),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: _glassPill(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (ArchiveType.values.any(service.canSearch)) ...[
+                    _railButton(
+                      node: _railSearchNode,
+                      icon: Icons.search,
+                      label:
+                          service.searching ? tr('Searching…') : tr('Search'),
+                      active: ArchiveType.values
+                          .any((t) => service.searchQuery(t) != null),
+                      onTap: () => _pickSearchType(service),
+                    ),
+                    _railDivider(),
+                  ],
+                  _railButton(
+                    node: _firstRailNode,
+                    icon: Icons.movie,
+                    label: tr('Movies'),
+                    active: _type == ArchiveType.movie,
+                    onTap: () => _setType(ArchiveType.movie),
+                  ),
+                  _railButton(
+                    icon: Icons.video_library,
+                    label: tr('TV Shows'),
+                    active: _type == ArchiveType.series,
+                    onTap: () => _setType(ArchiveType.series),
+                  ),
+                  _railDivider(),
+                  _railButton(
+                    icon: Icons.refresh,
+                    label: service.refreshing ? tr('Updating…') : tr('Refresh'),
+                    onTap: () => service.refresh(force: true, manifests: true),
+                  ),
+                  _railButton(
+                    icon: Icons.extension_outlined,
+                    label: tr('Media Hub sources'),
+                    onTap: _openSources,
+                  ),
+                  _railButton(
+                    icon: Icons.dns_outlined,
+                    label: tr('Connect Jellyfin / Emby'),
+                    onTap: _connectMediaServer,
+                  ),
+                ],
               ),
-              _RailTile(
-                focusNode: _firstRailNode,
-                icon: Icons.movie,
-                label: tr('Movies'),
-                selected: _type == ArchiveType.movie,
-                onTap: () => _setType(ArchiveType.movie),
-              ),
-              _RailTile(
-                icon: Icons.video_library,
-                label: tr('TV Shows'),
-                selected: _type == ArchiveType.series,
-                onTap: () => _setType(ArchiveType.series),
-              ),
-              const Divider(height: 20, color: Colors.white24),
-              _RailTile(
-                icon: Icons.refresh,
-                label: service.refreshing ? tr('Updating…') : tr('Refresh'),
-                small: true,
-                onTap: () => service.refresh(force: true, manifests: true),
-              ),
-              _RailTile(
-                icon: Icons.extension_outlined,
-                label: tr('Media Hub sources'),
-                small: true,
-                onTap: _openSources,
-              ),
-              _RailTile(
-                icon: Icons.dns_outlined,
-                label: tr('Connect Jellyfin / Emby'),
-                small: true,
-                onTap: _connectMediaServer,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  /// A rail entry: icon + label while the rail is open, the icon alone
+  /// (label as tooltip, for the mouse) while it is closed.
+  Widget _railButton({
+    FocusNode? node,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool active = false,
+  }) =>
+      _BarButton(
+        focusNode: node,
+        icon: icon,
+        label: _railOpen ? label : null,
+        tooltip: _railOpen ? null : label,
+        expand: true,
+        alignStart: _railOpen,
+        dense: true,
+        active: active,
+        onTap: onTap,
+      );
+
+  /// The floating bar's look: dark glass, hairline border, soft shadow.
+  static BoxDecoration _glassPill(double radius) => BoxDecoration(
+        gradient: LinearGradient(colors: [
+          Colors.white.withValues(alpha: 0.10),
+          Colors.white.withValues(alpha: 0.04),
+        ]),
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: Colors.white24),
+        boxShadow: const [
+          BoxShadow(color: Colors.black54, blurRadius: 12),
+        ],
+      );
+
+  Widget _railDivider() => Container(
+        height: 1,
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        color: Colors.white24,
+      );
 
   /// Phone / narrow window: the rail's two choices + sources as a row.
   Widget _buildTopBar(ArchiveService service) {
@@ -773,7 +982,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   /// The floating bar's buttons, in order (for explicit Left/Right).
   List<FocusNode> _barNodes(ArchiveService service, List<ArchiveRow> rows) => [
         if (_showNewest(service)) _barNewestNode,
-        if (service.canSearch(_type)) _barSearchNode,
+        if (_narrow && service.canSearch(_type)) _railSearchNode,
         if (service.searchQuery(_type) != null) ...[
           _barSourceNode,
           _barClearNode
@@ -876,18 +1085,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  Colors.white.withValues(alpha: 0.10),
-                  Colors.white.withValues(alpha: 0.04),
-                ]),
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(34),
-                border: Border.all(color: Colors.white24),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black54, blurRadius: 12),
-                ],
-              ),
+              decoration: _glassPill(34),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -910,9 +1108,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         color: Colors.white24,
                       ),
                     ],
-                    if (canSearch)
+                    if (canSearch && _narrow)
                       _BarButton(
-                        focusNode: _barSearchNode,
+                        focusNode: _railSearchNode,
                         icon: Icons.search,
                         label: service.searching
                             ? tr('Searching…')
@@ -935,13 +1133,17 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       _BarButton(
                         focusNode: _barClearNode,
                         icon: Icons.close,
+                        // Wide screens: the rail's Search button no longer
+                        // shows the query, so this one does.
+                        label: _narrow ? null : '"$query"',
                         tooltip: tr('Clear search'),
                         onTap: () {
                           _clearSearch(service);
-                          _focusBarNode(_barSearchNode);
+                          _focusBarNode(_railSearchNode);
                         },
                       ),
-                    if (canSearch && (other || barRows.isNotEmpty || hasGenres))
+                    if ((canSearch || query != null) &&
+                        (other || barRows.isNotEmpty || hasGenres))
                       Container(
                         width: 1,
                         height: 24,
@@ -1050,6 +1252,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
 
     final focused = _focused;
+    final narrow = MediaQuery.sizeOf(context).width < 700;
     return FocusScope(
       node: _contentScope,
       child: Focus(
@@ -1057,9 +1260,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero: the focused title.
+            // Hero: the focused title, Nuvio style (owner, 2026-11-01):
+            // title logo, one info line with the IMDb rating, 4 lines of
+            // description. Sized so a TV shows one row plus the next one's
+            // top, which tells the user there is more below.
             SizedBox(
-              height: 150,
+              height: narrow ? 150 : 200,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
                 child: focused == null
@@ -1067,33 +1273,27 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(focused.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 26, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 6),
-                          Wrap(spacing: 6, runSpacing: 4, children: [
-                            if (focused.year != null)
-                              DetailMetaChip(
-                                  scale: 1, label: focused.year!, strong: true),
-                            if (focused.runtime != null)
-                              DetailMetaChip(scale: 1, label: focused.runtime!),
-                            for (final g in focused.genres.take(3))
-                              DetailMetaChip(scale: 1, label: g),
-                            if (_focusedLabel != null)
-                              DetailMetaChip(scale: 1, label: _focusedLabel!),
-                          ]),
+                          _HeroTitle(
+                              key: ValueKey(focused.id),
+                              meta: focused,
+                              height: narrow ? 36 : 64),
+                          const SizedBox(height: 8),
+                          _HeroInfoLine(
+                              meta: focused,
+                              sourceLabel: _focusedLabel,
+                              imdbRating: !_focusedFromServer),
                           const SizedBox(height: 8),
                           if (focused.description != null)
                             Flexible(
                               child: SizedBox(
-                                width: 560,
+                                width: 520,
                                 child: Text(focused.description!,
-                                    maxLines: 3,
+                                    maxLines: narrow ? 2 : 4,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                        fontSize: 13, color: Colors.white70)),
+                                        fontSize: 13,
+                                        height: 1.35,
+                                        color: Colors.white70)),
                               ),
                             ),
                         ],
@@ -1124,6 +1324,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Widget _buildRow(ArchiveService service, List<ArchiveRow> rows, int r,
       ColorScheme scheme) {
     final row = rows[r];
+    final wideAt = _wideIndex(row);
     return Column(
       key: _rowKey(row.key),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1152,8 +1353,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             // Exact slot width: [_focusCard]'s jump lands where the card
             // really is, even far past the built ones (the TV tab's rows
             // do the same, see `_categoryRowHeight`). Cards ~5 ahead are
-            // built early, so Right always finds the next one ready.
-            itemExtent: _cardExtent,
+            // built early, so Right always finds the next one ready. Always
+            // a builder (never switching to itemExtent): another sliver type
+            // would rebuild the cards and drop the focus.
+            itemExtentBuilder: _extentBuilder(row.key, wideAt),
             scrollCacheExtent: const ScrollCacheExtent.pixels(_cardExtent * 5),
             itemCount: row.items.length,
             itemBuilder: (_, i) {
@@ -1169,6 +1372,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     focusNode: _node(row.key, i),
                     title: meta.name,
                     imageUrl: meta.posterUrl,
+                    wideWidth: i == wideAt ? PosterCard.wideCardWidth : null,
+                    wideImageUrl: meta.backgroundUrl,
+                    wideLogoUrl: meta.logo,
                     rating: row.continuations != null
                         ? (row.continuations![i].episodeLabel.isNotEmpty
                             ? row.continuations![i].episodeLabel
@@ -1211,11 +1417,16 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       if (i >= row.items.length - 12) {
                         context.read<ArchiveService>().loadMore(row);
                       }
-                      if (_focused?.id == meta.id && _focusedRow == r) return;
+                      if (_focused?.id == meta.id &&
+                          _focusedRow == r &&
+                          wideAt == i) {
+                        return;
+                      }
                       setState(() {
                         _focusedRow = r;
                         _focused = meta;
                         _focusedLabel = row.labelAt(i);
+                        _focusedFromServer = row.sourceAt(i).server != null;
                       });
                     },
                   ),
@@ -1241,6 +1452,8 @@ class _BarButton extends StatefulWidget {
     this.active = false,
     this.autofocus = false,
     this.expand = false,
+    this.alignStart = false,
+    this.dense = false,
     this.onHold,
   });
 
@@ -1252,6 +1465,12 @@ class _BarButton extends StatefulWidget {
 
   /// Fill the width (grid cells), content centred.
   final bool expand;
+
+  /// With [expand]: content at the start (the rail), not centred.
+  final bool alignStart;
+
+  /// The rail's tighter padding.
+  final bool dense;
   final IconData icon;
   final String? label;
   final String? tooltip;
@@ -1278,7 +1497,8 @@ class _BarButtonState extends State<_BarButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: EdgeInsets.symmetric(
-            horizontal: widget.label == null ? 10 : 18, vertical: 9),
+            horizontal: widget.label == null ? 10 : (widget.dense ? 12 : 18),
+            vertical: widget.dense ? 8 : 9),
         decoration: BoxDecoration(
           color:
               lit ? Colors.white.withValues(alpha: 0.14) : Colors.transparent,
@@ -1293,13 +1513,18 @@ class _BarButtonState extends State<_BarButton> {
         ),
         child: Row(
             mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: widget.alignStart
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             children: [
               Icon(widget.icon,
                   size: 20, color: lit ? scheme.primary : Colors.white70),
               if (widget.label != null) ...[
                 const SizedBox(width: 8),
-                ConstrainedBox(
+                // Grid cells and the rail give the label the room that is
+                // left (ellipsis); a lone pill sizes to its text.
+                Flexible(
+                    child: ConstrainedBox(
                   constraints: BoxConstraints(
                       maxWidth: widget.expand ? double.infinity : 220),
                   child: Text(widget.label!,
@@ -1311,7 +1536,7 @@ class _BarButtonState extends State<_BarButton> {
                           fontWeight: widget.active
                               ? FontWeight.w700
                               : FontWeight.w500)),
-                ),
+                )),
               ],
             ]),
       ),
@@ -1506,7 +1731,6 @@ class _RailTile extends StatefulWidget {
     required this.label,
     required this.onTap,
     this.selected = false,
-    this.small = false,
     this.focusNode,
   });
 
@@ -1514,7 +1738,6 @@ class _RailTile extends StatefulWidget {
   final String label;
   final VoidCallback onTap;
   final bool selected;
-  final bool small;
   final FocusNode? focusNode;
 
   @override
@@ -1536,12 +1759,11 @@ class _RailTileState extends State<_RailTile> {
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: EdgeInsets.symmetric(
-              horizontal: 10, vertical: widget.small ? 7 : 10),
+          padding: const EdgeInsets.all(10),
           decoration: detailFocusDecoration(scheme,
               focused: _focused, selected: widget.selected, radius: 10),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(widget.icon, size: widget.small ? 16 : 20, color: fg),
+            Icon(widget.icon, size: 20, color: fg),
             const SizedBox(width: 10),
             Flexible(
               child: Text(widget.label,
@@ -1549,7 +1771,7 @@ class _RailTileState extends State<_RailTile> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       color: fg,
-                      fontSize: widget.small ? 13 : 15,
+                      fontSize: 15,
                       fontWeight:
                           widget.selected ? FontWeight.w700 : FontWeight.w500)),
             ),
@@ -1600,6 +1822,108 @@ class _EmptyState extends StatelessWidget {
           ),
         ]),
       ),
+    );
+  }
+}
+
+/// The hero's title: the title's logo art (Nuvio style), else its name.
+class _HeroTitle extends StatelessWidget {
+  const _HeroTitle({super.key, required this.meta, required this.height});
+
+  final ArchiveMeta meta;
+  final double height;
+
+  /// Logo URLs that failed (MetaHub has no logo for many titles): those
+  /// show the name at once on the next visit instead of retrying.
+  static final Set<String> _failed = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final name = Align(
+      alignment: Alignment.bottomLeft,
+      child: Text(meta.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+              fontSize: height >= 60 ? 30 : 24, fontWeight: FontWeight.w700)),
+    );
+    final logo = meta.logo;
+    return SizedBox(
+      height: height,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: logo == null || _failed.contains(logo)
+            ? name
+            : HdNetworkImage(
+                url: logo,
+                kind: ImageKind.poster,
+                fit: BoxFit.contain,
+                alignment: Alignment.bottomLeft,
+                decodeWidth:
+                    HdNetworkImage.cardDecodeWidth(context, 360, oversample: 1),
+                fadeInDuration: const Duration(milliseconds: 200),
+                onFailed: () => _failed.add(logo),
+                errorWidget: (_) => name,
+              ),
+      ),
+    );
+  }
+}
+
+/// "Movie • Horror • 2026" plus the rating badge and the source chip.
+class _HeroInfoLine extends StatelessWidget {
+  const _HeroInfoLine({
+    required this.meta,
+    required this.sourceLabel,
+    required this.imdbRating,
+  });
+
+  final ArchiveMeta meta;
+  final String? sourceLabel;
+
+  /// The rating is IMDb's (add-ons send `imdbRating`); a media server's
+  /// community rating gets a plain star instead.
+  final bool imdbRating;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+        fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white);
+    final parts = [
+      meta.type == ArchiveType.movie ? tr('Movie') : tr('Series'),
+      ...meta.genres.take(2),
+      if (meta.year != null) meta.year!,
+      if (meta.runtime != null) meta.runtime!,
+    ];
+    final rating = meta.rating;
+    return Wrap(
+      spacing: 10,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(parts.join('  •  '), style: style),
+        if (rating != null)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            if (imdbRating)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5C518),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: const Text('IMDb',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900)),
+              )
+            else
+              const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+            const SizedBox(width: 5),
+            Text(rating, style: style),
+          ]),
+        if (sourceLabel != null) DetailMetaChip(scale: 1, label: sourceLabel!),
+      ],
     );
   }
 }

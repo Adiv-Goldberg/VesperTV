@@ -164,7 +164,9 @@ class _Feed extends SportsService {
   }
 
   @override
-  Future<SportsGameSummary?> gameSummary(SportsGame game) async => summary;
+  Future<SportsGameSummary?> gameSummary(SportsGame game,
+          {bool fresh = false}) async =>
+      summary;
 
   @override
   Future<DateTime?> nextGameStart(SportsLeague league, DateTime day) async =>

@@ -213,7 +213,7 @@ class MediaServerApi {
       'IncludeItemTypes':
           catalog.type == ArchiveType.series ? 'Series' : 'Movie',
       'Fields': 'Overview,Genres,ProductionYear,ProviderIds,RemoteTrailers',
-      'EnableImageTypes': 'Primary,Backdrop',
+      'EnableImageTypes': 'Primary,Backdrop,Logo',
       'ImageTypeLimit': '1',
       'StartIndex': '$skip',
       'Limit': '$catalogPageSize',
@@ -269,6 +269,7 @@ class MediaServerApi {
       name: meta.name,
       posterUrl: meta.originalPosterUrl,
       backgroundUrl: meta.backgroundUrl,
+      logoUrl: meta.logoUrl,
       year: meta.year,
       description: meta.description,
       genres: meta.genres,
@@ -334,6 +335,7 @@ class MediaServerApi {
       name: name,
       posterUrl: _image(s, j, 'Primary', 'maxHeight=600'),
       backgroundUrl: _image(s, j, 'Backdrop', 'maxWidth=1280'),
+      logoUrl: _image(s, j, 'Logo', 'maxWidth=600'),
       year: _str(j['ProductionYear']),
       description: _str(j['Overview']),
       genres: [

@@ -64,13 +64,7 @@ class SportsService {
   bool hasReliableSchedule(SportsLeague league, DateTime day) {
     if (league.isCfl) return _cflScheduleKnown;
     final local = DateTime(day.year, day.month, day.day);
-    final dates = league.sportsDbId != null
-        ? [local]
-        : [
-            local.subtract(const Duration(days: 1)),
-            local,
-            local.add(const Duration(days: 1))
-          ];
+    final dates = league.sportsDbId != null ? [local] : _aroundDay(local);
     return dates.every((date) {
       final key = '${league.id}|${_espnDate(date)}';
       return !_failedScheduleKeys.contains(key) &&
@@ -87,15 +81,21 @@ class SportsService {
   ///
   /// Never throws: a league that fails keeps its last cached games (or
   /// none), and [lastError] says so.
+  /// The local day before [day], [day] and the day after, by calendar.
+  /// Not +/- 24 h: on the day clocks go back, midnight + 24 h is 23:00 the
+  /// same day, so the next day's schedule was never fetched (and spring
+  /// forward skipped back two days).
+  static List<DateTime> _aroundDay(DateTime day) => [
+        DateTime(day.year, day.month, day.day - 1),
+        DateTime(day.year, day.month, day.day),
+        DateTime(day.year, day.month, day.day + 1),
+      ];
+
   Future<List<SportsGame>> gamesForDay(
       List<SportsLeague> leagues, DateTime day) async {
     final local = DateTime(day.year, day.month, day.day);
     final today = _today();
-    final dates = [
-      local.subtract(const Duration(days: 1)),
-      local,
-      local.add(const Duration(days: 1)),
-    ];
+    final dates = _aroundDay(local);
     final results = await Future.wait([
       for (final league in leagues)
         if (league.isCfl)
@@ -415,14 +415,17 @@ class SportsService {
   /// One game's box score, leaders, injuries and its teams' standings (the
   /// live list's detail pop-up). One call per opened game, cached 30 s
   /// while it's live. Null when ESPN can't be reached and nothing is cached.
-  Future<SportsGameSummary?> gameSummary(SportsGame game) {
+  /// [fresh]: skip the cache (a goal alert needs the goal just scored).
+  Future<SportsGameSummary?> gameSummary(SportsGame game,
+      {bool fresh = false}) {
     if (game.league.sportsDbId != null ||
         (game.league.isCfl && game.statusText == 'Score unavailable')) {
       return _tableSummary(game);
     }
     final key = '${game.league.id}|${game.id}';
     final cached = _summaryCache[key];
-    if (cached != null &&
+    if (!fresh &&
+        cached != null &&
         DateTime.now().difference(cached.$2) <
             (game.state == GameState.live
                 ? const Duration(seconds: 30)
@@ -671,7 +674,7 @@ class _CacheEntry {
       return age > Duration(seconds: sportsDb ? 120 : 50);
     }
     final d = DateTime(espnDate.year, espnDate.month, espnDate.day);
-    if (d.isBefore(today.subtract(const Duration(days: 1)))) {
+    if (d.isBefore(DateTime(today.year, today.month, today.day - 1))) {
       return age > const Duration(hours: 6);
     }
     return age > const Duration(minutes: 10);
@@ -1829,6 +1832,9 @@ SportsTeam _parseTeam(Map<String, dynamic> c) {
     logo = (logos.first as Map)['href']?.toString();
   }
   final name = (t['displayName'] ?? t['name'] ?? '').toString();
+  // 99 = unranked.
+  final poll = (c['curatedRank'] as Map?)?['current'];
+  final pollRank = poll is num && poll >= 1 && poll <= 25 ? poll.toInt() : null;
   return SportsTeam(
     id: (t['id'] ?? name).toString(),
     name: name,
@@ -1838,5 +1844,6 @@ SportsTeam _parseTeam(Map<String, dynamic> c) {
     color: t['color']?.toString(),
     record: record,
     score: score,
+    pollRank: pollRank,
   );
 }

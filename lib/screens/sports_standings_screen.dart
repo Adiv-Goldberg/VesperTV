@@ -96,6 +96,16 @@ List<SportsStandingColumn> sportsStandingColumns(SportsLeague league) {
   }
   final sport = league.espnPath.split('/').first;
   switch (sport) {
+    case 'rugby' || 'rugby-league':
+      return const [
+        SportsStandingColumn('GP', 'gamesPlayed'),
+        SportsStandingColumn('W', 'gamesWon'),
+        SportsStandingColumn('D', 'gamesDrawn'),
+        SportsStandingColumn('L', 'gamesLost'),
+        SportsStandingColumn('DIFF', 'pointsDifference', width: 54),
+        SportsStandingColumn('BP', 'bonusPoints'),
+        SportsStandingColumn('PTS', 'points', width: 50),
+      ];
     case 'hockey':
       return const [
         SportsStandingColumn('GP', 'gamesPlayed'),

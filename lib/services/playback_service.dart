@@ -685,10 +685,18 @@ class PlaybackService extends ChangeNotifier {
         final duration = c.value.duration;
         if (duration > Duration.zero) {
           _storage.setLastDuration(ch.id, duration.inMilliseconds);
-          // Auto-advance a season/series near the end.
+          // Auto-advance a season/series near the end (Settings >
+          // Playback > Up Next; a user missed every episode's last seconds,
+          // 1.0.51).
           final remaining = duration - c.value.position;
-          if (remaining <= const Duration(seconds: 30) &&
-              !_autoAdvanceDismissed) {
+          final mode = _storage.getUpNextMode();
+          final due = switch (mode) {
+            'off' => false,
+            'end' => c.value.isCompleted ||
+                remaining <= const Duration(milliseconds: 500),
+            _ => remaining <= const Duration(seconds: 30),
+          };
+          if (due && !_autoAdvanceDismissed) {
             final next = _nextInQueue;
             if (next != null) unawaited(play(next));
           }

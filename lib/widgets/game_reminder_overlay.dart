@@ -7,12 +7,18 @@ import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
 import '../services/game_reminders.dart';
+import '../services/storage_service.dart';
 import '../services/viewer_profile_service.dart';
 
 /// Above the root Navigator, including fullscreen players and dialogs.
-/// Never requests focus or changes the currently playing stream.
+/// Never requests focus or changes the currently playing stream. With
+/// Settings > Sports Trak > Watch game button, the kickoff popup also calls
+/// [onGameStarting] (main.dart finds the channel and offers the player's
+/// Watch game pill).
 class GameReminderOverlay extends StatefulWidget {
-  const GameReminderOverlay({super.key});
+  const GameReminderOverlay({super.key, this.onGameStarting});
+
+  final Future<void> Function(GameReminder reminder)? onGameStarting;
 
   /// Occupied top edge for stacking score alerts on narrow screens only.
   static final occupiedHeight = ValueNotifier<double>(0);
@@ -101,7 +107,15 @@ class _GameReminderOverlayState extends State<GameReminderOverlay>
       }
     }
     setState(() => _notice = next);
-    if (next != null) _hide = Timer(const Duration(seconds: 12), _showNext);
+    if (next == null) return;
+    _hide = Timer(const Duration(seconds: 12), _showNext);
+    if (next.atStart && widget.onGameStarting != null) {
+      if (context.read<StorageService>().getSportsAutoPlay()) {
+        unawaited(widget.onGameStarting!(next.reminder));
+      } else {
+        debugPrint('WatchGame: ${next.reminder.key} button setting off');
+      }
+    }
   }
 
   @override

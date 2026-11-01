@@ -113,7 +113,9 @@ class _SummaryService extends SportsService {
   final SportsGameSummary result;
 
   @override
-  Future<SportsGameSummary?> gameSummary(SportsGame game) async => result;
+  Future<SportsGameSummary?> gameSummary(SportsGame game,
+          {bool fresh = false}) async =>
+      result;
 }
 
 void main() {

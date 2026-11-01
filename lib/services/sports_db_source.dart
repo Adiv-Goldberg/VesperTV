@@ -242,10 +242,19 @@ SportsGame? _combatEvent(Map<String, dynamic> e, SportsLeague league, String id,
       .where((s) => s.isNotEmpty)
       .toSet()
       .join(', ');
+  // PDC days come at 00:00 UTC, i.e. no session time: a date-only card
+  // like golf (US-Eastern midnight, "Nov 4"), and the channel search looks
+  // at that whole day instead of the evening before.
+  DateTime? end;
+  if (league.isDarts && start.hour == 0 && start.minute == 0) {
+    start = DateTime.utc(start.year, start.month, start.day, 4);
+    end = start;
+  }
   return SportsGame(
       id: id,
       league: league,
       start: start,
+      end: end,
       state: state,
       statusText: status,
       home: fighter(first, 'strHomeTeamBadge'),

@@ -34,7 +34,21 @@ class PosterCard extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.sourceLabel,
     this.tapToPreview = false,
+    this.wideWidth,
+    this.wideImageUrl,
+    this.wideLogoUrl,
   });
+
+  /// Media Hub's focused card (Nuvio style): set by the caller while this
+  /// card is the focused one, the artwork grows to this width and shows
+  /// [wideImageUrl] (the backdrop) with [wideLogoUrl] over it. Same height,
+  /// so the row keeps its shape; the caller widens the list slot to match.
+  final double? wideWidth;
+  final String? wideImageUrl;
+  final String? wideLogoUrl;
+
+  /// A wide card's width for [posterHeight]: 16:9 artwork.
+  static const double wideCardWidth = posterHeight * 16 / 9;
 
   /// Touch: the first tap only focuses the card (the browse hero shows
   /// its description), a tap on the focused card or a double tap opens
@@ -138,7 +152,12 @@ class _PosterCardState extends State<PosterCard> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final hasImage = widget.imageUrl != null && widget.imageUrl!.isNotEmpty;
+    final wide = widget.wideWidth != null;
+    final cardWidth = widget.wideWidth ?? widget.cardWidth;
+    final imageUrl =
+        wide ? (widget.wideImageUrl ?? widget.imageUrl) : widget.imageUrl;
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final logoUrl = wide ? widget.wideLogoUrl : null;
     final showProgress = !widget.watched && widget.progressFraction != null;
     // Derived from however much bigger than the TV-tuned default
     // `cardWidth` actually is (1.0 for every caller that doesn't override
@@ -192,17 +211,19 @@ class _PosterCardState extends State<PosterCard> {
           // Bumped from 1.08 — the same relative scale at this smaller
           // card size grew it by fewer pixels, so the focus "pop" read
           // as noticeably weaker; this restores a similarly visible glow.
-          scale: _focused ? 1.10 : 1.0,
+          // A wide card zooms less: 10 % of its width ran over both
+          // neighbours.
+          scale: _focused ? (wide ? 1.04 : 1.10) : 1.0,
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
           child: SizedBox(
-            width: widget.cardWidth,
+            width: cardWidth,
             height: widget.cardPosterHeight + titleHeight + sourceHeight,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: widget.cardWidth,
+                  width: cardWidth,
                   height: widget.cardPosterHeight,
                   foregroundDecoration: RefinedFinish.artworkRim(
                       context, BorderRadius.circular(10),
@@ -242,8 +263,12 @@ class _PosterCardState extends State<PosterCard> {
                       if (hasImage)
                         Positioned.fill(
                           child: HdNetworkImage(
-                            url: widget.imageUrl!,
-                            kind: ImageKind.poster,
+                            // Keyed: the wide card swaps poster -> backdrop.
+                            key: ValueKey(imageUrl),
+                            url: imageUrl,
+                            kind: wide && widget.wideImageUrl != null
+                                ? ImageKind.backdrop
+                                : ImageKind.poster,
                             fit: widget.fit,
                             // Provider posters commonly come in well above
                             // this card's on-screen size; without a cap,
@@ -262,7 +287,7 @@ class _PosterCardState extends State<PosterCard> {
                             // the TMDB rendition (w342 on a 1080p TV box)
                             // — see hdImageUrl.
                             decodeWidth: HdNetworkImage.cardDecodeWidth(
-                                context, widget.cardWidth),
+                                context, cardWidth),
                             // A poster popping in instantly from the grey
                             // placeholder reads as a jarring flash,
                             // especially when scrolling back re-triggers a
@@ -280,6 +305,23 @@ class _PosterCardState extends State<PosterCard> {
                         )
                       else
                         const _PosterFallbackIcon(),
+                      if (logoUrl != null)
+                        Positioned(
+                          left: 10,
+                          right: cardWidth * 0.35,
+                          bottom: showProgress ? 26 : 8,
+                          height: widget.cardPosterHeight * 0.32,
+                          child: HdNetworkImage(
+                            url: logoUrl,
+                            kind: ImageKind.poster,
+                            fit: BoxFit.contain,
+                            alignment: Alignment.bottomLeft,
+                            decodeWidth: HdNetworkImage.cardDecodeWidth(
+                                context, cardWidth * 0.65),
+                            fadeInDuration: const Duration(milliseconds: 200),
+                            errorWidget: (_) => const SizedBox.shrink(),
+                          ),
+                        ),
                       if (widget.watched)
                         Positioned(
                           top: 4,

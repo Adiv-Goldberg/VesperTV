@@ -50,6 +50,27 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+      'TV: the keyboard closing ends typing and Down leaves (Google TV)',
+      (tester) async {
+    await pump(tester, tv: true);
+    addTearDown(tester.view.reset);
+    await tester.sendKeyEvent(LogicalKeyboardKey.select); // opens typing
+    await tester.pumpAndSettle();
+    TextField textField() => tester.widget<TextField>(find.byType(TextField));
+    expect(textField().readOnly, isFalse);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    expect(textField().readOnly, isFalse);
+    tester.view.viewInsets = FakeViewPadding.zero; // Back closed it
+    await tester.pumpAndSettle();
+    expect(textField().readOnly, isTrue);
+    expect(field.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(below.hasFocus, isTrue);
+  });
+
   testWidgets('TV: Down leaves a typed-in field', (tester) async {
     await pump(tester, tv: true);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);

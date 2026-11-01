@@ -695,6 +695,8 @@ class SportsBackdrop extends StatelessWidget {
   final SportsLeague? league;
 
   static IconData sportIcon(SportsLeague? league) {
+    // Darts rides on the fight-card code (event days), not its icon.
+    if (league?.isDarts ?? false) return Icons.track_changes;
     switch (league?.kind) {
       case SportsKind.golf:
         return Icons.sports_golf;
@@ -715,6 +717,8 @@ class SportsBackdrop extends StatelessWidget {
       'football' => Icons.sports_football,
       'baseball' => Icons.sports_baseball,
       'soccer' => Icons.sports_soccer,
+      'rugby' || 'rugby-league' => Icons.sports_rugby,
+      'cricket' => Icons.sports_cricket,
       _ => Icons.sports,
     };
   }

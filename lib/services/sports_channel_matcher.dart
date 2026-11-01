@@ -886,9 +886,21 @@ class SportsChannelMatcher {
   /// Golf/racing: the event alone ("singapore grand prix").
   static List<List<String>> _nameGroups(SportsGame g) {
     if (g.isEventOnly && g.league.kind == SportsKind.fight) {
-      final title =
-          (g.event?.title ?? '').replaceAll(RegExp(r'#\d+'), '').trim();
+      var title = (g.event?.title ?? '').replaceAll(RegExp(r'#\d+'), '').trim();
+      // "Players Championship 33", "Bahrain Darts Masters Day 1": guides
+      // name the event, not its number or day.
+      if (g.league.isDarts) {
+        title = title
+            .replaceAll(RegExp(r'\bday\s*\d+\b', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\b\d+\b'), '')
+            .trim();
+      }
       final normalized = sportsNormalize(title);
+      // "Canelo Alvarez vs Terence Crawford": each fighter, not the whole
+      // title word for word (channels say "Canelo vs Crawford", a user
+      // found no match, 1.0.51).
+      final sides = _fightTitleSides(normalized);
+      if (sides != null) return sides;
       final names = <String>{if (title.isNotEmpty) normalized};
       final lower = title.toLowerCase();
       final shows = g.league.id == 'wrestling.wwe'
@@ -930,6 +942,13 @@ class SportsChannelMatcher {
 
   static const _nameSuffixes = {'jr', 'sr', 'ii', 'iii', 'iv'};
 
+  /// Fighters known by a ring name, which channel names use instead of the
+  /// legal name the schedule feeds give: full name -> ring name.
+  static const _fighterAliases = {
+    ' saul alvarez ': ' canelo ',
+    ' santos saul alvarez ': ' canelo ',
+  };
+
   static List<String> _fighterPhrases(SportsTeam t) {
     final full = sportsNormalize(t.name);
     final words =
@@ -938,8 +957,69 @@ class SportsChannelMatcher {
     return {
       if (full.trim().length >= 4) full,
       if (last != null && last.length >= 4) ' $last ',
+      for (final e in _fighterAliases.entries)
+        if (full.contains(e.key)) e.value,
+      // "Canelo Alvarez" as a listed name: the ring name alone too.
+      if (full.contains(' canelo ')) ' canelo ',
     }.toList();
   }
+
+  /// An event-only fight title split at "vs": each fighter is the two
+  /// words next to it ("ufc 300 alex pereira", "terence crawford main
+  /// card"), plus each side whole and known ring names.
+  /// Null when the title is not "A vs B" (shows, cards without a bout).
+  static List<List<String>>? _fightTitleSides(String normalized) {
+    final parts = normalized.split(RegExp(r' (?:vs|v|x) '));
+    if (parts.length != 2) return null;
+    List<String> side(String text, {required bool left}) {
+      final words = text
+          .trim()
+          .split(' ')
+          .where((w) => w.isNotEmpty && !_nameSuffixes.contains(w))
+          .toList();
+      if (words.isEmpty) return const [];
+      // The two words next to "vs" (first and last name), minus filler.
+      final near = (left ? words.reversed : words)
+          .where((w) => !_fightFiller.contains(w))
+          .take(2);
+      final whole = ' ${words.join(' ')} ';
+      return {
+        for (final w in near)
+          if (w.length >= 4) ' $w ',
+        if (whole.trim().length >= 4) whole,
+        for (final e in _fighterAliases.entries)
+          if (whole.contains(e.key)) e.value,
+        if (whole.contains(' canelo ')) ' canelo ',
+      }.toList();
+    }
+
+    final a = side(parts[0], left: true);
+    final b = side(parts[1], left: false);
+    if (a.isEmpty || b.isEmpty) return null;
+    return [a, b];
+  }
+
+  static const _fightFiller = {
+    'main',
+    'card',
+    'event',
+    'fight',
+    'night',
+    'boxing',
+    'title',
+    'ufc',
+    'ppv',
+    'live',
+    'undisputed',
+    'championship',
+    'world',
+    'prelims',
+  };
+
+  /// A channel name that carries fights ("DAZN PPV 1", "Boxing: ...",
+  /// "... vs ..."): one fighter's name is enough there.
+  static final _fightChannelCue = RegExp(
+      r' (?:ppv|boxing|box|fight|fights|fight night|dazn|vs|v|ufc|mma|pbc|main event|undercard|ring) ');
 
   /// When a guide programme for [g] may start: around a game's start; a
   /// fight card's main event comes hours after the prelims; a golf round
@@ -954,11 +1034,15 @@ class SportsChannelMatcher {
       return (from, from.add(const Duration(hours: 24)));
     }
     // Tennis times are "not before": a match often starts hours late.
-    final after = switch (g.league.kind) {
-      SportsKind.fight => const Duration(hours: 5),
-      SportsKind.tennis => const Duration(hours: 4),
-      _ => const Duration(minutes: 30),
-    };
+    // Darts: TheSportsDB times the tournament day/session, not each match,
+    // and a PDC day runs from the afternoon into the evening session.
+    final after = g.league.isDarts
+        ? const Duration(hours: 12)
+        : switch (g.league.kind) {
+            SportsKind.fight => const Duration(hours: 5),
+            SportsKind.tennis => const Duration(hours: 4),
+            _ => const Duration(minutes: 30),
+          };
     return (g.start.subtract(const Duration(minutes: 60)), g.start.add(after));
   }
 
@@ -1236,6 +1320,26 @@ class SportsChannelMatcher {
         if (d != null && !_dateFits(d, g.start)) continue;
         add(i, MatchReason.name,
             (d != null ? 120 : 100) + _regionBias(i, g.league), null, true);
+      }
+
+      // 2a. Fights: one fighter's name on a fight channel ("DAZN PPV:
+      // Canelo") counts too, below both names (user report, 1.0.51: no
+      // stream found though several named Canelo). Names of 5+ letters
+      // only, so a short surname can't hit unrelated channels.
+      if (g.league.kind == SportsKind.fight && groups.length == 2) {
+        for (final group in groups) {
+          final distinctive = [
+            for (final p in group)
+              if (p.trim().length >= 5) p,
+          ];
+          if (distinctive.isEmpty) continue;
+          for (final i in _channelsNaming(distinctive)) {
+            if (!_fightChannelCue.hasMatch(_names[i])) continue;
+            final d = _dateInName(_names[i]);
+            if (d != null && !_dateFits(d, g.start)) continue;
+            add(i, MatchReason.name, 75 + _regionBias(i, g.league), null, true);
+          }
+        }
       }
 
       // 2b. A team's own channel: one team's full name plus the league

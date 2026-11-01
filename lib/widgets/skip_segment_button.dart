@@ -183,6 +183,7 @@ class SkipSegmentButton extends StatelessWidget {
     required this.onSkip,
     this.focusNode,
     this.onDown,
+    this.onUp,
   });
 
   final SkipSegmentWatcher watcher;
@@ -195,6 +196,9 @@ class SkipSegmentButton extends StatelessWidget {
   /// ([onDown]), Left/Right/Up stay.
   final FocusNode? focusNode;
   final VoidCallback? onDown;
+
+  /// Up from the pill (the Watch game pill above it); null = stay.
+  final VoidCallback? onUp;
 
   static const _hidden = Positioned(
       right: 24, bottom: 200, width: 0, height: 0, child: SizedBox.shrink());
@@ -230,6 +234,10 @@ class SkipSegmentButton extends StatelessWidget {
               }
               if (key == LogicalKeyboardKey.arrowDown) {
                 if (event is KeyDownEvent) onDown?.call();
+                return KeyEventResult.handled;
+              }
+              if (key == LogicalKeyboardKey.arrowUp && onUp != null) {
+                if (event is KeyDownEvent) onUp!();
                 return KeyEventResult.handled;
               }
               if (key == LogicalKeyboardKey.arrowUp ||

@@ -94,6 +94,17 @@ class SportsLeague {
 
   /// CFL's ESPN feed stopped in 2022; use the league's own scores/stats.
   bool get isCfl => id == 'cfl';
+
+  /// The `{sport}` part of [espnPath]: "hockey", "rugby", "cricket"...
+  String get sport => espnPath.split('/').first;
+
+  /// PDC darts: tournament days, not matches (see the bank entry).
+  bool get isDarts => sport == 'darts';
+
+  /// Reads "Home vs Away" like soccer (rugby and cricket list the home
+  /// side first); North American leagues read "Away at Home".
+  bool get homeFirst =>
+      soccer || const {'rugby', 'rugby-league', 'cricket'}.contains(sport);
 }
 
 /// The base leagues — always available in the League manager, in the
@@ -1054,6 +1065,165 @@ const List<SportsLeague> kSportsLeagueBank = [
       shortName: 'BSKY',
       logoUrl: 'https://a.espncdn.com/i/teamlogos/ncaa_conf/500/20.png',
       region: 'College'),
+  // Rugby (ESPN, checked 2026-11-01: scoreboards + tables; ESPN has no
+  // per-competition rugby logos, so the generic rugby icon). Cricket and
+  // PDC darts come from TheSportsDB: cricket has scores (runs) but no
+  // tables on the free tier; darts is one card per tournament day, no
+  // matches or scores, and usually no start time (a date-only card).
+  SportsLeague(
+      id: 'rugby.six-nations',
+      espnPath: 'rugby/180659',
+      name: 'Six Nations',
+      shortName: '6N',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'rugby.championship',
+      espnPath: 'rugby/244293',
+      name: 'The Rugby Championship',
+      shortName: 'TRC',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby',
+      hasStandings: false),
+  SportsLeague(
+      id: 'rugby.world-cup',
+      espnPath: 'rugby/164205',
+      name: 'Rugby World Cup',
+      shortName: 'RWC',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'rugby.tests',
+      espnPath: 'rugby/289234',
+      name: 'Rugby Test Matches',
+      shortName: 'TESTS',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby',
+      hasStandings: false),
+  SportsLeague(
+      id: 'rugby.prem',
+      espnPath: 'rugby/267979',
+      name: 'Premiership Rugby',
+      shortName: 'PREM',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'rugby.urc',
+      espnPath: 'rugby/270557',
+      name: 'United Rugby Championship',
+      shortName: 'URC',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'rugby.top14',
+      espnPath: 'rugby/270559',
+      name: 'Top 14',
+      shortName: 'TOP14',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby',
+      homeTags: ['fr']),
+  SportsLeague(
+      id: 'rugby.champions-cup',
+      espnPath: 'rugby/271937',
+      name: 'Champions Cup',
+      shortName: 'ECC',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'rugby.super-rugby',
+      espnPath: 'rugby/242041',
+      name: 'Super Rugby Pacific',
+      shortName: 'SRP',
+      logoUrl:
+          'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-rugby.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'rugby-league.nrl',
+      espnPath: 'rugby-league/3',
+      name: 'NRL',
+      shortName: 'NRL',
+      logoUrl: 'https://a.espncdn.com/i/teamlogos/leagues/500/nrl.png',
+      region: 'Rugby'),
+  SportsLeague(
+      id: 'cricket.ipl',
+      espnPath: 'cricket/ipl',
+      sportsDbId: '4460',
+      name: 'Indian Premier League',
+      shortName: 'IPL',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/gaiti11741709844.png',
+      region: 'Cricket',
+      hasStandings: false),
+  SportsLeague(
+      id: 'cricket.bbl',
+      espnPath: 'cricket/bbl',
+      sportsDbId: '4461',
+      name: 'Big Bash League',
+      shortName: 'BBL',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/yko7ny1546635346.png',
+      region: 'Cricket',
+      hasStandings: false),
+  SportsLeague(
+      id: 'cricket.psl',
+      espnPath: 'cricket/psl',
+      sportsDbId: '5067',
+      name: 'Pakistan Super League',
+      shortName: 'PSL',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/4xo0kt1709121687.png',
+      region: 'Cricket',
+      hasStandings: false),
+  SportsLeague(
+      id: 'cricket.sa20',
+      espnPath: 'cricket/sa20',
+      sportsDbId: '5532',
+      name: 'SA20',
+      shortName: 'SA20',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/aakvuk1734183412.png',
+      region: 'Cricket',
+      hasStandings: false),
+  SportsLeague(
+      id: 'cricket.cpl',
+      espnPath: 'cricket/cpl',
+      sportsDbId: '5176',
+      name: 'Caribbean Premier League',
+      shortName: 'CPL',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/5mjjnj1645179844.png',
+      region: 'Cricket',
+      hasStandings: false),
+  SportsLeague(
+      id: 'cricket.t20-blast',
+      espnPath: 'cricket/t20-blast',
+      sportsDbId: '4463',
+      name: 'T20 Blast',
+      shortName: 'BLAST',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/m1lsns1649766933.png',
+      region: 'Cricket',
+      hasStandings: false),
+  SportsLeague(
+      id: 'darts.pdc',
+      espnPath: 'darts/pdc',
+      sportsDbId: '4554',
+      name: 'PDC Darts',
+      shortName: 'PDC',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/isf07m1555602216.png',
+      region: 'Darts',
+      hasStandings: false,
+      kind: SportsKind.fight,
+      seriesPhrases: ['pdc', 'darts']),
 ];
 
 /// Bank group headings, in display order.
@@ -1072,9 +1242,12 @@ const List<String> kSportsLeagueRegions = [
   'College',
   'Hockey',
   'Baseball',
+  'Rugby',
+  'Cricket',
   'Golf',
   'Tennis',
   'Fighting',
+  'Darts',
   'Motorsport',
   'Other',
 ];
@@ -1127,9 +1300,14 @@ class SportsTeam {
     this.color,
     this.record,
     this.score,
+    this.pollRank,
   });
 
   final String id;
+
+  /// College poll rank on the scoreboard (ESPN `curatedRank`, AP / CFP);
+  /// null = unranked or not college.
+  final int? pollRank;
 
   /// Full name ("Detroit Red Wings").
   final String name;
@@ -1200,7 +1378,7 @@ class SportsGame {
 
   /// The two sides in on-screen order (see [SportsLeague.soccer]).
   /// Fights read "A vs B" in the order ESPN bills them, like soccer.
-  bool get _homeFirst => league.soccer || league.kind != SportsKind.team;
+  bool get _homeFirst => league.homeFirst || league.kind != SportsKind.team;
   SportsTeam get first => _homeFirst ? home : away;
   SportsTeam get second => _homeFirst ? away : home;
   String get joiner => _homeFirst ? 'vs' : 'at';

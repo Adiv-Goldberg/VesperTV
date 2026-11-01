@@ -327,6 +327,7 @@ class AppConstants {
   // Settings > Playback > Skip intro: the IntroDB skip button on episodes
   // (on by default; services/skip_segments.dart).
   static const String keySkipSegments = 'vesper_skip_segments';
+  static const String keyUpNextMode = 'vesper_up_next_mode';
   // Live channel ids seen playing at real 4K (Real4kChannels), list.
   static const String keyReal4kChannels = 'vesper_real_4k_channels';
   // Media Hub placeholder clips re-asked + titles tagged Ready
@@ -351,6 +352,7 @@ class AppConstants {
   static const String keySportsHideEmptyLeagues =
       'vesper_sports_hide_empty_leagues';
   static const String keySportsShowOdds = 'vesper_sports_show_odds';
+  static const String keySportsAutoPlay = 'vesper_sports_auto_play';
 
   /// Home page rows, per viewer: ordered row ids, a hidden row as `-id`
   /// (`HomeRows`). Null = never edited (the default order).
@@ -363,6 +365,7 @@ class AppConstants {
   static const String keyGoalsAlert = 'vesper_goals_alert';
   static const String keyTransparentPopups = 'vesper_transparent_popups';
   static const String keyMatchScoreAlerts = 'vesper_match_score_alerts';
+  static const String keyLeagueGoalAlerts = 'vesper_league_goal_alerts';
   static const String keySportsFollowedTeams = 'vesper_sports_followed_teams';
   static const String keyGameReminders = 'vesper_game_reminders';
   static const String keyProgrammeReminders = 'vesper_programme_reminders';

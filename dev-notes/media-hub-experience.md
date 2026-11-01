@@ -128,3 +128,49 @@ hide/restore/reorder a row, and browse a collection and an actor's credits.
   subtitle menu offers stream-supplied subtitles even with no subtitle add-on
   (same rule as Android `player_controls`). Windows still not built or run.
 - The 41 new UI strings had no entries in fr/es/it/el: added (machine-authored).
+
+## Design reference: Nuvio home (owner, 2026-11-01)
+
+Screenshot: `dev-notes/references/nuvio-media-hub-home.png` (Nuvio on a TV). What to take from it:
+- **Hero = the focused title**, backdrop on the right ~60% fading into black to the left and
+  bottom; no separate hero card. Text sits over the dark left part.
+- **Title as logo art** (stylised "CLAYFACE" clearlogo) instead of plain text; fall back to
+  text when there is no logo. `ArchiveMeta.logoUrl` already reads the add-on/Cinemeta `logo`.
+- **One metadata line:** `Movie • Horror • 2026` + a yellow **IMDb 7.6** badge, then a
+  4-line description with ellipsis.
+- **Focused card expands to landscape:** the focused poster becomes a wide backdrop card
+  with the title logo on it and a white outline; the rest of the row stays portrait posters.
+- Rows titled "Trending Movies - Movie" / "Trending Series - Series"; the next row peeks
+  at the bottom so users see there is more.
+- Slim left icon rail (Home, Search, Library, Settings), no labels.
+Watch on weak boxes: the expanding card changes row geometry (keep `itemExtent`/focus maths
+exact, see the 1.0.31 `_cardExtent` fix) and the hero backdrop swap must stay
+dark -> backdrop without a poster flash (`_focusedArtPending`).
+
+**Done (Claude, 2026-11-01, uncommitted, no APK yet):**
+- `ArchiveMeta.logoUrl` (`logo`, cached in toJson) + getter `logo` (falls back to MetaHub
+  `images.metahub.space/logo/medium/{imdb}/img` by IMDb id; may 404). Jellyfin/Emby ask for
+  `Logo` images. Plex: no logo (name shown).
+- Hero (`archive_screen.dart`): 200 px tall on TV (150 phone), `_HeroTitle` logo with the name
+  as fallback (failed logo URLs remembered for the session), `_HeroInfoLine` "Movie • Horror •
+  2026 • runtime" + yellow IMDb badge (media servers: star, their rating is a community one) +
+  source chip, 4-line description. Backdrop area grew (left 30 %, 70 % of the height).
+- Focused card wide: `PosterCard.wideWidth/wideImageUrl/wideLogoUrl`, 16:9 at poster height
+  (`PosterCard.wideCardWidth`), logo bottom-left, zoom 1.04. Only the focused card of the
+  focused row, only with a backdrop, only at widths >= 700. Rows use `itemExtentBuilder`
+  (cached per row, `_extentBuilder`) — never switch to `itemExtent` (sliver type change drops
+  focus). `_focusCard` maths assumes cards before the focused one are normal slots; a
+  post-frame `_revealCard` fixes the clamp near a row's end. Test: `archive_wide_card_test.dart`.
+- Not done: Nuvio's slim icon rail (ours keeps Movies / TV Shows / catalog jumps).
+- Device check pending: decode cost of the backdrop on each Right on the Fire Stick.
+- **Rail redesign (2026-11-01, owner):** the left rail is the top bar's glass pill stood up (`_glassPill`,
+  `_BarButton(expand, alignStart)`), 250 px wide. Search moved into it (top): OK pulls out a small
+  Movies / TV Shows menu beside it (`_pickSearchType`, `showRollDownMenu` with a side anchor),
+  then opens that category's search. The top bar keeps Newest, row jumps, Genre, Customize, and
+  (only while a search is active) Sources + a Clear button labelled with the query. Phones keep
+  Search in the top bar (`_narrow`). Test: `archive_rail_search_test.dart`.
+- **Collapsing rail (2026-11-01, owner: "way too big"):** the rail is open (240 px, labels) only while it
+  has focus or Search's pull-out is up (`_railOpen`, `_railPinned`); otherwise an 80 px icon strip.
+  Open, it pushes the hero/rows aside (`Row` + `AnimatedContainer`); never over the posters (owner,
+  +553 photo: the overlay showed the hero text and rows through the glass). Glass stays see-through.
+  80 px = an entry with its label still fits at the start of the open animation (no overflow).

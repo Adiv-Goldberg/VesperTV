@@ -5,9 +5,10 @@ import '../l10n/l10n.dart';
 import '../models/archive_models.dart';
 import '../services/archive_ready_watch.dart';
 import '../services/archive_service.dart';
+import '../utils/display_title.dart';
 import '../utils/tv_theme.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/poster_card.dart';
-import '../widgets/settings_scaffold.dart';
 import 'archive_detail_screen.dart';
 import 'archive_playback.dart';
 
@@ -43,6 +44,11 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
   /// the remote with nothing (or a random visible card) focused.
   final FocusNode _firstPoster = FocusNode(debugLabel: 'archive-grid-first');
 
+  /// The focused title, shown full screen behind the grid like the IPTV
+  /// expanded catalog (owner, 1.0.51). A notifier: moving focus must not
+  /// rebuild the grid.
+  final ValueNotifier<ArchiveMeta?> _spot = ValueNotifier(null);
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +60,7 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
   @override
   void dispose() {
     _firstPoster.dispose();
+    _spot.dispose();
     super.dispose();
   }
 
@@ -80,7 +87,15 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
       context,
       (context) => Stack(
         children: [
-          const Positioned.fill(child: SettingsGradientBackground()),
+          const Positioned.fill(child: ColoredBox(color: Colors.black)),
+          // Same backdrop as GroupCatalogScreen: full height, faded left.
+          Positioned.fill(
+            child: ValueListenableBuilder<ArchiveMeta?>(
+              valueListenable: _spot,
+              builder: (context, spot, _) => DetailBackdrop(
+                  url: spot?.backgroundUrl ?? spot?.posterUrl, fadeLeft: true),
+            ),
+          ),
           Scaffold(
             backgroundColor: Colors.transparent,
             appBar: AppBar(
@@ -90,21 +105,38 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.maybePop(context),
               ),
-              title: Text(
-                  items.isEmpty
-                      ? widget.title
-                      : '${widget.title} · ${items.length}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
+              toolbarHeight: 64,
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                      items.isEmpty
+                          ? widget.title
+                          : '${widget.title}   ·   ${tr('{n} titles', {
+                                  'n': items.length
+                                })}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          const TextStyle(fontSize: 13, color: Colors.white70)),
+                  ValueListenableBuilder<ArchiveMeta?>(
+                    valueListenable: _spot,
+                    builder: (context, spot, _) => _spotLine(context, spot),
+                  ),
+                ],
+              ),
             ),
             body: row == null || items.isEmpty
                 ? Center(child: Text(tr('No items in this group.')))
                 : GridView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: PosterCard.width + 12,
-                      mainAxisExtent: PosterCard.height + 12,
+                      mainAxisExtent: PosterCard.height + 10,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
                     ),
                     itemCount: items.length,
                     itemBuilder: (context, i) {
@@ -129,6 +161,7 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
                           onToggleFavorite: () => holdArchiveTitle(
                               context, current, current.sourceAt(i), meta),
                           onFocusGained: () {
+                            _spot.value = meta;
                             // A grid row holds several cards: ask for the
                             // next page a few rows before the end.
                             if (i >= items.length - 24) {
@@ -143,5 +176,34 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
         ],
       ),
     );
+  }
+
+  /// The focused title with its year and rating, one line (the IPTV
+  /// expanded catalog's spotlight line).
+  Widget _spotLine(BuildContext context, ArchiveMeta? spot) {
+    if (spot == null) return const SizedBox.shrink();
+    final info = [
+      if (spot.year != null && spot.year!.isNotEmpty) spot.year!,
+      if (spot.rating != null && spot.rating!.isNotEmpty) '★ ${spot.rating}',
+    ];
+    return Row(children: [
+      Flexible(
+        child: Text(cleanDisplayTitle(spot.name),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                shadows: [Shadow(color: Colors.black, blurRadius: 8)])),
+      ),
+      if (info.isNotEmpty) ...[
+        const SizedBox(width: 14),
+        Text(info.join('   ·   '),
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary)),
+      ],
+    ]);
   }
 }

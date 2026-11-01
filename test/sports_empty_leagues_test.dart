@@ -49,6 +49,24 @@ void main() {
     expect(requests.length, 3);
   });
 
+  // Clocks went back on 2026-11-01 in North America: midnight + 24 h was
+  // 23:00 the same day, so the next day's games were never fetched (and
+  // the day strip's "tomorrow" showed today). Calendar days, not hours.
+  test('the day after a clock change is still fetched', () async {
+    final requests = <String>[];
+    final client = MockClient((r) async {
+      requests.add(r.url.queryParameters['dates'] ?? '');
+      return http.Response('{"events":[]}', 200);
+    });
+    addTearDown(client.close);
+    final service = SportsService.forTesting(client);
+    await service.gamesForDay([nhl], DateTime(2026, 11, 1));
+    expect(requests.toSet(), {'20261031', '20261101', '20261102'});
+    requests.clear();
+    await service.gamesForDay([nhl], DateTime(2026, 3, 8));
+    expect(requests.toSet(), {'20260307', '20260308', '20260309'});
+  });
+
   test(
       'one failed neighboring date stays unknown independently of other leagues and recovers',
       () async {

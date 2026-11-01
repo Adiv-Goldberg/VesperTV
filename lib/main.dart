@@ -34,12 +34,15 @@ import 'services/device_memory_service.dart';
 import 'services/epg_service.dart';
 import 'services/parental_pin.dart';
 import 'services/persistent_image_cache.dart';
+import 'models/sports.dart';
 import 'services/playback_service.dart';
 import 'services/guide_key.dart';
 import 'services/profile_gate.dart';
 import 'services/archive_ready_watch.dart';
 import 'services/real_4k_channels.dart';
 import 'services/recording_service.dart';
+import 'services/sports_channel_library.dart';
+import 'services/watch_game_offer.dart';
 import 'services/sports_channel_matcher.dart';
 import 'services/sports_service.dart';
 import 'models/channel.dart';
@@ -402,6 +405,62 @@ class _NoxIptvAppState extends State<NoxIptvApp>
             _storage.getActiveViewerId() == viewer &&
             WidgetsBinding.instance.lifecycleState ==
                 AppLifecycleState.resumed);
+  }
+
+  /// Settings > Sports Trak > Watch game button: a reminded game is about
+  /// to start, so the player shows a Watch game pill (Up from the player
+  /// bar, OK switches; never by itself, owner 1.0.51) for the channel Sports
+  /// Trak would pick first (saved pick / added source / best match). No
+  /// match = no pill.
+  Future<void> _offerStartingGame(GameReminder reminder) async {
+    final split = reminder.key.indexOf(':');
+    if (split <= 0) return;
+    final league = sportsLeagueById(reminder.key.substring(0, split));
+    final id = reminder.key.substring(split + 1);
+    if (league == null) return;
+    final viewer = _storage.getActiveViewerId();
+    try {
+      await _playlistManager.ensureLiveChannelsLoaded();
+      final start = reminder.start.toLocal();
+      final games = await SportsService.instance
+          .gamesForDay([league], DateTime(start.year, start.month, start.day));
+      final game = games.where((g) => g.id == id).firstOrNull;
+      if (game == null) return;
+      final live = _playlistManager.visibleChannels(category: 'tv');
+      final matcher = SportsChannelMatcher.shared(_epgService);
+      await matcher.prepare(live,
+          hidden: _playlistManager.hiddenLiveChannels());
+      final picks = SportsChannelPicks.load(_storage);
+      final key = SportsChannelPicks.eventKey(game);
+      final found = (await matcher.matchDay([game], picks))[key] ?? [];
+      final saved = SportsChannelLists(_storage).sourcesFor(game, key);
+      final channel = (picks.channelIdFor(game) == null
+              ? live.where((c) => saved.contains(c.id)).firstOrNull
+              : null) ??
+          picks
+              .orderMatches(found, countries: picks.countryPreferences)
+              .firstOrNull
+              ?.channel;
+      if (channel == null ||
+          !mounted ||
+          _storage.getActiveViewerId() != viewer) {
+        debugPrint('WatchGame: ${reminder.key} no channel');
+        return;
+      }
+      debugPrint('WatchGame: ${reminder.key} -> ${channel.name}');
+      final offer = WatchGameOffer(
+          title: '${reminder.home} vs ${reminder.away}',
+          channel: channel,
+          until: DateTime.now().add(WatchGameOffer.lifetime));
+      WatchGameOffer.current.value = offer;
+      Timer(WatchGameOffer.lifetime, () {
+        if (WatchGameOffer.current.value == offer) {
+          WatchGameOffer.current.value = null;
+        }
+      });
+    } catch (e) {
+      debugPrint('WatchGame: ${reminder.key} failed: $e');
+    }
   }
 
   Future<void> _refreshAutoRecordings() async {
@@ -1075,7 +1134,7 @@ class _NoxIptvAppState extends State<NoxIptvApp>
               // than reusing LiveResumeHint/PlaybackService.
               if (Platform.isWindows)
                 DesktopLiveResumeHint(navigatorKey: _navigatorKey),
-              const GameReminderOverlay(),
+              GameReminderOverlay(onGameStarting: _offerStartingGame),
               const ProgrammeReminderOverlay(),
               const GoalsAlertOverlay(),
             ],

@@ -264,6 +264,22 @@
     "url": "https://vespertv.app/remote.html#Full%20screen"
   },
   {
+    "id": "0cb973cf2566aaef",
+    "category": "Full screen",
+    "title": "When the next episode starts",
+    "answer": "30 seconds before the end (default: the Up Next card counts down over the credits), When the episode ends, or Never (no countdown; the episode plays to its end). Applies to this device.",
+    "controls": "Settings → Playback → Up Next EPISODE · ANDROID",
+    "url": "https://vespertv.app/remote.html#Full%20screen"
+  },
+  {
+    "id": "18f7934142260da9",
+    "category": "Full screen",
+    "title": "Watch game",
+    "answer": "With Settings → Sports Trak → Watch game button on, a game you set a reminder for offers a Watch game button in the player when it starts. It shows for 10 seconds, then only with the player bar, for 10 minutes. Up from the bar selects it; OK switches to the game on its best channel. It never changes the channel by itself.",
+    "controls": "↑ from the player bar, then OK ANDROID",
+    "url": "https://vespertv.app/remote.html#Full%20screen"
+  },
+  {
     "id": "29f1f49f260982d1",
     "category": "Full screen",
     "title": "Play / Pause",
@@ -352,10 +368,26 @@
     "url": "https://vespertv.app/remote.html#Media%20Hub"
   },
   {
+    "id": "ad512e8c893f29ab",
+    "category": "Media Hub",
+    "title": "Left panel",
+    "answer": "Search, Movies, TV Shows, Refresh, Media Hub sources and Jellyfin / Emby. While you browse the rows or the top bar it folds to a slim strip of icons; Left (or Back) from the rows opens it again and slides the rows aside. On a TV, the title you're on fills the top of the page with its logo, genre, year, IMDb rating and description, and its card turns into a wide picture.",
+    "controls": "← from the first card",
+    "url": "https://vespertv.app/remote.html#Media%20Hub"
+  },
+  {
+    "id": "bb626bc12938e69b",
+    "category": "Media Hub",
+    "title": "Search movies or TV shows",
+    "answer": "A small menu slides out beside Search: pick Movies or TV Shows, then type. Results come first in the rows; the top bar shows Sources and a Clear button with your search. Phones keep Search in the top bar.",
+    "controls": "OK on Search in the left panel",
+    "url": "https://vespertv.app/remote.html#Media%20Hub"
+  },
+  {
     "id": "b39e8c0bc4e5d4f3",
     "category": "Media Hub",
     "title": "Floating bar",
-    "answer": "Search, a button for each row, Genre and Newest. Genre › Other holds add-on catalogs that aren't plain movies or series. Newest shows only this year's releases (from a source's release-year catalog, such as the New row); pick a genre as well to see the new releases in that genre. Sources whose titles carry no genre information drop out while a genre is picked. After adding a TMDB catalog to an add-on, press Refresh so Newest can use it.",
+    "answer": "A button for each row, Genre and Newest. Genre › Other holds add-on catalogs that aren't plain movies or series. Newest shows only this year's releases (from a source's release-year catalog, such as the New row); pick a genre as well to see the new releases in that genre. Sources whose titles carry no genre information drop out while a genre is picked. After adding a TMDB catalog to an add-on, press Refresh so Newest can use it.",
     "controls": "↑ from the first row",
     "url": "https://vespertv.app/remote.html#Media%20Hub"
   },
@@ -512,6 +544,14 @@
     "url": "https://vespertv.app/remote.html#Sports%20Trak"
   },
   {
+    "id": "e358a123cd870258",
+    "category": "Sports Trak",
+    "title": "Score alerts for a whole league",
+    "answer": "Choose Goals alert for all of (league) to get the score popup for every goal in that league, for any team. Remove goals alert for (league) stops it. Hide scores pauses these alerts too. Saved for this profile on this device.",
+    "controls": "Hold OK on a game, or on a league in League manager",
+    "url": "https://vespertv.app/remote.html#Sports%20Trak"
+  },
+  {
     "id": "37d7b6bb84088bf0",
     "category": "Sports Trak",
     "title": "Prefer channels from your country",
@@ -547,7 +587,7 @@
     "id": "daf3986dfef318b3",
     "category": "Sports Trak",
     "title": "Score alerts for My Teams",
-    "answer": "Off by default. Enable it for a top-left popup when any followed team scores, above any screen or stream while VesperTV is open. The card shows the team and league logos and the current score. Game reminders stay top-right; on a phone the cards stack. Alerts follow the sports feed's update speed, pause with Hide scores or when the app is in the background, and do not replay old scores on launch or profile changes.",
+    "answer": "Off by default. Enable it for a top-left popup when any followed team scores, above any screen or stream while VesperTV is open. The card shows the team and league logos, the current score and, when the sports feed has it, who scored. Game reminders stay top-right; on a phone the cards stack. Alerts follow the sports feed's update speed, pause with Hide scores or when the app is in the background, and do not replay old scores on launch or profile changes.",
     "controls": "Settings → Interface → Goals alert",
     "url": "https://vespertv.app/remote.html#Sports%20Trak"
   },

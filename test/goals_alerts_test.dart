@@ -325,6 +325,32 @@ void main() {
     expect(service.isSet(games.single), isTrue);
   });
 
+  test('league alert covers every game of that league only, per viewer',
+      () async {
+    final nhl = sportsLeagueById('nhl')!;
+    await service.setLeague(nhl, true);
+    expect(service.isLeagueSet(nhl), isTrue);
+    games = [
+      scoreGame(time, id: 'a'),
+      scoreGame(time, id: 'b', league: 'nba'),
+    ];
+    expect(await service.poll(), isEmpty); // baseline
+    time = time.add(const Duration(minutes: 1));
+    games = [
+      scoreGame(time, id: 'a', home: '1', away: '1'),
+      scoreGame(time, id: 'b', league: 'nba', home: '2'),
+    ];
+    final notices = await service.poll();
+    expect(notices.map((n) => '${n.game.id}|${n.team.id}').toSet(),
+        {'a|mtl', 'a|buf'});
+    expect(requests.toSet(), {'nhl'});
+    await storage.setActiveViewerId('other');
+    expect(service.isLeagueSet(nhl), isFalse);
+    await storage.setActiveViewerId('main');
+    await service.setLeague(nhl, false);
+    expect(service.isLeagueSet(nhl), isFalse);
+  });
+
   test('selected match alerts on either side, not other games in that league',
       () async {
     await storage.setSportsFollowedTeams([]);

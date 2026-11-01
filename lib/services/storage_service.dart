@@ -515,6 +515,17 @@ class StorageService {
   Future<void> setSkipSegments(bool value) =>
       _prefs.setBool(AppConstants.keySkipSegments, value);
 
+  /// Settings > Playback > Up Next: when the next episode starts by itself.
+  /// `early` = 30 s before the end (default, the original behaviour),
+  /// `end` = when the episode ends, `off` = never (no countdown either).
+  String getUpNextMode() {
+    final v = _prefs.getString(AppConstants.keyUpNextMode);
+    return v == 'end' || v == 'off' ? v! : 'early';
+  }
+
+  Future<void> setUpNextMode(String mode) =>
+      _prefs.setString(AppConstants.keyUpNextMode, mode);
+
   bool getMixFavoritePlaylists() =>
       _prefs.getBool(AppConstants.keyMixFavoritePlaylists) ?? false;
   Future<void> setMixFavoritePlaylists(bool value) =>
@@ -605,6 +616,12 @@ class StorageService {
       _prefs.getBool(_vk(AppConstants.keySportsShowOdds)) ?? false;
   Future<void> setSportsShowOdds(bool value) =>
       _prefs.setBool(_vk(AppConstants.keySportsShowOdds), value);
+
+  /// Play a reminded game on its channel when it starts (per viewer, off).
+  bool getSportsAutoPlay() =>
+      _prefs.getBool(_vk(AppConstants.keySportsAutoPlay)) ?? false;
+  Future<void> setSportsAutoPlay(bool value) =>
+      _prefs.setBool(_vk(AppConstants.keySportsAutoPlay), value);
   Future<void> setSportsPreferredPlaylist(String? playlistId) async {
     final key = _vk(AppConstants.keySportsPreferredPlaylist);
     if (playlistId == null) {
@@ -917,6 +934,15 @@ class StorageService {
   Future<void> setMatchScoreAlerts(String json, {String? viewerId}) =>
       _prefs.setString(
           _vk(AppConstants.keyMatchScoreAlerts, viewerId: viewerId), json);
+
+  /// Leagues whose every goal alerts this viewer (league ids).
+  List<String> getLeagueGoalAlerts({String? viewerId}) =>
+      _prefs.getStringList(
+          _vk(AppConstants.keyLeagueGoalAlerts, viewerId: viewerId)) ??
+      const [];
+  Future<void> setLeagueGoalAlerts(List<String> ids, {String? viewerId}) =>
+      _prefs.setStringList(
+          _vk(AppConstants.keyLeagueGoalAlerts, viewerId: viewerId), ids);
 
   String? getSportsChannelLists({String? viewerId}) => _prefs
       .getString(_vk(AppConstants.keySportsChannelLists, viewerId: viewerId));

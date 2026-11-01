@@ -1137,6 +1137,12 @@ class _MiniTable extends StatelessWidget {
     }
     return switch (league.espnPath.split('/').first) {
       'hockey' => const ['wins', 'losses', 'otLosses', 'points'],
+      'rugby' || 'rugby-league' => const [
+          'gamesWon',
+          'gamesLost',
+          'pointsDifference',
+          'points'
+        ],
       'football' => const ['wins', 'losses', 'ties', 'winPercent'],
       _ => const ['wins', 'losses', 'winPercent', 'gamesBehind'],
     };

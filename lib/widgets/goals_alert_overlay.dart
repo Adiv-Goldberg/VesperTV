@@ -9,6 +9,7 @@ import '../l10n/l10n.dart';
 import '../services/app_preferences.dart';
 import '../models/sports.dart';
 import '../services/goals_alerts.dart';
+import '../services/sports_service.dart';
 import '../services/viewer_profile_service.dart';
 import 'game_reminder_overlay.dart';
 
@@ -36,6 +37,10 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
   final _queue = <GoalAlertNotice>[];
   GoalAlertNotice? _notice;
   bool _preview = false;
+
+  /// Who scored ("C. Caufield · 2nd 12:34"), from the game's summary, once
+  /// it lists this goal (owner, 1.0.51). Null = the card without it.
+  String? _scorer;
 
   @override
   void initState() {
@@ -123,6 +128,7 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
         away: away);
     setState(() {
       _preview = true;
+      _scorer = 'C. Caufield · 2nd 12:34';
       _notice = GoalAlertNotice(
           viewerId: _viewer ?? '',
           game: game,
@@ -143,8 +149,48 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
         break;
       }
     }
-    setState(() => _notice = next);
-    if (next != null) _hide = Timer(const Duration(seconds: 8), _showNext);
+    setState(() {
+      _notice = next;
+      _scorer = null;
+    });
+    if (next != null) {
+      _hide = Timer(const Duration(seconds: 8), _showNext);
+      unawaited(_lookupScorer(next));
+    }
+  }
+
+  /// The scorer of [notice]'s goal: the summary's last goal by that team,
+  /// only when its goal count equals the new score (a summary behind the
+  /// scoreboard would name the previous scorer). A late answer keeps the
+  /// card up a few seconds more.
+  Future<void> _lookupScorer(GoalAlertNotice notice) async {
+    final score = int.tryParse(notice.team.score ?? '');
+    if (score == null || score <= 0) return;
+    try {
+      final summary =
+          await SportsService.instance.gameSummary(notice.game, fresh: true);
+      if (!mounted || _notice != notice || summary == null) return;
+      final goals = summary.goals;
+      final mine = goals.where((g) => g.teamId == notice.team.id).toList();
+      SportsGoal? goal;
+      if (mine.isNotEmpty) {
+        if (mine.length == score) goal = mine.last;
+      } else if (goals.isNotEmpty && goals.every((g) => g.teamId == null)) {
+        // No team ids: only when the whole game's count is right.
+        final total = (int.tryParse(notice.game.home.score ?? '') ?? -1) +
+            (int.tryParse(notice.game.away.score ?? '') ?? -1);
+        if (goals.length == total) goal = goals.last;
+      }
+      if (goal == null || goal.scorer.trim().isEmpty) return;
+      final when = [goal.period, goal.minute]
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .join(' ');
+      setState(() =>
+          _scorer = when.isEmpty ? goal!.scorer : '${goal!.scorer} · $when');
+      _hide?.cancel();
+      _hide = Timer(const Duration(seconds: 6), _showNext);
+    } catch (_) {/* The card stays as it is. */}
   }
 
   @override
@@ -265,6 +311,14 @@ class _GoalsAlertOverlayState extends State<GoalsAlertOverlay>
                                                 color: accent,
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w800)),
+                                        if (_scorer case final scorer?)
+                                          Text(scorer,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600)),
                                         const SizedBox(height: 4),
                                         Text(
                                             tr(

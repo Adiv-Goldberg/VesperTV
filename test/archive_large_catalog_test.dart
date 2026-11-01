@@ -108,6 +108,9 @@ void main() {
   testWidgets('catalog button jumps to an unbuilt row before focusing',
       (tester) async {
     final service = await _open(tester);
+    // Out of the rail first: open, it lies over the bar's left end.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
     final button = find.text('Catalog 80');
     await tester.ensureVisible(button);
     await tester.tap(button);

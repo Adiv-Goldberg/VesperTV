@@ -64,12 +64,38 @@ class GoalsAlerts extends ChangeNotifier {
 
   bool get enabled =>
       !storage.getSportsHideScores() &&
-      (storage.getGoalsAlert() || _matches().isNotEmpty);
+      (storage.getGoalsAlert() ||
+          _matches().isNotEmpty ||
+          _leagueIds.isNotEmpty);
   Set<String> get _followed => storage.getGoalsAlert()
       ? storage.getSportsFollowedTeams().toSet()
       : <String>{};
 
   static String gameKey(SportsGame game) => '${game.league.id}:${game.id}';
+
+  /// Leagues whose every game alerts (game hold menu / League manager).
+  Set<String> get _leagueIds => storage.getLeagueGoalAlerts().toSet();
+
+  bool isLeagueSet(SportsLeague league) => _leagueIds.contains(league.id);
+
+  bool canSetLeague(SportsLeague league) => league.kind == SportsKind.team;
+
+  Future<void> setLeague(SportsLeague league, bool value) async {
+    if (_disposed || (value && !canSetLeague(league))) return;
+    final viewer = storage.getActiveViewerId();
+    final ids = storage.getLeagueGoalAlerts(viewerId: viewer).toList()
+      ..remove(league.id);
+    if (value) ids.add(league.id);
+    await storage.setLeagueGoalAlerts(ids, viewerId: viewer);
+    if (_disposed) return;
+    // A new subscription starts with a silent baseline, as for a match.
+    _epoch++;
+    if (viewer == storage.getActiveViewerId()) {
+      _scores
+          .removeWhere((_, sample) => sample.owner.startsWith('${league.id}|'));
+    }
+    notifyListeners();
+  }
 
   Map<String, _MatchScoreWatch> _matches({String? viewerId}) {
     final result = <String, _MatchScoreWatch>{};
@@ -158,7 +184,8 @@ class GoalsAlerts extends ChangeNotifier {
       _viewer == notice.viewerId &&
       storage.getActiveViewerId() == notice.viewerId &&
       (_followed.contains('${notice.game.league.id}|${notice.team.id}') ||
-          isSet(notice.game)) &&
+          isSet(notice.game) ||
+          isLeagueSet(notice.game.league)) &&
       now().difference(notice.observedAt) <= const Duration(seconds: 90);
 
   Future<List<GoalAlertNotice>> poll() async {
@@ -174,8 +201,11 @@ class GoalsAlerts extends ChangeNotifier {
     }
     final followed = _followed;
     final matches = _matches();
+    final leagueIds = _leagueIds;
     _scores.removeWhere((_, s) =>
-        (!followed.contains(s.owner) && !matches.containsKey(s.gameKey)) ||
+        (!followed.contains(s.owner) &&
+            !matches.containsKey(s.gameKey) &&
+            !leagueIds.contains(s.owner.split('|').first)) ||
         now().difference(s.at) > const Duration(hours: 6));
     final leagues = <String, SportsLeague>{};
     for (final raw in followed) {
@@ -187,6 +217,12 @@ class GoalsAlerts extends ChangeNotifier {
     }
     for (final watch in matches.values) {
       leagues[watch.league.id] = watch.league;
+    }
+    for (final id in leagueIds) {
+      final league = sportsLeagueById(id);
+      if (league != null && league.kind == SportsKind.team) {
+        leagues[league.id] = league;
+      }
     }
     if (leagues.isEmpty || _busyEpoch == _epoch) return const [];
     final epoch = _epoch;
@@ -248,6 +284,7 @@ class GoalsAlerts extends ChangeNotifier {
       final at = now();
       final owners = _followed;
       final selected = _matches();
+      final wholeLeagues = _leagueIds;
       final seen = <String>{};
       final notices = <GoalAlertNotice>[];
       for (final game in all) {
@@ -262,7 +299,9 @@ class GoalsAlerts extends ChangeNotifier {
         if (home == null || away == null || home < 0 || away < 0) continue;
         for (final team in [game.home, game.away]) {
           final owner = '${game.league.id}|${team.id}';
-          if (!owners.contains(owner) && !selected.containsKey(gameKey(game))) {
+          if (!owners.contains(owner) &&
+              !selected.containsKey(gameKey(game)) &&
+              !wholeLeagues.contains(game.league.id)) {
             continue;
           }
           final key = '${game.league.id}:${game.id}|${team.id}';

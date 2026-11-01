@@ -367,7 +367,12 @@ old ~50 s EPG delay is **fixed** by the SQLite EPG store (0.5 s on the Formuler)
 Timeline/Live guide, player secondary row + badges, Multiview, welcome prompt, hide channels, Expand catalog, backup servers, palettes, **viewer profiles** (never rewrite Main's storage keys), **languages** (EN/FR/ES/IT/EL), **Transfer to another device** (Wi-Fi + internet vault, built to grow into cloud sync). Read the file before changing any of these.
 
 ## 13. Status & open items (as of 2026-10-24)
-- **Claude, 2026-10-31 - release 1.0.51 (beta), +541 (latest):** owner tested +540 on the Formuler and asked for the
+- **Claude, 2026-11-01 - release 1.0.52 (beta), +555 (latest):** owner tested +554 and said "cut it". Android only;
+  Windows stays 1.0.45 (owner: bring Windows up to the Android version later). Media Hub redesign (title-logo hero,
+  wide focused card, glass left rail with Search pull-out that folds to icons), rugby/cricket/PDC darts leagues, team
+  ranks, Watch game button, league goal alerts + scorer, fight matching, Up Next setting, Google TV keyboard fix,
+  clock-change day fix (`SportsService._aroundDay`, calendar days not +/-24 h). Notes: dev-notes/releases/1.0.52.md.
+- **Claude, 2026-10-31 - release 1.0.51 (beta), +541:** owner tested +540 on the Formuler and asked for the
   release and announcement. Android only; Windows stays 1.0.45. German (lib/l10n/de.dart, machine-translated), expanded
   catalog spotlight design + opt-in "Open groups as expanded catalog", Interface > Guide page (+ Compact guide, custom
   EPG URL in EPG > General), transparent popups (+ test popup), Support and Discord entries, Fast startup now ON by
@@ -1713,6 +1718,9 @@ Timeline/Live guide, player secondary row + badges, Multiview, welcome prompt, h
 - **Roadmap (owner, 2026-10-12):** ~~fix Multiview~~ (done 2026-10-13). **Next:** a **Sports tab** (design draft: `dev-notes/sports-tab.md`)
   with live scores, BYOK supporting **two** sports APIs (user picks/pastes a key in Settings; hard
   part is matching games to channels).
+- **Offline downloads (planned 2026-11-01, not started):** movies/episodes for offline play,
+  Android phones first, then Windows. Plan + hard parts (offline cold start first):
+  `dev-notes/offline-downloads-plan.md`.
 - **Ideas discussed, not started:** OpenSubtitles integration (BYO key); Windows player-controls
   secondary-row parity; widen `epgPastRetention` for catch-up later (owner wants it, after basics/
   stability); (done) EPG speed rework; (done) rename of `nox_iptv.exe`→`VesperTV.exe`

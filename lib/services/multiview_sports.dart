@@ -89,6 +89,9 @@ class MultiviewSports {
       'hockey' => const Duration(minutes: 165),
       'baseball' => const Duration(minutes: 195),
       'football' => const Duration(minutes: 210),
+      'rugby' || 'rugby-league' => const Duration(minutes: 120),
+      // A T20 innings pair; the feeds carry no longer formats.
+      'cricket' => const Duration(hours: 4),
       _ => const Duration(hours: 3),
     };
     var ended = game.start.add(typical);

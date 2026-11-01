@@ -10,6 +10,7 @@ import '../widgets/hold_to_activate.dart';
 import '../widgets/section_label.dart';
 import '../widgets/settings_scaffold.dart';
 import '../widgets/sports_widgets.dart';
+import '../widgets/game_score_alert_menu_tile.dart';
 import '../widgets/tv_menu_tile.dart';
 import '../l10n/l10n.dart';
 
@@ -131,6 +132,8 @@ class _SportsLeagueManagerScreenState extends State<SportsLeagueManagerScreen> {
                           {'tab': AppConstants.sportsTabName}),
                   onTap: () => Navigator.of(context).pop('favorite'),
                 ),
+                LeagueGoalAlertMenuTile(
+                    league: l, onDone: () => Navigator.of(context).pop()),
                 if (!l.isBase)
                   TvMenuTile(
                     icon: Icons.remove_circle_outline,

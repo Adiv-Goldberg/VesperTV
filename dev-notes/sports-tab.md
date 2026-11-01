@@ -525,3 +525,21 @@ menu (`onMenu`; without one, reminder toggle). Data `SportsService.teamSeason` (
 uses `soccer/all/teams/{id}/schedule` (verified live 2026-10-27, Arsenal: Carabao Cup, UCL, Community
 Shield, friendlies); other sports / CFL / TheSportsDB = `teamSchedule`. Channel matches are computed for
 the next 14 days only. Tests: `test/sports_schedule_test.dart`.
+
+## Rugby, cricket, PDC darts (Claude, 2026-11-01, owner request, uncommitted)
+
+League bank regions Rugby / Cricket / Darts (`kSportsLeagueBank`, test
+`sports_rugby_cricket_darts_test.dart`).
+- Rugby: ESPN `rugby/{id}` (Six Nations 180659, Rugby Championship 244293, World Cup 164205,
+  Tests 289234, Prem 267979, URC 270557, Top 14 270559, Champions Cup 271937, Super Rugby
+  242041) + NRL `rugby-league/3`. Tables use gamesWon/gamesDrawn/gamesLost/pointsDifference/
+  bonusPoints/points. ESPN has no per-competition rugby logos (generic icon).
+- Cricket: TheSportsDB (IPL 4460, BBL 4461, PSL 5067, SA20 5532, CPL 5176, T20 Blast 4463).
+  Scores are runs only (no wickets/overs), free tables empty -> no Standings. ESPN cricket is one
+  id per series (no league feed); internationals (Tests/ODIs) have no free source.
+- Darts: TheSportsDB PDC 4554, `SportsKind.fight` event-only cards (tournament days, no matches
+  or scores). 00:00 UTC = no time -> date-only card (`end` set, like golf). Channel search uses
+  the title without numbers/"Day N" plus series phrases pdc/darts.
+- `SportsLeague.homeFirst` (soccer, rugby, cricket read Home vs Away), `sport`, `isDarts`.
+- Darts times are per tournament day/session, not per match (owner, 2026-11-01): a timed PDC
+  card keeps its time, but the guide search looks 12 h past it (`_guideWindow`).

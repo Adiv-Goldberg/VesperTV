@@ -549,6 +549,7 @@ class ArchiveMeta {
     required this.name,
     String? posterUrl,
     this.backgroundUrl,
+    this.logoUrl,
     this.year,
     this.description,
     this.genres = const [],
@@ -603,6 +604,18 @@ class ArchiveMeta {
   static final _tmdbId = RegExp(r'^tmdb:(\d+)');
   final String? backgroundUrl;
 
+  /// The source's title logo (`logo`, a transparent clearlogo); see [logo].
+  final String? logoUrl;
+
+  /// The title logo to show in the hero: the source's own, else MetaHub's
+  /// by IMDb id (what Cinemeta's own `logo` points at). May 404: callers
+  /// fall back to the plain title.
+  String? get logo =>
+      logoUrl ??
+      (imdb == null
+          ? null
+          : 'https://images.metahub.space/logo/medium/$imdb/img');
+
   /// `releaseInfo` as sources send it: "1931", or "1959-1964" for a series.
   final String? year;
   final String? description;
@@ -650,6 +663,7 @@ class ArchiveMeta {
       name: name,
       posterUrl: _str(j['poster']),
       backgroundUrl: _str(j['background']),
+      logoUrl: _str(j['logo']),
       year: _str(j['releaseInfo']) ?? _str(j['year']),
       description: _str(j['description']),
       genres: _strs(j['genres']),
@@ -689,6 +703,7 @@ class ArchiveMeta {
         if (imdbId != null) 'imdb_id': imdbId,
         if (originalPosterUrl != null) 'poster': originalPosterUrl,
         if (backgroundUrl != null) 'background': backgroundUrl,
+        if (logoUrl != null) 'logo': logoUrl,
         if (year != null) 'releaseInfo': year,
         if (description != null) 'description': description,
         if (genres.isNotEmpty) 'genres': genres,

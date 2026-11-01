@@ -619,6 +619,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                             },
                           ),
                         ]),
+                  if (Platform.isAndroid)
+                    _section('upnext', Icons.queue_play_next, tr('Up Next'),
+                        children: [_UpNextPicker()]),
                   _section('trailers', Icons.movie_outlined, tr('Trailers'),
                       children: [
                         TvSwitchListTile(
@@ -711,6 +714,60 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                 ],
               ),
             ));
+  }
+}
+
+/// Playback > Up Next ([StorageService.getUpNextMode]): when the next
+/// episode starts by itself. One row; OK opens the choices.
+class _UpNextPicker extends StatefulWidget {
+  @override
+  State<_UpNextPicker> createState() => _UpNextPickerState();
+}
+
+class _UpNextPickerState extends State<_UpNextPicker> {
+  static const _modes = [
+    ('early', '30 seconds before the end'),
+    ('end', 'When the episode ends'),
+    ('off', 'Never'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final storage = context.read<StorageService>();
+    final current = storage.getUpNextMode();
+    final name = _modes.firstWhere((m) => m.$1 == current).$2;
+    return TvMenuTile(
+      leading: const Icon(Icons.queue_play_next),
+      title: tr('Play the next episode'),
+      subtitle: tr(
+          '{when}. On TV show episodes, the Up Next card counts down and the next episode starts by itself. Never: no countdown; the episode plays to its end.',
+          {'when': tr(name)}),
+      onTap: () async {
+        final picked = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            title: Text(tr('Play the next episode')),
+            children: [
+              for (final (id, label) in _modes)
+                TvDialogOption(
+                  autofocus: id == current,
+                  onPressed: () => Navigator.of(dialogContext).pop(id),
+                  child: Row(children: [
+                    Icon(id == current
+                        ? Icons.check_circle
+                        : Icons.circle_outlined),
+                    const SizedBox(width: 12),
+                    Text(tr(label)),
+                  ]),
+                ),
+            ],
+          ),
+        );
+        if (picked == null) return;
+        await storage.setUpNextMode(picked);
+        if (mounted) setState(() {});
+      },
+    );
   }
 }
 

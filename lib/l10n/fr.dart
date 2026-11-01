@@ -5,44 +5,32 @@
 /// Keep every `{placeholder}` exactly as in the key. `{s}` is the plural "s"
 /// the code fills in ("chaîne{s}").
 const Map<String, String> kFr = {
-  "Discord":
-      "Discord",
-  "Direct support through Discord":
-      "Aide directe sur Discord",
+  "Discord": "Discord",
+  "Direct support through Discord": "Aide directe sur Discord",
   "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
       "Questions, aide à la configuration, idées et nouvelles versions : rejoignez la communauté VesperTV sur Discord.",
   "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
       "VesperTV est gratuit et sans publicité. Un café ou un abonnement Supporter aide à couvrir ses frais.",
-  "Show a test popup":
-      "Afficher une fenêtre test",
+  "Show a test popup": "Afficher une fenêtre test",
   "A sample goal alert for 8 seconds.":
       "Un exemple d'alerte de but pendant 8 secondes.",
-  "Guide":
-      "Guide",
+  "Guide": "Guide",
   "Live TV guide layout, full-screen video, compact rows":
       "Disposition du guide, vidéo plein écran, lignes compactes",
-  "{n} titles":
-      "{n} titres",
-  "Open groups as expanded catalog":
-      "Ouvrir les groupes en catalogue étendu",
+  "{n} titles": "{n} titres",
+  "Open groups as expanded catalog": "Ouvrir les groupes en catalogue étendu",
   "Movies and TV Shows groups open the full poster grid instead of the rows.":
       "Les groupes Films et Séries s'ouvrent en grille d'affiches complète plutôt qu'en rangées.",
-  "Compact guide":
-      "Guide compact",
+  "Compact guide": "Guide compact",
   "Shorter Timeline rows so more channels fit in the same space.":
       "Lignes de la grille plus courtes pour afficher plus de chaînes.",
-  "Transparent popups":
-      "Fenêtres transparentes",
+  "Transparent popups": "Fenêtres transparentes",
   "Reminders and goal alerts lose their background and outline, keeping only the logo and text.":
       "Les rappels et alertes de but perdent leur fond et leur contour, il ne reste que le logo et le texte.",
-  "Use with playlist":
-      "Utiliser avec la playlist",
-  "Save EPG URL":
-      "Enregistrer l'URL du guide",
-  "Custom EPG URL saved.":
-      "URL du guide perso enregistrée.",
-  "Custom EPG URL cleared.":
-      "URL du guide perso supprimée.",
+  "Use with playlist": "Utiliser avec la playlist",
+  "Save EPG URL": "Enregistrer l'URL du guide",
+  "Custom EPG URL saved.": "URL du guide perso enregistrée.",
+  "Custom EPG URL cleared.": "URL du guide perso supprimée.",
   "Pick a playlist, then paste a third-party XMLTV link. Leave it blank to use the guide of that playlist. A channel is only filled in when the ids in the feed match the playlist.":
       "Choisissez une playlist, puis collez un lien XMLTV tiers. Laissez vide pour utiliser le guide de la playlist. Une chaîne n'est remplie que si les identifiants de la source correspondent à ceux de la playlist.",
   // Sports Trak quality preference (moved from the league bar).
@@ -55,18 +43,25 @@ const Map<String, String> kFr = {
   "Unlock touch controls": "Déverrouiller les commandes tactiles",
   "Touch controls locked": "Commandes tactiles verrouillées",
   // Media Hub custom posters.
-  "Add {imdb_id} or {tmdb_id} where the title goes.": "Ajoutez {imdb_id} ou {tmdb_id} à l'endroit du titre.",
+  "Add {imdb_id} or {tmdb_id} where the title goes.":
+      "Ajoutez {imdb_id} ou {tmdb_id} à l'endroit du titre.",
   "Custom posters": "Affiches personnalisées",
-  "Custom posters off: Media Hub shows the sources' posters.": "Affiches personnalisées désactivées : le Media Hub montre les affiches des sources.",
+  "Custom posters off: Media Hub shows the sources' posters.":
+      "Affiches personnalisées désactivées : le Media Hub montre les affiches des sources.",
   "Example: {url}": "Exemple : {url}",
-  "Media Hub posters from a poster service": "Affiches du Media Hub d'un service d'affiches",
+  "Media Hub posters from a poster service":
+      "Affiches du Media Hub d'un service d'affiches",
   "Poster address": "Adresse des affiches",
-  "Saved. Media Hub posters now come from this address.": "Enregistré. Les affiches du Media Hub viennent maintenant de cette adresse.",
-  "Show Media Hub posters from a poster service of your choice, for example one that adds ratings. Paste its poster address with {imdb_id} (or {tmdb_id}) where the title goes; include your own key if the service needs one.": "Affichez les affiches du Media Hub depuis le service de votre choix, par exemple un service qui ajoute les cotes. Collez son adresse d'affiche avec {imdb_id} (ou {tmdb_id}) à l'endroit du titre; incluez votre propre clé si le service en demande une.",
+  "Saved. Media Hub posters now come from this address.":
+      "Enregistré. Les affiches du Media Hub viennent maintenant de cette adresse.",
+  "Show Media Hub posters from a poster service of your choice, for example one that adds ratings. Paste its poster address with {imdb_id} (or {tmdb_id}) where the title goes; include your own key if the service needs one.":
+      "Affichez les affiches du Media Hub depuis le service de votre choix, par exemple un service qui ajoute les cotes. Collez son adresse d'affiche avec {imdb_id} (ou {tmdb_id}) à l'endroit du titre; incluez votre propre clé si le service en demande une.",
   "Turn off": "Désactiver",
-  "When a title has no matching ID, its normal poster is shown. Leave empty to turn it off.": "Si un titre n'a pas l'identifiant voulu, son affiche habituelle est montrée. Laissez vide pour désactiver.",
+  "When a title has no matching ID, its normal poster is shown. Leave empty to turn it off.":
+      "Si un titre n'a pas l'identifiant voulu, son affiche habituelle est montrée. Laissez vide pour désactiver.",
   // Media Hub experience (progressive sources, rows, discovery).
-  "Add your TMDB key for collections and cast credits": "Ajoutez votre clé TMDB pour les collections et la distribution",
+  "Add your TMDB key for collections and cast credits":
+      "Ajoutez votre clé TMDB pour les collections et la distribution",
   "Airs {date}": "Diffusion {date}",
   "All sources": "Toutes les sources",
   "Any source": "N'importe quelle source",
@@ -75,22 +70,26 @@ const Map<String, String> kFr = {
   "Collection": "Collection",
   "Continue series": "Continuer la série",
   "Could not load credits.": "Impossible de charger les crédits.",
-  "Could not load this title. Try again.": "Impossible de charger ce titre. Réessayez.",
+  "Could not load this title. Try again.":
+      "Impossible de charger ce titre. Réessayez.",
   "Customize": "Personnaliser",
   "Customize Media Hub": "Personnaliser le Media Hub",
   "Customize rows": "Personnaliser les rangées",
   "Explore more": "Explorer plus",
   "Explore this genre": "Explorer ce genre",
-  "Hide a row without disabling its playback source.": "Masquez une rangée sans désactiver sa source de lecture.",
+  "Hide a row without disabling its playback source.":
+      "Masquez une rangée sans désactiver sa source de lecture.",
   "Hide row": "Masquer la rangée",
-  "If no stream matches, choose one manually. Format and language information comes from your sources.": "Si aucun flux ne correspond, choisissez-en un manuellement. Le format et la langue proviennent de vos sources.",
+  "If no stream matches, choose one manually. Format and language information comes from your sources.":
+      "Si aucun flux ne correspond, choisissez-en un manuellement. Le format et la langue proviennent de vos sources.",
   "Leave empty to reset": "Laissez vide pour réinitialiser",
   "Loading": "Chargement",
   "Loading recommendations…": "Chargement des recommandations…",
   "Looking for streams…": "Recherche de flux…",
   "Maximum quality": "Qualité maximale",
   "More like this": "Dans le même genre",
-  "No compatible source for this title. Add a playback source in Media Hub settings.": "Aucune source compatible pour ce titre. Ajoutez une source de lecture dans les paramètres du Media Hub.",
+  "No compatible source for this title. Add a playback source in Media Hub settings.":
+      "Aucune source compatible pour ce titre. Ajoutez une source de lecture dans les paramètres du Media Hub.",
   "No credits found.": "Aucun crédit trouvé.",
   "No results": "Aucun résultat",
   "No streams": "Aucun flux",
@@ -112,8 +111,10 @@ const Map<String, String> kFr = {
   "Latest goal": "Dernier but",
   "Last play": "Dernière action",
   "Game situation": "Situation du match",
-  "OK: watch here  ·  Hold: pick the channel": "OK : regarder ici  ·  Maintenir : choisir la chaîne",
-  "Click: watch here  ·  Hold: pick the channel": "Cliquer : regarder ici  ·  Maintenir : choisir la chaîne",
+  "OK: watch here  ·  Hold: pick the channel":
+      "OK : regarder ici  ·  Maintenir : choisir la chaîne",
+  "Click: watch here  ·  Hold: pick the channel":
+      "Cliquer : regarder ici  ·  Maintenir : choisir la chaîne",
   "Open full Live TV": "Ouvrir Télé en direct complète",
   // Startup profile selector.
   "Launch with profiles selector": "Lancer avec le sélecteur de profils",
@@ -127,8 +128,10 @@ const Map<String, String> kFr = {
       "Impossible de changer de profil. Veuillez réessayer.",
 
   "Sports Mode": "Mode Sports",
-  "Make Sports Trak your home, with your top five leagues at the side.": "Faites de Sports Trak votre accueil, avec vos cinq premières ligues sur le côté.",
-  "Could not change Sports Mode. Try again.": "Impossible de changer le mode Sports. Réessayez.",
+  "Make Sports Trak your home, with your top five leagues at the side.":
+      "Faites de Sports Trak votre accueil, avec vos cinq premières ligues sur le côté.",
+  "Could not change Sports Mode. Try again.":
+      "Impossible de changer le mode Sports. Réessayez.",
   // Media Hub source cards.
   "Enabled": "Activée",
   "Catalogs from Cinemeta": "Catalogues de Cinemeta",
@@ -158,8 +161,10 @@ const Map<String, String> kFr = {
       "Afficher dans Autres place une source derrière le filtre de genre Autres dans Films et Séries.",
 
   "Remove from history": "Retirer de l’historique",
-  "Automatically play the largest file": "Lire automatiquement le plus gros fichier",
-  "Use the largest known file size when starting a title. Resume keeps your selected stream.": "Choisir le plus gros fichier connu au démarrage. La reprise conserve le flux sélectionné.",
+  "Automatically play the largest file":
+      "Lire automatiquement le plus gros fichier",
+  "Use the largest known file size when starting a title. Resume keeps your selected stream.":
+      "Choisir le plus gros fichier connu au démarrage. La reprise conserve le flux sélectionné.",
   "Prefer highest quality": "Préférer la meilleure qualité",
   "Remind me for every game: {team}": "Me rappeler chaque match : {team}",
   "Stop team reminders: {team}": "Désactiver les rappels : {team}",
@@ -176,13 +181,17 @@ const Map<String, String> kFr = {
   "Is about to start": "Le match va commencer",
 
   "Display": "Affichage",
-  "Match the TV to the video's frame rate and resolution": "Adapter le téléviseur à la fréquence d’images et à la résolution de la vidéo",
+  "Match the TV to the video's frame rate and resolution":
+      "Adapter le téléviseur à la fréquence d’images et à la résolution de la vidéo",
   "Match frame rate": "Adapter la fréquence d’images",
-  "Switches the TV to the video's frame rate a few seconds after it starts (50 Hz for UK and European channels, 24 Hz for films), for smooth motion. The screen goes black for a second or two while the TV switches; channels with the same rate don't switch again. Leaving the app gives the TV its own setting back.": "Passe le téléviseur à la fréquence d’images de la vidéo quelques secondes après le début (50 Hz pour les chaînes britanniques et européennes, 24 Hz pour les films), pour un mouvement fluide. L’écran devient noir une ou deux secondes pendant le changement; les chaînes à la même fréquence ne changent plus. En quittant l’app, le téléviseur reprend son propre réglage.",
+  "Switches the TV to the video's frame rate a few seconds after it starts (50 Hz for UK and European channels, 24 Hz for films), for smooth motion. The screen goes black for a second or two while the TV switches; channels with the same rate don't switch again. Leaving the app gives the TV its own setting back.":
+      "Passe le téléviseur à la fréquence d’images de la vidéo quelques secondes après le début (50 Hz pour les chaînes britanniques et européennes, 24 Hz pour les films), pour un mouvement fluide. L’écran devient noir une ou deux secondes pendant le changement; les chaînes à la même fréquence ne changent plus. En quittant l’app, le téléviseur reprend son propre réglage.",
   "Only switch between 50 and 60 Hz": "Changer seulement entre 50 et 60 Hz",
-  "Films at 24 frames per second keep the current rate, so fewer switches.": "Les films à 24 images par seconde gardent la fréquence actuelle : moins de changements.",
+  "Films at 24 frames per second keep the current rate, so fewer switches.":
+      "Les films à 24 images par seconde gardent la fréquence actuelle : moins de changements.",
   "Match resolution": "Adapter la résolution",
-  "Switches the TV to the video's resolution (1080p, 4K…) so the TV does the upscaling. Off: this device scales every video to its current resolution.": "Passe le téléviseur à la résolution de la vidéo (1080p, 4K…) pour que le téléviseur fasse la mise à l’échelle. Désactivé : cet appareil met chaque vidéo à sa résolution actuelle.",
+  "Switches the TV to the video's resolution (1080p, 4K…) so the TV does the upscaling. Off: this device scales every video to its current resolution.":
+      "Passe le téléviseur à la résolution de la vidéo (1080p, 4K…) pour que le téléviseur fasse la mise à l’échelle. Désactivé : cet appareil met chaque vidéo à sa résolution actuelle.",
   "Stream HDR": "HDR du flux",
   "No (SDR)": "Non (SDR)",
   "Home": "Accueil",
@@ -191,18 +200,23 @@ const Map<String, String> kFr = {
   "Favourite channels": "Chaînes favorites",
   "New movies": "Nouveaux films",
   "New TV shows": "Nouvelles séries",
+  'Series': "Série",
   "Movie": "Film",
   "Move row up": "Monter la rangée",
   "Move row down": "Descendre la rangée",
   "Hide this row": "Masquer cette rangée",
   "Edit Home rows…": "Modifier les rangées de l’accueil…",
   "Home rows": "Rangées de l’accueil",
-  "Nothing here yet. Watch a channel, a movie or a show and it shows up on Home.": "Rien pour l’instant. Regardez une chaîne, un film ou une série et ils apparaîtront ici.",
+  "Nothing here yet. Watch a channel, a movie or a show and it shows up on Home.":
+      "Rien pour l’instant. Regardez une chaîne, un film ou une série et ils apparaîtront ici.",
   "Native video surface (beta)": "Surface vidéo native (bêta)",
-  "Plays the picture the way native TV apps do, for HDR that looks washed out or green flashes under the guide (Fire TV Cube, NVIDIA Shield). Restart the app after changing it. If the picture is missing, in the wrong place or menus look wrong, turn it off and send us a log.": "Affiche l’image comme les applications TV natives, pour un HDR délavé ou des éclairs verts sous le guide (Fire TV Cube, NVIDIA Shield). Redémarrez l’application après l’avoir modifié. Si l’image manque, est mal placée ou si les menus s’affichent mal, désactivez-le et envoyez-nous un journal.",
-  "Close the app completely and open it again to apply this change.": "Fermez complètement l’application et rouvrez-la pour appliquer ce changement.",
+  "Plays the picture the way native TV apps do, for HDR that looks washed out or green flashes under the guide (Fire TV Cube, NVIDIA Shield). Restart the app after changing it. If the picture is missing, in the wrong place or menus look wrong, turn it off and send us a log.":
+      "Affiche l’image comme les applications TV natives, pour un HDR délavé ou des éclairs verts sous le guide (Fire TV Cube, NVIDIA Shield). Redémarrez l’application après l’avoir modifié. Si l’image manque, est mal placée ou si les menus s’affichent mal, désactivez-le et envoyez-nous un journal.",
+  "Close the app completely and open it again to apply this change.":
+      "Fermez complètement l’application et rouvrez-la pour appliquer ce changement.",
   "Green flicker fix (test)": "Correctif du scintillement vert (test)",
-  "For green flashes on the picture while the guide or a menu is over it (NVIDIA Shield). Unlike Compatibility video it keeps HDR. Applies from the next channel. If the guide or menus disappear behind the video, turn it off.": "Pour les éclairs verts sur l’image quand le guide ou un menu est par-dessus (NVIDIA Shield). Contrairement à Vidéo compatible, le HDR est conservé. S’applique à la prochaine chaîne. Si le guide ou les menus disparaissent derrière la vidéo, désactivez-le.",
+  "For green flashes on the picture while the guide or a menu is over it (NVIDIA Shield). Unlike Compatibility video it keeps HDR. Applies from the next channel. If the guide or menus disappear behind the video, turn it off.":
+      "Pour les éclairs verts sur l’image quand le guide ou un menu est par-dessus (NVIDIA Shield). Contrairement à Vidéo compatible, le HDR est conservé. S’applique à la prochaine chaîne. Si le guide ou les menus disparaissent derrière la vidéo, désactivez-le.",
   'Automatic: on for this device.': 'Automatique : activé pour cet appareil.',
   '1 hour': '1 heure',
   '{h} hours': '{h} heures',
@@ -262,7 +276,8 @@ const Map<String, String> kFr = {
   'Move to the big screen': "Mettre sur le grand écran",
   'Swap mode': "Mode échange",
   'SWAP': "ÉCHANGE",
-  'Arrows swap · OK or Back to finish': "Flèches : échanger · OK ou Retour : terminer",
+  'Arrows swap · OK or Back to finish':
+      "Flèches : échanger · OK ou Retour : terminer",
   '2 screens': "2 écrans",
   '= audio — Select to switch, hold Select for options':
       "= audio — OK pour changer, maintenir OK pour les options",
@@ -286,7 +301,8 @@ const Map<String, String> kFr = {
   'Back': "Retour",
   'Fit to screen': "Ajuster à l'écran",
   'Fill screen': "Remplir l'écran",
-  'Closed captions (CC) — if the channel broadcasts them': "Sous-titres codés (CC) — si la chaîne les diffuse",
+  'Closed captions (CC) — if the channel broadcasts them':
+      "Sous-titres codés (CC) — si la chaîne les diffuse",
   'Up Next': "À suivre",
   'Playing in {countdown}s': "Lecture dans {countdown} s",
   'Playing now...': "Lecture…",
@@ -303,16 +319,14 @@ const Map<String, String> kFr = {
   'This device\'s video decoder couldn\'t play this stream — likely 4K HDR (HEVC 10-bit). If your provider offers an HD (non-4K) version of this channel or title, try that. If another app plays this stream on this device, please report it with a photo of the technical details below.':
       "Le décodeur vidéo de cet appareil n'a pas pu lire ce flux — probablement du 4K HDR (HEVC 10 bits). Si votre fournisseur offre une version HD (non 4K) de cette chaîne ou de ce titre, essayez-la. Si une autre appli lit ce flux sur cet appareil, signalez-le avec une photo des détails techniques ci-dessous.",
   'Playback error:\n{raw}': "Erreur de lecture :\n{raw}",
-  "Server error {code}":
-      "Erreur serveur {code}",
+  "Server error {code}": "Erreur serveur {code}",
   "The provider's server had a problem. Try again in a moment.":
       "Le serveur du fournisseur a rencontré un problème. Réessayez dans un instant.",
   "The provider refused the stream: check that your account is active and not already in use on another device.":
       "Le fournisseur a refusé le flux : vérifiez que votre compte est actif et pas déjà utilisé sur un autre appareil.",
   "The provider has no stream at this address: the channel or title may have been removed.":
       "Le fournisseur n'a aucun flux à cette adresse : la chaîne ou le titre a peut-être été retiré.",
-  "The provider rejected the request.":
-      "Le fournisseur a rejeté la demande.",
+  "The provider rejected the request.": "Le fournisseur a rejeté la demande.",
   "Couldn't reach the provider's server. Check your internet connection, or the server may be down.":
       "Impossible de joindre le serveur du fournisseur. Vérifiez votre connexion Internet, ou le serveur est peut-être hors service.",
   "Couldn't find the provider's server address. Check your internet connection or DNS settings, or try again later.":
@@ -330,8 +344,7 @@ const Map<String, String> kFr = {
   "Remove from favourite networks": "Retirer des réseaux favoris",
   "Networks": "Réseaux",
   "Other sports channels": "Autres chaînes sportives",
-  "On now":
-      "En ce moment",
+  "On now": "En ce moment",
   "No channel matches these filters.":
       "Aucune chaîne ne correspond à ces filtres.",
   "No sports channels found in your playlists.":
@@ -342,21 +355,21 @@ const Map<String, String> kFr = {
       "OK · Plein écran   Maintenir OK · Choisir une chaîne   Retour · Arrêter",
   "OK · Preview   Hold OK · Pick a channel or add to a list":
       "OK · Aperçu   Maintenir OK · Choisir une chaîne ou l'ajouter à une liste",
-  "See all":
-      "Tout voir",
-  "Update automatically":
-      "Mettre à jour automatiquement",
+  "See all": "Tout voir",
+  "Update automatically": "Mettre à jour automatiquement",
   "On: when an update is due, it runs at launch without asking. Off: the app asks \"Update content now?\" first.":
       "Activé : quand une mise à jour est due, elle se lance au démarrage sans demander. Désactivé : l'appli demande d'abord « Mettre à jour le contenu maintenant ? ».",
-  "Open on":
-      "Ouvrir sur",
+  "Open on": "Ouvrir sur",
   "{section}. Where the app opens after starting. With \"Resume last channel in full screen\" on, the channel then plays in the background instead.":
       "{section}. L'écran où l'appli s'ouvre au démarrage. Si « Reprendre la dernière chaîne en plein écran » est activé, la chaîne joue alors en arrière-plan.",
   "Subtitle size": "Taille des sous-titres",
   "Enter a name first": "Saisissez d’abord un nom",
-  "Dolby Vision (profile {p}, no HDR10 fallback)": "Dolby Vision (profil {p}, sans repli HDR10)",
-  "Dolby Vision (profile {p}, HDR10 compatible)": "Dolby Vision (profil {p}, compatible HDR10)",
-  "Dolby Vision (profile {p}, HLG compatible)": "Dolby Vision (profil {p}, compatible HLG)",
+  "Dolby Vision (profile {p}, no HDR10 fallback)":
+      "Dolby Vision (profil {p}, sans repli HDR10)",
+  "Dolby Vision (profile {p}, HDR10 compatible)":
+      "Dolby Vision (profil {p}, compatible HDR10)",
+  "Dolby Vision (profile {p}, HLG compatible)":
+      "Dolby Vision (profil {p}, compatible HLG)",
   "Dolby Vision (profile {p})": "Dolby Vision (profil {p})",
   "Extra small": "Très petite",
   "Small": "Petite",
@@ -365,40 +378,30 @@ const Map<String, String> kFr = {
   "Extra large": "Très grande",
   'Off': "Désactivés",
   'Forced': "Forcés",
-  'Online':
-      'En ligne',
-  'Search online subtitles':
-      'Chercher des sous-titres en ligne',
+  'Online': 'En ligne',
+  'Search online subtitles': 'Chercher des sous-titres en ligne',
   'From your add-ons (Settings > Add-ons)':
       'Avec vos modules (Paramètres > Modules)',
-  'Online subtitles':
-      'Sous-titres en ligne',
+  'Online subtitles': 'Sous-titres en ligne',
   'No subtitles found for this title.':
       'Aucun sous-titre trouvé pour ce titre.',
   "Couldn't download that subtitle. Try another.":
       'Impossible de télécharger ce sous-titre. Essayez-en un autre.',
-  'Add-ons':
-      'Modules',
+  'Add-ons': 'Modules',
   'Online subtitles in more languages':
       'Sous-titres en ligne dans plus de langues',
-  'Remove {name}?':
-      'Retirer {name} ?',
+  'Remove {name}?': 'Retirer {name} ?',
   "That link isn't a subtitle add-on (only subtitle add-ons are supported).":
       "Ce lien n'est pas un module de sous-titres (seuls ceux-ci sont pris en charge).",
-  'That add-on is already in the list.':
-      'Ce module est déjà dans la liste.',
-  '{name} added.':
-      '{name} ajouté.',
+  'That add-on is already in the list.': 'Ce module est déjà dans la liste.',
+  '{name} added.': '{name} ajouté.',
   "Add-ons find subtitles online for movies and episodes, in many languages. They are free community services, separate from your provider — VesperTV only uses them for subtitles. Turn one on, then pick \"Search online subtitles\" in the player's Subtitles button.":
       'Les modules trouvent des sous-titres en ligne pour les films et les épisodes, dans de nombreuses langues. Ce sont des services communautaires gratuits, distincts de votre fournisseur — VesperTV ne les utilise que pour les sous-titres. Activez-en un, puis choisissez « Chercher des sous-titres en ligne » dans le bouton Sous-titres du lecteur.',
-  'Subtitle add-ons':
-      'Modules de sous-titres',
+  'Subtitle add-ons': 'Modules de sous-titres',
   'Subtitles in 60+ languages from OpenSubtitles.org':
       'Sous-titres en plus de 60 langues depuis OpenSubtitles.org',
-  'Hold OK to remove':
-      'Maintenir OK pour retirer',
-  'Add an add-on':
-      'Ajouter un module',
+  'Hold OK to remove': 'Maintenir OK pour retirer',
+  'Add an add-on': 'Ajouter un module',
   'Add-on link (ends with manifest.json)':
       'Lien du module (se termine par manifest.json)',
   'Only subtitle add-ons work here. When one is on, the title and episode you are watching are sent to it to find subtitles; nothing else is shared.':
@@ -465,7 +468,8 @@ const Map<String, String> kFr = {
   'Switch Profile': "Changer de profil",
   'Restricted': "Restreint",
   'Search everything...': "Tout rechercher…",
-  'Search everything... (press OK to type)': "Tout rechercher… (OK pour écrire)",
+  'Search everything... (press OK to type)':
+      "Tout rechercher… (OK pour écrire)",
   'Still loading the full catalog in the background ({warmCatalogDone}/{warmCatalogTotal} categories) — some results may not show up yet.':
       "Le catalogue complet charge encore en arrière-plan ({warmCatalogDone}/{warmCatalogTotal} catégories) — certains résultats peuvent manquer.",
   'Search Live TV, Movies & TV Shows':
@@ -553,8 +557,7 @@ const Map<String, String> kFr = {
   'Tap: watch here  ·  Hold: pick the channel':
       "Toucher : regarder ici  ·  Maintenir : choisir la chaîne",
   'Play here': "Lire ici",
-  '{channel} · plays at the top of {tab}':
-      "{channel} · joue en haut de {tab}",
+  '{channel} · plays at the top of {tab}': "{channel} · joue en haut de {tab}",
   '▶❚❚: watch this game  ·  Back: playing game':
       "▶❚❚ : regarder ce match  ·  Retour : match en cours",
   'OK: full screen  ·  ▶❚❚ or Back: stop':
@@ -594,14 +597,10 @@ const Map<String, String> kFr = {
   'Your pick': "Votre choix",
   'Found by its name': "Trouvée par son nom",
   'Found in the guide': "Trouvée dans le guide",
-  "Team's channel, no guide listing":
-      "Chaîne de l'équipe, pas dans le guide",
-  "Broadcaster, no guide listing":
-      "Diffuseur, pas dans le guide",
-  "Only on a hidden channel":
-      "Seulement sur une chaîne masquée",
-  "Not in your guide yet":
-      "Pas encore dans votre guide",
+  "Team's channel, no guide listing": "Chaîne de l'équipe, pas dans le guide",
+  "Broadcaster, no guide listing": "Diffuseur, pas dans le guide",
+  "Only on a hidden channel": "Seulement sur une chaîne masquée",
+  "Not in your guide yet": "Pas encore dans votre guide",
   "On a hidden channel — OK to pick one":
       "Sur une chaîne masquée — OK pour en choisir une",
   "Not in your guide yet — OK to pick one":
@@ -648,36 +647,24 @@ const Map<String, String> kFr = {
   'Cancel Hide': "Annuler le masquage",
   'Hide Group': "Masquer le groupe",
   'Move Up / Down': "Monter / descendre",
-  "Show":
-      "Afficher",
-  "Hide":
-      "Masquer",
-  "Hidden here · {n} groups":
-      "Masquée ici · {n} groupes",
-  "At least one playlist stays shown.":
-      "Au moins une playlist reste affichée.",
-  "{name} hidden in {tab}":
-      "{name} masquée dans {tab}",
-  "{name} shown in {tab}":
-      "{name} affichée dans {tab}",
-  "Playlists":
-      "Playlists",
-  "Jump to playlist":
-      "Aller à la playlist",
-  "{n} groups":
-      "{n} groupes",
-  "Background video":
-      "Vidéo en arrière-plan",
+  "Show": "Afficher",
+  "Hide": "Masquer",
+  "Hidden here · {n} groups": "Masquée ici · {n} groupes",
+  "At least one playlist stays shown.": "Au moins une playlist reste affichée.",
+  "{name} hidden in {tab}": "{name} masquée dans {tab}",
+  "{name} shown in {tab}": "{name} affichée dans {tab}",
+  "Playlists": "Playlists",
+  "Jump to playlist": "Aller à la playlist",
+  "{n} groups": "{n} groupes",
+  "Background video": "Vidéo en arrière-plan",
   "Mute": "Couper le son",
   "Unmute": "Rétablir le son",
-  "Show under Other":
-      "Afficher dans Autre",
+  "Show under Other": "Afficher dans Autre",
   "On: this source only appears behind the Other genre filter (Movies and TV Shows). Off: in the main rows. Press Refresh in Media Hub after changing this.":
       "Activé : cette source n'apparaît que derrière le filtre de genre Autre (Films et Séries). Désactivé : dans les rangées principales. Appuyez sur Actualiser dans Media Hub après un changement.",
   "Use the Other filter in Media Hub > Movies / TV Shows > Genre to see this source.":
       "Utilisez le filtre Autre dans Media Hub > Films / Séries > Genre pour voir cette source.",
-  "Back to main":
-      "Retour au principal",
+  "Back to main": "Retour au principal",
   "Compatibility video": "Vidéo compatible",
   "Turn this on if the picture shows twice, in the wrong size or as coloured stripes (older Fire TV sticks). Applies from the next channel. On by default on Android 7 and older.":
       "Activez ceci si l'image s'affiche en double, à la mauvaise taille ou en rayures de couleur (anciennes clés Fire TV). S'applique à partir de la chaîne suivante. Activé par défaut sur Android 7 et versions antérieures.",
@@ -690,66 +677,49 @@ const Map<String, String> kFr = {
       "Taper une adresse de serveur et un mot de passe avec une télécommande est pénible. Scannez ce code avec l'appareil photo de votre téléphone et connectez-vous là-bas — les informations apparaissent ici pour que vous les vérifiiez.",
   "Check the details here, then press Connect.":
       "Vérifiez les informations ici, puis appuyez sur Connecter.",
-  "{n} other catalogs":
-      "{n} autres catalogues",
+  "{n} other catalogs": "{n} autres catalogues",
   "Use the Other filter in Media Hub > Movies > Genre to see this content.":
       "Utilisez le filtre Autres dans Media Hub > Films > Genre pour voir ce contenu.",
-  "Backup & restore":
-      "Sauvegarde et restauration",
+  "Backup & restore": "Sauvegarde et restauration",
   "Save everything to a file on this device":
       "Tout enregistrer dans un fichier sur cet appareil",
-  "Back up now":
-      "Sauvegarder maintenant",
+  "Back up now": "Sauvegarder maintenant",
   "Playlists, favourites, profiles, progress and settings, saved to {path}":
       "Playlists, favoris, profils, progression et réglages, enregistrés dans {path}",
-  "Automatic backup":
-      "Sauvegarde automatique",
+  "Automatic backup": "Sauvegarde automatique",
   "Once a week, when VesperTV starts. Keeps the last {n}.":
       "Une fois par semaine, au démarrage de VesperTV. Garde les {n} dernières.",
-  "Restore from a file":
-      "Restaurer depuis un fichier",
+  "Restore from a file": "Restaurer depuis un fichier",
   "Pick a backup file, e.g. after reinstalling VesperTV":
       "Choisissez un fichier de sauvegarde, par exemple après avoir réinstallé VesperTV",
-  "Backups":
-      "Sauvegardes",
-  "No backups yet.":
-      "Aucune sauvegarde pour l'instant.",
+  "Backups": "Sauvegardes",
+  "No backups yet.": "Aucune sauvegarde pour l'instant.",
   "Backups include your playlist logins. Keep the files private.":
       "Les sauvegardes contiennent les identifiants de vos playlists. Gardez ces fichiers privés.",
-  "Manual":
-      "Manuelle",
-  "Restore this backup":
-      "Restaurer cette sauvegarde",
-  "Restore":
-      "Restaurer",
-  "Restore backup?":
-      "Restaurer la sauvegarde ?",
+  "Manual": "Manuelle",
+  "Restore this backup": "Restaurer cette sauvegarde",
+  "Restore": "Restaurer",
+  "Restore backup?": "Restaurer la sauvegarde ?",
   "Everything on this device (playlists, favourites, profiles, settings) is replaced by the backup from {from}. Your current setup is saved as an automatic backup first. VesperTV closes afterwards.":
       "Tout ce qui est sur cet appareil (playlists, favoris, profils, réglages) est remplacé par la sauvegarde du {from}. Votre configuration actuelle est d'abord enregistrée comme sauvegarde automatique. VesperTV se ferme ensuite.",
-  "the chosen file":
-      "le fichier choisi",
-  "Backup restored":
-      "Sauvegarde restaurée",
-  "Backup saved to {path}":
-      "Sauvegarde enregistrée dans {path}",
-  "Backup failed: {error}":
-      "Échec de la sauvegarde : {error}",
+  "the chosen file": "le fichier choisi",
+  "Backup restored": "Sauvegarde restaurée",
+  "Backup saved to {path}": "Sauvegarde enregistrée dans {path}",
+  "Backup failed: {error}": "Échec de la sauvegarde : {error}",
   "VesperTV needs storage access to save backups.":
       "VesperTV a besoin de l'accès au stockage pour enregistrer les sauvegardes.",
   "Couldn't read the backup folder: {error}":
       "Impossible de lire le dossier de sauvegarde : {error}",
   "Couldn't read this backup: {error}":
       "Impossible de lire cette sauvegarde : {error}",
-  "Couldn't delete this backup.":
-      "Impossible de supprimer cette sauvegarde.",
+  "Couldn't delete this backup.": "Impossible de supprimer cette sauvegarde.",
   "This device has no file picker. Copy the backup into {path} on this device instead.":
       "Cet appareil n'a pas de sélecteur de fichiers. Copiez plutôt la sauvegarde dans {path} sur cet appareil.",
   "This file is not a VesperTV backup.":
       "Ce fichier n'est pas une sauvegarde VesperTV.",
   "Up / Down moves {name}. OK when done.":
       "Haut / Bas déplace {name}. OK pour terminer.",
-  "Mix playlists in Favourites":
-      "Mélanger les playlists dans les favoris",
+  "Mix playlists in Favourites": "Mélanger les playlists dans les favoris",
   "TV, Movies and TV Shows favourites from every playlist in one A-Z list, instead of one list per playlist.":
       "Les favoris TV, Films et Séries de toutes les playlists dans une seule liste de A à Z, au lieu d'une liste par playlist.",
   'Move to Top': "Mettre en haut",
@@ -1050,7 +1020,8 @@ const Map<String, String> kFr = {
   '{shown} of {total} groups': '{shown} groupes sur {total}',
   'Show results': 'Afficher les résultats',
   'Hide results': 'Masquer les résultats',
-  'No groups start with "{query}".': 'Aucun groupe ne commence par « {query} ».',
+  'No groups start with "{query}".':
+      'Aucun groupe ne commence par « {query} ».',
   'Show All': "Tout afficher",
   'Hide All': "Tout masquer",
   'Hidden channels': "Chaînes masquées",
@@ -1288,6 +1259,9 @@ const Map<String, String> kFr = {
   'Other': "Autres",
   'Golf': "Golf",
   'Tennis': "Tennis",
+  'Rugby': "Rugby",
+  'Cricket': "Cricket",
+  'Darts': "Fléchettes",
   'Fighting': "Combat",
   'Motorsport': "Sport automobile",
   'Always for {name}': "Toujours pour {name}",
@@ -1325,37 +1299,23 @@ const Map<String, String> kFr = {
   '24-hour clock': "Horloge 24 heures",
   'Times show as 21:30': "Les heures s'affichent ainsi : 21:30",
   'Times show as 9:30 PM': "Les heures s'affichent ainsi : 9:30 PM",
-  'Welcome back, legend':
-      "Bon retour, légende",
+  'Welcome back, legend': "Bon retour, légende",
   'No favourites yet. Hold Select on a poster or a group to add one.':
       "Aucun favori pour l'instant. Maintiens OK sur une affiche ou un groupe pour en ajouter.",
   'Rotate': "Pivoter",
-  'You have great taste':
-      "Tu as vraiment bon goût",
-  'Looking sharp today':
-      "Tu as fière allure aujourd'hui",
-  'You make this place better':
-      "Tu rends cet endroit meilleur",
-  'Hey superstar':
-      "Salut, superstar",
-  'You deserve this break':
-      "Tu mérites cette pause",
-  'You\'re doing amazing':
-      "Tu fais un travail incroyable",
-  'Hello, wonderful you':
-      "Bonjour, toi la merveille",
-  'Smart choice, as always':
-      "Bon choix, comme toujours",
-  'You light up the room':
-      "Tu illumines la pièce",
-  'Keep shining, you\'ve got this':
-      "Continue de briller, tu gères",
-  'You earned some fun today':
-      "Tu as mérité un peu de plaisir aujourd'hui",
-  'The world is better with you in it':
-      "Le monde est meilleur avec toi",
-  'Hey champ, welcome in':
-      "Salut champion, entre donc",
+  'You have great taste': "Tu as vraiment bon goût",
+  'Looking sharp today': "Tu as fière allure aujourd'hui",
+  'You make this place better': "Tu rends cet endroit meilleur",
+  'Hey superstar': "Salut, superstar",
+  'You deserve this break': "Tu mérites cette pause",
+  'You\'re doing amazing': "Tu fais un travail incroyable",
+  'Hello, wonderful you': "Bonjour, toi la merveille",
+  'Smart choice, as always': "Bon choix, comme toujours",
+  'You light up the room': "Tu illumines la pièce",
+  'Keep shining, you\'ve got this': "Continue de briller, tu gères",
+  'You earned some fun today': "Tu as mérité un peu de plaisir aujourd'hui",
+  'The world is better with you in it': "Le monde est meilleur avec toi",
+  'Hey champ, welcome in': "Salut champion, entre donc",
   'Send from this device': "Envoyer depuis cet appareil",
   'Shows a code to enter on the other device':
       "Affiche un code à entrer sur l'autre appareil",
@@ -1402,12 +1362,10 @@ const Map<String, String> kFr = {
   '{n} profiles': "{n} profils",
   '{n} favorite': "{n} favori",
   '{n} favorites': "{n} favoris",
-  'Clear favourites?':
-      "Effacer les favoris?",
+  'Clear favourites?': "Effacer les favoris?",
   "Removes every starred item and favourite group from this tab's Favourites.":
       "Retire tous les éléments étoilés et groupes favoris des Favoris de cet onglet.",
-  'Favourites cleared.':
-      "Favoris effacés.",
+  'Favourites cleared.': "Favoris effacés.",
   'Delete watched history?': "Supprimer l'historique de visionnage?",
   'Removes the History list of live channels.':
       "Efface la liste Historique des chaînes en direct.",
@@ -1436,7 +1394,8 @@ const Map<String, String> kFr = {
       "Les affiches et données des films et séries peuvent provenir de TMDB (The Movie Database).",
   '{appName} {version} is available': "{appName} {version} est disponible",
   "What's new:": "Nouveautés :",
-  'A new version is ready to install.': "Une nouvelle version est prête à être installée.",
+  'A new version is ready to install.':
+      "Une nouvelle version est prête à être installée.",
   'Skip this version': "Ignorer cette version",
   'Later': "Plus tard",
   'See all · stats': "Tout voir · stats",
@@ -1446,7 +1405,8 @@ const Map<String, String> kFr = {
   'RED ZONE': "ZONE ROUGE",
   'No channel': "Aucune chaîne",
   'Watch on {channel}': "Regarder sur {channel}",
-  'No channel found. Hold OK on the game in {tab} to pick one.': "Aucune chaîne trouvée. Maintenez OK sur le match dans {tab} pour en choisir une.",
+  'No channel found. Hold OK on the game in {tab} to pick one.':
+      "Aucune chaîne trouvée. Maintenez OK sur le match dans {tab} pour en choisir une.",
   '▲▼ scroll · Back closes': "▲▼ défiler · Retour ferme",
   'Passing': "Passes",
   'Rushing': "Course",
@@ -1465,11 +1425,13 @@ const Map<String, String> kFr = {
   'Goals': "Buts",
   'pen.': "pén.",
   'Team stats': "Stats d'équipe",
-  'OK = stats · hold OK = channels · ▶❚❚ = watch': "OK = stats · maintenir OK = chaînes · ▶❚❚ = regarder",
+  'OK = stats · hold OK = channels · ▶❚❚ = watch':
+      "OK = stats · maintenir OK = chaînes · ▶❚❚ = regarder",
   '{channel} · full screen': "{channel} · plein écran",
   // ── Archive tab ──────────────────────────────────────────────────────
   "Add a source": "Ajouter une source",
-  "Couldn't load the catalog: {error}": "Impossible de charger le catalogue : {error}",
+  "Couldn't load the catalog: {error}":
+      "Impossible de charger le catalogue : {error}",
   "Couldn't reach that link.": "Impossible de joindre ce lien.",
   "This link failed at the provider. Choose another stream.":
       "Ce lien a échoué chez le fournisseur. Choisissez un autre flux.",
@@ -1480,14 +1442,18 @@ const Map<String, String> kFr = {
   "None of your sources has movies.": "Aucune de vos sources n'a de films.",
   "Nothing here yet.": "Rien ici pour l'instant.",
   "Refresh": "Actualiser",
-  "Source link (ends with manifest.json)": "Lien de la source (se termine par manifest.json)",
+  "Source link (ends with manifest.json)":
+      "Lien de la source (se termine par manifest.json)",
   "That source is already in the list.": "Cette source est déjà dans la liste.",
-  "This source lists no episodes for this show.": "Cette source n'indique aucun épisode pour cette série.",
-  "VesperTV ships no sources. The titles you open are requested from the source you added; nothing else is shared.": "VesperTV n'inclut aucune source. Les titres que vous ouvrez sont demandés à la source ajoutée; rien d'autre n'est partagé.",
+  "This source lists no episodes for this show.":
+      "Cette source n'indique aucun épisode pour cette série.",
+  "VesperTV ships no sources. The titles you open are requested from the source you added; nothing else is shared.":
+      "VesperTV n'inclut aucune source. Les titres que vous ouvrez sont demandés à la source ajoutée; rien d'autre n'est partagé.",
   "Your sources": "Vos sources",
   "{n} TV show catalogs": "{n} catalogues de séries",
   "{n} movie catalogs": "{n} catalogues de films",
-  "Check the link here, then press Add.": "Vérifiez le lien ici, puis appuyez sur Ajouter.",
+  "Check the link here, then press Add.":
+      "Vérifiez le lien ici, puis appuyez sur Ajouter.",
   "Hide Movies": "Masquer Films",
   "Hide TV Shows": "Masquer Séries",
   "Hide Recordings": "Masquer les enregistrements",
@@ -1499,11 +1465,15 @@ const Map<String, String> kFr = {
       "Collez la clé et touchez Envoyer à la télé.",
   "Check it here, then press Save.":
       "Vérifiez-le ici, puis appuyez sur Enregistrer.",
-  "Paste the link and tap Send to TV.": "Collez le lien et touchez Envoyer à la télé.",
-  "Removes the Movies tab and movie search results.": "Retire l'onglet Films et les films des résultats de recherche.",
-  "Removes the TV Shows tab and show search results.": "Retire l'onglet Séries et les séries des résultats de recherche.",
+  "Paste the link and tap Send to TV.":
+      "Collez le lien et touchez Envoyer à la télé.",
+  "Removes the Movies tab and movie search results.":
+      "Retire l'onglet Films et les films des résultats de recherche.",
+  "Removes the TV Shows tab and show search results.":
+      "Retire l'onglet Séries et les séries des résultats de recherche.",
   "Removes the Recordings tab.": "Retire l’onglet Enregistrements.",
-  "Typing a long link with a remote is painful. Scan this code with your phone camera and paste the link there — it appears here for you to check and add.": "Taper un long lien avec une télécommande, c'est pénible. Scannez ce code avec l'appareil photo de votre téléphone et collez-y le lien — il apparaît ici pour que vous le vérifiiez et l'ajoutiez.",
+  "Typing a long link with a remote is painful. Scan this code with your phone camera and paste the link there — it appears here for you to check and add.":
+      "Taper un long lien avec une télécommande, c'est pénible. Scannez ce code avec l'appareil photo de votre téléphone et collez-y le lien — il apparaît ici pour que vous le vérifiiez et l'ajoutiez.",
   // Archive: rows, search, stream picker
   'Popular': 'Populaires',
   'New': 'Nouveautés',
@@ -1520,26 +1490,39 @@ const Map<String, String> kFr = {
   // Transfer: Archive tab data
   // Media Hub tab (was Extras, before that Archive) + Multiview toggle
   // Trakt & Simkl (trackers_screen.dart, tracker rows)
-  'Watch tracking powered by Trakt and Simkl; VesperTV is not affiliated with or endorsed by either.': "Suivi de visionnage fourni par Trakt et Simkl; VesperTV n'est ni affilié à l'un ni approuvé par l'un ou l'autre.",
-  'Powered by Trakt (trakt.tv) and Simkl (simkl.com).': "Fourni par Trakt (trakt.tv) et Simkl (simkl.com).",
-  'VesperTV is not affiliated with or endorsed by Trakt or Simkl.': "VesperTV n'est ni affilié à Trakt ou Simkl, ni approuvé par eux.",
+  'Watch tracking powered by Trakt and Simkl; VesperTV is not affiliated with or endorsed by either.':
+      "Suivi de visionnage fourni par Trakt et Simkl; VesperTV n'est ni affilié à l'un ni approuvé par l'un ou l'autre.",
+  'Powered by Trakt (trakt.tv) and Simkl (simkl.com).':
+      "Fourni par Trakt (trakt.tv) et Simkl (simkl.com).",
+  'VesperTV is not affiliated with or endorsed by Trakt or Simkl.':
+      "VesperTV n'est ni affilié à Trakt ou Simkl, ni approuvé par eux.",
   'Trakt & Simkl': 'Trakt et Simkl',
-  'Track what you watch, lists in the Media Hub': 'Suivi de ce que vous regardez, listes dans le Media Hub',
-  'Connected as {name} — press OK to disconnect': 'Connecté en tant que {name} — OK pour déconnecter',
+  'Track what you watch, lists in the Media Hub':
+      'Suivi de ce que vous regardez, listes dans le Media Hub',
+  'Connected as {name} — press OK to disconnect':
+      'Connecté en tant que {name} — OK pour déconnecter',
   'Not available in this build yet': 'Pas encore disponible dans cette version',
-  'Connect a watch tracker: what you watch in the Media Hub is marked as watched on your account, and your lists show up as Media Hub rows. Nothing is sent unless you connect an account.': 'Connectez un service de suivi : ce que vous regardez dans le Media Hub est marqué comme vu sur votre compte, et vos listes apparaissent en rangées dans le Media Hub. Rien n\'est envoyé si vous ne connectez pas de compte.',
-  'Watchlist and trending rows, scrobbling': 'Rangées watchlist et tendances, scrobbling',
-  'Watching and plan-to-watch rows, scrobbling': 'Rangées en cours et à voir, scrobbling',
-  'Titles from your lists play through your stream add-ons (Media Hub sources), by IMDb id. Only titles with an IMDb id are reported.': 'Les titres de vos listes sont lus par vos add-ons de flux (sources Media Hub), par identifiant IMDb. Seuls les titres avec un identifiant IMDb sont signalés.',
+  'Connect a watch tracker: what you watch in the Media Hub is marked as watched on your account, and your lists show up as Media Hub rows. Nothing is sent unless you connect an account.':
+      'Connectez un service de suivi : ce que vous regardez dans le Media Hub est marqué comme vu sur votre compte, et vos listes apparaissent en rangées dans le Media Hub. Rien n\'est envoyé si vous ne connectez pas de compte.',
+  'Watchlist and trending rows, scrobbling':
+      'Rangées watchlist et tendances, scrobbling',
+  'Watching and plan-to-watch rows, scrobbling':
+      'Rangées en cours et à voir, scrobbling',
+  'Titles from your lists play through your stream add-ons (Media Hub sources), by IMDb id. Only titles with an IMDb id are reported.':
+      'Les titres de vos listes sont lus par vos add-ons de flux (sources Media Hub), par identifiant IMDb. Seuls les titres avec un identifiant IMDb sont signalés.',
   '{name} connected.': '{name} connecté.',
   'Disconnect {name}?': 'Déconnecter {name}?',
-  'Its rows leave the Media Hub and plays are no longer reported. Your account itself is untouched.': 'Ses rangées quittent le Media Hub et les lectures ne sont plus signalées. Votre compte lui-même n\'est pas modifié.',
+  'Its rows leave the Media Hub and plays are no longer reported. Your account itself is untouched.':
+      'Ses rangées quittent le Media Hub et les lectures ne sont plus signalées. Votre compte lui-même n\'est pas modifié.',
   'Disconnect': 'Déconnecter',
-  'Couldn\'t reach {name}. Check the connection.': 'Impossible de joindre {name}. Vérifiez la connexion.',
+  'Couldn\'t reach {name}. Check the connection.':
+      'Impossible de joindre {name}. Vérifiez la connexion.',
   'The code expired. Try again.': 'Le code a expiré. Réessayez.',
-  'Sign-in was not completed. Try again.': 'La connexion n\'a pas abouti. Réessayez.',
+  'Sign-in was not completed. Try again.':
+      'La connexion n\'a pas abouti. Réessayez.',
   'Connect {name}': 'Connecter {name}',
-  'On your phone or computer, open': 'Sur votre téléphone ou ordinateur, ouvrez',
+  'On your phone or computer, open':
+      'Sur votre téléphone ou ordinateur, ouvrez',
   'and enter this code:': 'et entrez ce code :',
   'Waiting for you to approve…': 'En attente de votre approbation…',
   'Try again': 'Réessayer',
@@ -1549,34 +1532,49 @@ const Map<String, String> kFr = {
   'Simkl plan to watch': 'À voir sur Simkl',
   // Multiview picker: Live now / Sports shortcuts
   '{n} channels': '{n} chaînes',
-  'No live games on your channels right now': 'Aucun match en direct sur vos chaînes pour le moment',
+  'No live games on your channels right now':
+      'Aucun match en direct sur vos chaînes pour le moment',
   // Media Hub: Connect Jellyfin / Emby (media_server_screen.dart)
   'Connect Jellyfin / Emby': 'Connecter Jellyfin / Emby',
   'User name': 'Nom d\'utilisateur',
   'Connect': 'Connecter',
-  'Enter the server address and your user name.': 'Entrez l\'adresse du serveur et votre nom d\'utilisateur.',
-  'Wrong user name or password.': 'Nom d\'utilisateur ou mot de passe incorrect.',
-  'This account has no movie or TV library.': 'Ce compte n\'a aucune bibliothèque de films ou de séries.',
-  'Couldn\'t find a Jellyfin or Emby server at that address.': 'Aucun serveur Jellyfin ou Emby trouvé à cette adresse.',
-  'Sign in to your own Jellyfin or Emby server: its movie and TV libraries show up in the Media Hub. Files play as they are stored on the server (no transcoding).': 'Connectez-vous à votre propre serveur Jellyfin ou Emby : ses bibliothèques de films et de séries apparaissent dans le Media Hub. Les fichiers sont lus tels qu\'ils sont stockés sur le serveur (sans transcodage).',
-  'Your password is only sent to your server. VesperTV keeps the sign-in token the server gives back, not the password.': 'Votre mot de passe n\'est envoyé qu\'à votre serveur. VesperTV garde le jeton de connexion que le serveur renvoie, pas le mot de passe.',
+  'Enter the server address and your user name.':
+      'Entrez l\'adresse du serveur et votre nom d\'utilisateur.',
+  'Wrong user name or password.':
+      'Nom d\'utilisateur ou mot de passe incorrect.',
+  'This account has no movie or TV library.':
+      'Ce compte n\'a aucune bibliothèque de films ou de séries.',
+  'Couldn\'t find a Jellyfin or Emby server at that address.':
+      'Aucun serveur Jellyfin ou Emby trouvé à cette adresse.',
+  'Sign in to your own Jellyfin or Emby server: its movie and TV libraries show up in the Media Hub. Files play as they are stored on the server (no transcoding).':
+      'Connectez-vous à votre propre serveur Jellyfin ou Emby : ses bibliothèques de films et de séries apparaissent dans le Media Hub. Les fichiers sont lus tels qu\'ils sont stockés sur le serveur (sans transcodage).',
+  'Your password is only sent to your server. VesperTV keeps the sign-in token the server gives back, not the password.':
+      'Votre mot de passe n\'est envoyé qu\'à votre serveur. VesperTV garde le jeton de connexion que le serveur renvoie, pas le mot de passe.',
   'Media Hub': 'Media Hub',
   'Media Hub sources': 'Sources Media Hub',
-  'Add-on sources for the Media Hub tab': 'Sources d\'add-ons pour l\'onglet Media Hub',
+  'Add-on sources for the Media Hub tab':
+      'Sources d\'add-ons pour l\'onglet Media Hub',
   'Clear Media Hub?': 'Effacer le Media Hub?',
   'Clear Media Hub': 'Effacer le Media Hub',
   'Media Hub cleared.': 'Media Hub effacé.',
   'Include Media Hub tab data': 'Inclure les données de l\'onglet Media Hub',
-  'Media Hub sources and their watch progress are sent too': 'Les sources Media Hub et leur progression sont aussi envoyées',
-  'The other device keeps its own Media Hub sources': 'L\'autre appareil garde ses propres sources Media Hub',
-  'Add a source to browse films and series. Any source that follows the catalog/stream add-on format works.': 'Ajoutez une source pour parcourir des films et des séries. Toute source qui suit le format d\'add-on catalogue/flux fonctionne.',
-  'That link isn\'t a Media Hub source (it needs movie or series streams).': 'Ce lien n\'est pas une source Media Hub (il lui faut des flux de films ou de séries).',
-  'Removes every Media Hub source and its saved catalog from this device.': 'Retire toutes les sources Media Hub et leur catalogue enregistré de cet appareil.',
-  'The Media Hub tab shows films and series from sources you add here. Any source that follows the catalog/stream add-on format works; a source that only offers streams by IMDb id gets its posters and episodes from Cinemeta. Only direct video links are played; torrent links are ignored.': 'L\'onglet Media Hub montre des films et des séries des sources ajoutées ici. Toute source qui suit le format d\'add-on catalogue/flux fonctionne; une source qui n\'offre que des flux par identifiant IMDb prend ses affiches et ses épisodes chez Cinemeta. Seuls les liens vidéo directs sont lus; les liens torrent sont ignorés.',
+  'Media Hub sources and their watch progress are sent too':
+      'Les sources Media Hub et leur progression sont aussi envoyées',
+  'The other device keeps its own Media Hub sources':
+      'L\'autre appareil garde ses propres sources Media Hub',
+  'Add a source to browse films and series. Any source that follows the catalog/stream add-on format works.':
+      'Ajoutez une source pour parcourir des films et des séries. Toute source qui suit le format d\'add-on catalogue/flux fonctionne.',
+  'That link isn\'t a Media Hub source (it needs movie or series streams).':
+      'Ce lien n\'est pas une source Media Hub (il lui faut des flux de films ou de séries).',
+  'Removes every Media Hub source and its saved catalog from this device.':
+      'Retire toutes les sources Media Hub et leur catalogue enregistré de cet appareil.',
+  'The Media Hub tab shows films and series from sources you add here. Any source that follows the catalog/stream add-on format works; a source that only offers streams by IMDb id gets its posters and episodes from Cinemeta. Only direct video links are played; torrent links are ignored.':
+      'L\'onglet Media Hub montre des films et des séries des sources ajoutées ici. Toute source qui suit le format d\'add-on catalogue/flux fonctionne; une source qui n\'offre que des flux par identifiant IMDb prend ses affiches et ses épisodes chez Cinemeta. Seuls les liens vidéo directs sont lus; les liens torrent sont ignorés.',
   'Hide Media Hub': 'Masquer Media Hub',
   'Removes the Media Hub tab.': 'Retire l\'onglet Media Hub.',
   'Hide Multiview': 'Masquer Multivue',
-  'Removes the Multiview row and the player\'s Open in Multiview button.': 'Retire la ligne Multivue et le bouton Ouvrir en Multivue du lecteur.',
+  'Removes the Multiview row and the player\'s Open in Multiview button.':
+      'Retire la ligne Multivue et le bouton Ouvrir en Multivue du lecteur.',
   // Extras genre filter
   'Genre': 'Genre',
   'All genres': 'Tous les genres',
@@ -1603,17 +1601,22 @@ const Map<String, String> kFr = {
   'genre.Talk-Show': 'Talk-show',
   'genre.Game-Show': 'Jeu télévisé',
   // Sports: favourite league
-  'OK: show/hide or add · Hold OK: favourite league, or send an added league back to the bank': 'OK : afficher/masquer ou ajouter · Maintenir OK : ligue favorite, ou renvoyer une ligue ajoutée à la banque',
+  'OK: show/hide or add · Hold OK: favourite league, or send an added league back to the bank':
+      'OK : afficher/masquer ou ajouter · Maintenir OK : ligue favorite, ou renvoyer une ligue ajoutée à la banque',
   'Make favourite league': 'En faire la ligue favorite',
   'Remove from favourite': 'Retirer des favoris',
-  '{tab} opens on it and its games come first in Live now': '{tab} s\'ouvre dessus et ses matchs passent en premier dans En direct',
+  '{tab} opens on it and its games come first in Live now':
+      '{tab} s\'ouvre dessus et ses matchs passent en premier dans En direct',
   'Send back to the league bank': 'Renvoyer à la banque de ligues',
   'Favourite league': 'Ligue favorite',
   // Player side panel: Pull stats
-  '◀ ▶ tabs  ·  OK to watch  ·  Hold OK for stats  ·  Back to close': '◀ ▶ onglets  ·  OK pour regarder  ·  Maintenir OK : stats  ·  Retour pour fermer',
+  '◀ ▶ tabs  ·  OK to watch  ·  Hold OK for stats  ·  Back to close':
+      '◀ ▶ onglets  ·  OK pour regarder  ·  Maintenir OK : stats  ·  Retour pour fermer',
   // Sports hero on Windows
-  'Click the game again or Enter: full screen  ·  Esc: stop': 'Cliquez à nouveau sur le match ou Entrée : plein écran  ·  Échap : arrêter',
-  'Click again: watch here  ·  Hold: pick the channel': 'Cliquer à nouveau : regarder ici  ·  Maintenir : choisir la chaîne',
+  'Click the game again or Enter: full screen  ·  Esc: stop':
+      'Cliquez à nouveau sur le match ou Entrée : plein écran  ·  Échap : arrêter',
+  'Click again: watch here  ·  Hold: pick the channel':
+      'Cliquer à nouveau : regarder ici  ·  Maintenir : choisir la chaîne',
   // Extras floating Search / Genre bar
   'Movie genres': 'Genres de films',
   'TV show genres': 'Genres de séries',
@@ -1621,75 +1624,44 @@ const Map<String, String> kFr = {
   'Recently watched': 'Regardés récemment',
   'Clear recent searches': 'Effacer les recherches récentes',
   // Data pool (player stream details, Settings > General)
-  "Data pool":
-      "Data pool",
-  "Data pool display":
-      "Affichage du Data pool",
+  "Data pool": "Data pool",
+  "Data pool display": "Affichage du Data pool",
   "Press OK while a live channel plays to open a second card under the channel info with the stream's details: resolution, frame rate, codecs, bitrate, quality variants, audio tracks, buffer and HDR. Off: OK shows only the channel info.":
       "Appuyez sur OK pendant une chaîne en direct pour ouvrir une deuxième carte sous les infos de la chaîne, avec les détails du flux : résolution, images par seconde, codecs, débit, variantes de qualité, pistes audio, mémoire tampon et HDR. Désactivé : OK n'affiche que les infos de la chaîne.",
-  "Reading the stream…":
-      "Lecture du flux…",
-  "Video":
-      "Vidéo",
-  "Video bitrate":
-      "Débit vidéo",
-  "Picture":
-      "Image",
-  "Quality variants":
-      "Variantes de qualité",
-  "One (not adaptive)":
-      "Une seule (non adaptatif)",
-  "Audio":
-      "Audio",
-  "Audio tracks":
-      "Pistes audio",
-  "Stream":
-      "Flux",
-  "Buffered":
-      "En mémoire tampon",
-  "{seconds} s":
-      "{seconds} s",
-  "State":
-      "État",
-  "Buffering…":
-      "Mise en mémoire tampon…",
-  "Playing for {time}":
-      "Lecture depuis {time}",
-  "Paused":
-      "En pause",
-  "Device HDR":
-      "HDR de l'appareil",
-  "Not reported by the stream":
-      "Non indiqué par le flux",
-  "Mono":
-      "Mono",
-  "Stereo":
-      "Stéréo",
-  "Direct stream":
-      "Flux direct",
-  "Yes":
-      "Oui",
-  "No":
-      "Non",
-  "Stream bitrate":
-      "Débit du flux",
-  "Declared bitrate":
-      "Débit déclaré",
-  "Dropped frames":
-      "Images perdues",
-  "(measured)":
-      "(mesuré)",
-  "Measuring…":
-      "Mesure…",
+  "Reading the stream…": "Lecture du flux…",
+  "Video": "Vidéo",
+  "Video bitrate": "Débit vidéo",
+  "Picture": "Image",
+  "Quality variants": "Variantes de qualité",
+  "One (not adaptive)": "Une seule (non adaptatif)",
+  "Audio": "Audio",
+  "Audio tracks": "Pistes audio",
+  "Stream": "Flux",
+  "Buffered": "En mémoire tampon",
+  "{seconds} s": "{seconds} s",
+  "State": "État",
+  "Buffering…": "Mise en mémoire tampon…",
+  "Playing for {time}": "Lecture depuis {time}",
+  "Paused": "En pause",
+  "Device HDR": "HDR de l'appareil",
+  "Not reported by the stream": "Non indiqué par le flux",
+  "Mono": "Mono",
+  "Stereo": "Stéréo",
+  "Direct stream": "Flux direct",
+  "Yes": "Oui",
+  "No": "Non",
+  "Stream bitrate": "Débit du flux",
+  "Declared bitrate": "Débit déclaré",
+  "Dropped frames": "Images perdues",
+  "(measured)": "(mesuré)",
+  "Measuring…": "Mesure…",
   // Settings categories (left panel)
-  "Playlists & guide":
-      "Listes et guide",
+  "Playlists & guide": "Listes et guide",
   "Your playlists and their logins, the TV guide (EPG) and the viewer profiles.":
       "Vos listes et leurs identifiants, le guide TV (EPG) et les profils.",
   "Everything the Media Hub uses: its add-on sources, online subtitles, Trakt & Simkl watch tracking and the optional TMDB key.":
       "Tout ce que le Media Hub utilise : ses sources d’add-ons, les sous-titres en ligne, le suivi Trakt et Simkl et la clé TMDB facultative.",
-  "Interface":
-      "Interface",
+  "Interface": "Interface",
   "How the app looks and what it shows: theme, tabs, matching the TV's frame rate, the player's extras and reminders.":
       "L’apparence et ce qui s’affiche : thème, onglets, fréquence d’images du téléviseur, extras du lecteur et rappels.",
   "Hide Movies, TV Shows, Media Hub, Recordings or Multiview":
@@ -1698,8 +1670,7 @@ const Map<String, String> kFr = {
       "Correctifs pour l’image sur certaines clés Fire TV",
   "Dolby Atmos to your soundbar or receiver":
       "Dolby Atmos vers votre barre de son ou ampli",
-  "Surround passthrough (Dolby Atmos)":
-      "Son surround direct (Dolby Atmos)",
+  "Surround passthrough (Dolby Atmos)": "Son surround direct (Dolby Atmos)",
   "Sends Dolby Digital, Dolby Atmos and DTS sound to your soundbar or receiver untouched (HDMI passthrough), so it can play Atmos. Off: this device turns that sound into plain stereo/5.1 first, so Atmos is lost. While on, the volume of that sound is set on your TV or receiver only, and if you hear nothing on a channel, turn this off. Multiview always uses plain sound (passthrough there kept muted screens playing). Applies from the next channel.":
       "Envoie le son Dolby Digital, Dolby Atmos et DTS tel quel à votre barre de son ou ampli (passthrough HDMI), pour qu'il puisse jouer l'Atmos. Désactivé : cet appareil convertit d'abord ce son en stéréo/5.1 simple, et l'Atmos est perdu. Activé, le volume de ce son se règle uniquement sur votre téléviseur ou ampli, et si vous n'entendez rien sur une chaîne, désactivez-le. Le Multiview utilise toujours le son simple (le passthrough y laissait le son des écrans coupés). S'applique à partir de la chaîne suivante.",
   "Stream details when you press OK on a channel":
@@ -1708,61 +1679,44 @@ const Map<String, String> kFr = {
       "Une liste pour toutes les listes, ou une par liste",
   "The connections tip when opening Multiview":
       "L’astuce sur les connexions à l’ouverture du Multiview",
-  "The \"Hold > to resume\" pill":
-      "La pastille « Maintenir > pour reprendre »",
+  "The \"Hold > to resume\" pill": "La pastille « Maintenir > pour reprendre »",
   "Language and clock, what plays when the app starts, Fast startup, and clearing your history.":
       "Langue et horloge, ce qui joue au démarrage, Démarrage rapide, et l’effacement de l’historique.",
-  "App language and 24-hour clock":
-      "Langue de l’app et horloge 24 h",
+  "App language and 24-hour clock": "Langue de l’app et horloge 24 h",
   "Resume the last channel, Fast startup":
       "Reprendre la dernière chaîne, Démarrage rapide",
   "Clear searches, channels, Continue Watching":
       "Effacer recherches, chaînes, Reprendre la lecture",
-  "Device & data":
-      "Appareil et données",
+  "Device & data": "Appareil et données",
   "Move your whole setup to another device, keep a backup of it, and update VesperTV.":
       "Copiez toute votre configuration sur un autre appareil, gardez-en une sauvegarde et mettez VesperTV à jour.",
   // Own live groups (Move to group)
-  "Move to group…":
-      "Déplacer vers un groupe…",
-  "Move {name} to":
-      "Déplacer {name} vers",
-  "New group…":
-      "Nouveau groupe…",
-  "Back to {group}":
-      "Retour dans {group}",
-  "New group":
-      "Nouveau groupe",
-  "Group name":
-      "Nom du groupe",
-  "{name} is now in {group}":
-      "{name} est maintenant dans {group}",
-  "Delete this group":
-      "Supprimer ce groupe",
+  "Move to group…": "Déplacer vers un groupe…",
+  "Move {name} to": "Déplacer {name} vers",
+  "New group…": "Nouveau groupe…",
+  "Back to {group}": "Retour dans {group}",
+  "New group": "Nouveau groupe",
+  "Group name": "Nom du groupe",
+  "{name} is now in {group}": "{name} est maintenant dans {group}",
+  "Delete this group": "Supprimer ce groupe",
   "{group} deleted. Its channels are back in their groups.":
       "{group} supprimé. Ses chaînes sont revenues dans leurs groupes.",
   // Fast startup
-  "Fast startup":
-      "Démarrage rapide",
+  "Fast startup": "Démarrage rapide",
   "Opens the app without waiting for Movies and TV Shows to load; they fill in a few seconds later. For fast devices — leave it off on an older box if the app closes by itself right after starting. Applies from the next start.":
       "Ouvre l’app sans attendre le chargement des Films et Séries ; ils se remplissent quelques secondes plus tard. Pour les appareils rapides — laissez-le désactivé sur un boîtier plus ancien si l’app se ferme toute seule juste après le démarrage. S’applique au prochain démarrage.",
   // Group hold menu: New group
   "{group} created. Hold OK on a channel > Move to group… to add channels.":
       "{group} créé. Maintenez OK sur une chaîne > Déplacer vers un groupe… pour y ajouter des chaînes.",
   // Channel menu: Remove from group
-  "Remove from {group}":
-      "Retirer de {group}",
+  "Remove from {group}": "Retirer de {group}",
   // Settings > Device & data > Send log
-  "Send log":
-      "Envoyer le journal",
+  "Send log": "Envoyer le journal",
   "Send the app's log to the developer":
       "Envoyer le journal de l'app au développeur",
-  "Sending...":
-      "Envoi...",
-  "Send again":
-      "Envoyer à nouveau",
-  "Log sent. Your code:":
-      "Journal envoyé. Votre code :",
+  "Sending...": "Envoi...",
+  "Send again": "Envoyer à nouveau",
+  "Log sent. Your code:": "Journal envoyé. Votre code :",
   "Mention this code on Reddit or Discord with what happened, so the developer can find your log.":
       "Indiquez ce code sur Reddit ou Discord avec ce qui s'est passé, pour que le développeur trouve votre journal.",
   "Something not working? Send the app's log to the VesperTV developer. It holds what the app did recently (this session and the last one) and your device model, nothing else.":
@@ -1774,127 +1728,82 @@ const Map<String, String> kFr = {
   "Couldn't send the log. Check the internet connection and try again.":
       "Impossible d'envoyer le journal. Vérifiez la connexion Internet et réessayez.",
   // Recordings (Sports Trak recording, Recordings tab)
-  "Watch live":
-      "Regarder en direct",
-  "Play from the start":
-      "Lire depuis le début",
-  "What has been recorded so far":
-      "Ce qui a été enregistré jusqu'ici",
-  "Stop recording":
-      "Arrêter l'enregistrement",
-  "Keeps what has been recorded":
-      "Garde ce qui a été enregistré",
-  "Cancel recording":
-      "Annuler l'enregistrement",
-  "Delete recording":
-      "Supprimer l'enregistrement",
-  "Frees {size}":
-      "Libère {size}",
-  "Removes it from the list":
-      "Le retire de la liste",
-  "Recordings":
-      "Enregistrements",
-  "Recording every {team} game":
-      "Enregistre chaque match de {team}",
+  "Watch live": "Regarder en direct",
+  "Play from the start": "Lire depuis le début",
+  "What has been recorded so far": "Ce qui a été enregistré jusqu'ici",
+  "Stop recording": "Arrêter l'enregistrement",
+  "Keeps what has been recorded": "Garde ce qui a été enregistré",
+  "Cancel recording": "Annuler l'enregistrement",
+  "Delete recording": "Supprimer l'enregistrement",
+  "Frees {size}": "Libère {size}",
+  "Removes it from the list": "Le retire de la liste",
+  "Recordings": "Enregistrements",
+  "Recording every {team} game": "Enregistre chaque match de {team}",
   "Nothing recorded yet. Hold OK on a game in {tab} and pick Record, or hold OK on a live channel.":
       "Aucun enregistrement pour l'instant. Maintenez OK sur un match dans {tab} et choisissez Enregistrer, ou maintenez OK sur une chaîne en direct.",
-  "Recording now":
-      "En cours d'enregistrement",
-  "Recorded":
-      "Enregistrés",
-  "{used} of {cap} GB used":
-      "{used} utilisés sur {cap} Go",
-  "REC · {size}":
-      "ENR · {size}",
-  "Waiting for a channel":
-      "En attente d'une chaîne",
-  "Interrupted · {size}":
-      "Interrompu · {size}",
-  "Missed":
-      "Manqué",
-  "Failed":
-      "Échec",
-  "Live channel":
-      "Chaîne en direct",
-  "Start early: {min} min":
-      "Commencer en avance : {min} min",
-  "Before the game's scheduled start":
-      "Avant l'heure prévue du match",
-  "Keep recording: {min} min":
-      "Continuer : {min} min",
+  "Recording now": "En cours d'enregistrement",
+  "Recorded": "Enregistrés",
+  "{used} of {cap} GB used": "{used} utilisés sur {cap} Go",
+  "REC · {size}": "ENR · {size}",
+  "Waiting for a channel": "En attente d'une chaîne",
+  "Interrupted · {size}": "Interrompu · {size}",
+  "Missed": "Manqué",
+  "Failed": "Échec",
+  "Live channel": "Chaîne en direct",
+  "Start early: {min} min": "Commencer en avance : {min} min",
+  "Before the game's scheduled start": "Avant l'heure prévue du match",
+  "Keep recording: {min} min": "Continuer : {min} min",
   "After the scheduled end, for overtime and delays":
       "Après la fin prévue, pour les prolongations et retards",
-  "Space for recordings: {gb} GB":
-      "Espace pour les enregistrements : {gb} Go",
+  "Space for recordings: {gb} GB": "Espace pour les enregistrements : {gb} Go",
   "{used} used. Recording stops when this is full or the storage has less than 1 GB left.":
       "{used} utilisés. L'enregistrement s'arrête quand cet espace est plein ou qu'il reste moins de 1 Go.",
-  "Save recordings to":
-      "Enregistrer dans",
-  "USB drive / SD card":
-      "Clé USB / carte SD",
-  "This device":
-      "Cet appareil",
-  "{free} free of {total}":
-      "{free} libres sur {total}",
+  "Save recordings to": "Enregistrer dans",
+  "USB drive / SD card": "Clé USB / carte SD",
+  "This device": "Cet appareil",
+  "{free} free of {total}": "{free} libres sur {total}",
   "Plug in a USB drive or SD card to record to it. Recordings on this device are deleted if VesperTV is uninstalled.":
       "Branchez une clé USB ou une carte SD pour y enregistrer. Les enregistrements sur cet appareil sont supprimés si VesperTV est désinstallé.",
-  "Recording in progress":
-      "Enregistrement en cours",
+  "Recording in progress": "Enregistrement en cours",
   "{title} is recording on {channel}. Your playlist allows one connection, so playing another of its channels stops the recording.":
       "{title} est en cours d'enregistrement sur {channel}. Votre playlist n'autorise qu'une connexion : lire une autre de ses chaînes arrête l'enregistrement.",
-  "Recording cancelled":
-      "Enregistrement annulé",
+  "Recording cancelled": "Enregistrement annulé",
   "Not enough free space to record":
       "Pas assez d'espace libre pour enregistrer",
-  "Recording {title}":
-      "Enregistrement de {title}",
-  "{title} will be recorded":
-      "{title} sera enregistré",
+  "Recording {title}": "Enregistrement de {title}",
+  "{title} will be recorded": "{title} sera enregistré",
   "No longer recording every {team} game":
       "Les matchs de {team} ne sont plus enregistrés",
   "Every {team} game will be recorded":
       "Chaque match de {team} sera enregistré",
-  "Waiting for a channel in the guide":
-      "En attente d'une chaîne dans le guide",
-  "Record":
-      "Enregistrer",
-  "{channel} · starts now":
-      "{channel} · commence maintenant",
-  "{channel} · from {time}":
-      "{channel} · à partir de {time}",
+  "Waiting for a channel in the guide": "En attente d'une chaîne dans le guide",
+  "Record": "Enregistrer",
+  "{channel} · starts now": "{channel} · commence maintenant",
+  "{channel} · from {time}": "{channel} · à partir de {time}",
   "Stop recording every {team} game":
       "Ne plus enregistrer chaque match de {team}",
-  "Record every {team} game":
-      "Enregistrer chaque match de {team}",
+  "Record every {team} game": "Enregistrer chaque match de {team}",
   "Recordings already made are kept":
       "Les enregistrements déjà faits sont conservés",
   "One team at a time, on the channel {tab} picks":
       "Une équipe à la fois, sur la chaîne choisie par {tab}",
-  "Replaces {team}":
-      "Remplace {team}",
-  "Recording stopped":
-      "Enregistrement arrêté",
+  "Replaces {team}": "Remplace {team}",
+  "Recording stopped": "Enregistrement arrêté",
   "Margins, space and where recordings are saved":
       "Marges, espace et emplacement des enregistrements",
-  "Record until the show ends":
-      "Enregistrer jusqu'à la fin de l'émission",
-  "Record until I stop it":
-      "Enregistrer jusqu'à ce que je l'arrête",
+  "Record until the show ends": "Enregistrer jusqu'à la fin de l'émission",
+  "Record until I stop it": "Enregistrer jusqu'à ce que je l'arrête",
   "Keeps going across shows (4 hours at most)":
       "Continue d'une émission à l'autre (4 heures au plus)",
-  "{title} · stops at {time}":
-      "{title} · s'arrête à {time}",
+  "{title} · stops at {time}": "{title} · s'arrête à {time}",
   "No guide for this channel: stops after 2 hours":
       "Pas de guide pour cette chaîne : s'arrête après 2 heures",
   // Media Hub: Ready tag / Debrid accounts
-  "Cleared":
-      "Effacé",
-  "Saved — key verified ✓":
-      "Enregistré — clé vérifiée ✓",
+  "Cleared": "Effacé",
+  "Saved — key verified ✓": "Enregistré — clé vérifiée ✓",
   "Saved, but {service} rejected the key — double-check it":
       "Enregistré, mais {service} a refusé la clé — vérifiez-la",
-  "Debrid accounts":
-      "Comptes debrid",
+  "Debrid accounts": "Comptes debrid",
   "Optional keys for the \"Ready\" tag":
       "Clés optionnelles pour l'étiquette « Prêt »",
   "Some Media Hub sources answer Play with a short \"being downloaded\" video while they fetch a title into your debrid account. VesperTV then checks back every minute and puts a \"Ready\" tag on the title's poster once it's there.":
@@ -1903,17 +1812,13 @@ const Map<String, String> kFr = {
       "Optionnel : avec votre propre clé, votre compte le confirme directement. Sans clé, VesperTV redemande à la source jusqu'à ce que le fichier complet réponde.",
   "Real-Debrid: real-debrid.com/apitoken. TorBox: torbox.app/settings (API key). Kept in VesperTV and only used to read your downloads list.":
       "Real-Debrid : real-debrid.com/apitoken. TorBox : torbox.app/settings (clé API). Conservée dans VesperTV et utilisée seulement pour lire votre liste de téléchargements.",
-  "Real-Debrid API token":
-      "Jeton API Real-Debrid",
-  "TorBox API key":
-      "Clé API TorBox",
+  "Real-Debrid API token": "Jeton API Real-Debrid",
+  "TorBox API key": "Clé API TorBox",
   // Sports Trak: League bank heading for college conferences
   "College": "Universitaire",
   // Settings > General > Support VesperTV
-  "Support VesperTV":
-      "Soutenir VesperTV",
-  "Buy a coffee or become a Supporter":
-      "Offrir un café ou devenir Supporter",
+  "Support VesperTV": "Soutenir VesperTV",
+  "Buy a coffee or become a Supporter": "Offrir un café ou devenir Supporter",
   "VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.":
       "VesperTV est gratuit et le restera : pas de pub, pas de pistage, aucune fonction payante. Si vous l'aimez, vous pouvez offrir un café ou devenir Supporter pour aider à payer le serveur, le site et le développement.",
   "Supporting is a thank-you, never a paywall: everyone gets the same app.":
@@ -1921,23 +1826,21 @@ const Map<String, String> kFr = {
   // Settings > General > Remote tips
   "Language and clock, what plays when the app starts, Fast startup, clearing your history, and remote tips.":
       "Langue et horloge, ce qui joue au démarrage, Démarrage rapide, l'effacement de l'historique et les astuces télécommande.",
-  "Remote tips":
-      "Astuces télécommande",
+  "Remote tips": "Astuces télécommande",
   "Every hold menu and shortcut, on your phone":
       "Chaque menu « maintenir » et raccourci, sur votre téléphone",
   "Every hold menu and remote shortcut, on one page: hold OK on channels, groups and posters, the side panel on ← in full screen, Multiview, Sports Trak and more.":
       "Chaque menu « maintenir » et raccourci de la télécommande sur une seule page : maintenir OK sur les chaînes, groupes et affiches, le panneau latéral avec ← en plein écran, Multiview, Sports Trak et plus.",
-  "Scan with your phone, or open":
-      "Scannez avec votre téléphone, ou ouvrez",
-  "Open":
-      "Ouvrir",
+  "Scan with your phone, or open": "Scannez avec votre téléphone, ou ouvrez",
+  "Open": "Ouvrir",
   "The basics: hold OK (about half a second) opens a menu almost everywhere. Back always steps out one level. OK twice on a channel = full screen.":
       "L'essentiel : maintenir OK (environ une demi-seconde) ouvre un menu presque partout. Retour recule toujours d'un niveau. OK deux fois sur une chaîne = plein écran.",
   "Fetching…": "Récupération…",
   // Media Hub: list-only sources
   "Plays through your other sources": "Joue via vos autres sources",
   // Search: Media Hub results
-  "Search Live TV, Movies, TV Shows & the Media Hub": "Rechercher la télé en direct, les films, les séries et le Media Hub",
+  "Search Live TV, Movies, TV Shows & the Media Hub":
+      "Rechercher la télé en direct, les films, les séries et le Media Hub",
   // Player: what an unreadable link really served
   "This file's format can't be played here. Try another stream (an MKV or MP4 one).":
       "Le format de ce fichier ne peut pas être lu ici. Essayez un autre flux (MKV ou MP4).",
@@ -1946,18 +1849,13 @@ const Map<String, String> kFr = {
   "Check your source or debrid account (plan limits, active downloads), or pick another stream.":
       "Vérifiez votre source ou votre compte debrid (limites du forfait, téléchargements actifs), ou choisissez un autre flux.",
   // Media Hub: import add-ons (pasted links, Stremio)
-  "Added to the Media Hub: {names}":
-      "Ajouté au Media Hub : {names}",
+  "Added to the Media Hub: {names}": "Ajouté au Media Hub : {names}",
   "Added to subtitle add-ons: {names}":
       "Ajouté aux add-ons de sous-titres : {names}",
-  "Already added: {names}":
-      "Déjà ajouté : {names}",
-  "Not usable in VesperTV: {names}":
-      "Inutilisable dans VesperTV : {names}",
-  "Couldn't reach: {names}":
-      "Inaccessible : {names}",
-  "Import from Stremio":
-      "Importer depuis Stremio",
+  "Already added: {names}": "Déjà ajouté : {names}",
+  "Not usable in VesperTV: {names}": "Inutilisable dans VesperTV : {names}",
+  "Couldn't reach: {names}": "Inaccessible : {names}",
+  "Import from Stremio": "Importer depuis Stremio",
   "Couldn't reach Stremio. Check your internet connection.":
       "Impossible de joindre Stremio. Vérifiez votre connexion Internet.",
   "Couldn't read your Stremio add-ons. Try again.":
@@ -1966,24 +1864,19 @@ const Map<String, String> kFr = {
       "Copiez les add-ons de votre compte Stremio. Rien n'est modifié sur votre compte Stremio.",
   "On your phone, scan the code or open":
       "Sur votre téléphone, scannez le code ou ouvrez",
-  "Code":
-      "Code",
+  "Code": "Code",
   "Then sign in to Stremio there. This page continues on its own.":
       "Puis connectez-vous à Stremio. Cette page continue toute seule.",
   "Your Stremio account has no add-ons VesperTV can copy.":
       "Votre compte Stremio n'a aucun add-on que VesperTV peut copier.",
   "Your Stremio add-ons. Untick any you don't want.":
       "Vos add-ons Stremio. Décochez ceux que vous ne voulez pas.",
-  "Add {n} add-ons":
-      "Ajouter {n} add-ons",
-  "Already added":
-      "Déjà ajouté",
-  "Can't play in VesperTV":
-      "Impossible à lire dans VesperTV",
+  "Add {n} add-ons": "Ajouter {n} add-ons",
+  "Already added": "Déjà ajouté",
+  "Can't play in VesperTV": "Impossible à lire dans VesperTV",
   "Several links at once work too.":
       "Plusieurs liens à la fois, ça marche aussi.",
-  "{n} links checked":
-      "{n} liens vérifiés",
+  "{n} links checked": "{n} liens vérifiés",
   // Data pool on movies / episodes
   "Press OK while a channel, movie or episode plays to open a card with the stream's details: resolution, frame rate, codecs, bitrate, quality variants, audio tracks, buffer and HDR. Off: OK shows only the channel info.":
       "Appuyez sur OK pendant la lecture d'une chaîne, d'un film ou d'un épisode pour ouvrir une carte avec les détails du flux : résolution, images par seconde, codecs, débit, variantes de qualité, pistes audio, mémoire tampon et HDR. Désactivé : OK affiche seulement les infos de la chaîne.",
@@ -2059,8 +1952,10 @@ const Map<String, String> kFr = {
   "Unable to open trailer": "Impossible d’ouvrir la bande-annonce",
   "Next episode airs {date}": "Le prochain épisode sera diffusé le {date}",
   "Next episode: {code} · {date}": "Prochain épisode : {code} · {date}",
-  "YouTube playback needs Android System WebView or Microsoft Edge WebView2.": "La lecture YouTube nécessite Android System WebView ou Microsoft Edge WebView2.",
-  "YouTube could not play this video ({code}).": "YouTube ne peut pas lire cette vidéo ({code}).",
+  "YouTube playback needs Android System WebView or Microsoft Edge WebView2.":
+      "La lecture YouTube nécessite Android System WebView ou Microsoft Edge WebView2.",
+  "YouTube could not play this video ({code}).":
+      "YouTube ne peut pas lire cette vidéo ({code}).",
   "Open in YouTube": "Ouvrir dans YouTube",
   "Back 10 seconds": "Reculer de 10 secondes",
   "Forward 10 seconds": "Avancer de 10 secondes",
@@ -2068,7 +1963,8 @@ const Map<String, String> kFr = {
   "Mark season watched": "Marquer la saison comme vue",
   "Mark season unwatched": "Marquer la saison comme non vue",
   "Season {season} marked as watched": "Saison {season} marquée comme vue",
-  "Season {season} marked as unwatched": "Saison {season} marquée comme non vue",
+  "Season {season} marked as unwatched":
+      "Saison {season} marquée comme non vue",
   "Colour": "Couleur",
   "Kids profile": "Profil enfant",
   "Photo": "Photo",
@@ -2076,27 +1972,37 @@ const Map<String, String> kFr = {
   "Actions": "Actions",
   "Active": "Actif",
   "Kids & PIN": "Enfants et code PIN",
-  "Scan with your phone to add a photo": "Scannez avec votre téléphone pour ajouter une photo",
+  "Scan with your phone to add a photo":
+      "Scannez avec votre téléphone pour ajouter une photo",
   "Choose a photo": "Choisir une photo",
   "Remove photo": "Supprimer la photo",
-  "Choose a photo and tap Send to TV.": "Choisissez une photo et appuyez sur Envoyer à la TV.",
-  "Your photo appears here automatically.": "Votre photo apparaît ici automatiquement.",
-  "Could not read photo. Choose a JPEG or PNG under 2 MB.": "Photo illisible. Choisissez un JPEG ou PNG de moins de 2 Mo.",
-  "Could not save profile. Try again.": "Impossible de sauvegarder le profil. Réessayez.",
+  "Choose a photo and tap Send to TV.":
+      "Choisissez une photo et appuyez sur Envoyer à la TV.",
+  "Your photo appears here automatically.":
+      "Votre photo apparaît ici automatiquement.",
+  "Could not read photo. Choose a JPEG or PNG under 2 MB.":
+      "Photo illisible. Choisissez un JPEG ou PNG de moins de 2 Mo.",
+  "Could not save profile. Try again.":
+      "Impossible de sauvegarder le profil. Réessayez.",
   "Watch history": "Historique de visionnage",
   "Hidden groups and channels": "Groupes et chaînes masqués",
   "Home rows layout": "Disposition des rangées d’accueil",
-  "What should this profile get from Main?": "Que doit recevoir ce profil de Principal ?",
-  "Copies are independent. Playlists, accounts and device settings stay shared.": "Les copies sont indépendantes. Listes, comptes et réglages de l’appareil restent partagés.",
+  "What should this profile get from Main?":
+      "Que doit recevoir ce profil de Principal ?",
+  "Copies are independent. Playlists, accounts and device settings stay shared.":
+      "Les copies sont indépendantes. Listes, comptes et réglages de l’appareil restent partagés.",
   "Everything": "Tout",
   "None": "Rien",
   "Save name": "Enregistrer le nom",
   "Saving…": "Enregistrement…",
-  "Profile restrictions are fixed when the profile is created.": "Les restrictions sont fixées à la création du profil.",
+  "Profile restrictions are fixed when the profile is created.":
+      "Les restrictions sont fixées à la création du profil.",
   "{n} groups allowed": "{n} groupes autorisés",
-  "{groups} groups hidden · {channels} channels hidden": "{groups} groupes masqués · {channels} chaînes masquées",
+  "{groups} groups hidden · {channels} channels hidden":
+      "{groups} groupes masqués · {channels} chaînes masquées",
   "Main cannot be deleted": "Le profil Principal ne peut pas être supprimé",
-  "Hold OK on a profile to edit it. Hold OK on a season to mark it watched or unwatched.": "Maintenez OK sur un profil pour le modifier, ou sur une saison pour la marquer vue ou non vue.",
+  "Hold OK on a profile to edit it. Hold OK on a season to mark it watched or unwatched.":
+      "Maintenez OK sur un profil pour le modifier, ou sur une saison pour la marquer vue ou non vue.",
   'Coming soon': 'Bientôt disponible',
   "Show Cinemeta catalog": "Afficher le catalogue Cinemeta",
   "Show the default Popular, New and Featured rows and Cinemeta search results. Turn off to browse only your own catalogs. Posters and episode details may still use Cinemeta.":
@@ -2115,8 +2021,10 @@ const Map<String, String> kFr = {
   "Play available trailers automatically with sound on IPTV and Media Hub movie and show pages.":
       "Lire automatiquement avec le son les bandes-annonces disponibles sur les pages des films et séries IPTV et Media Hub.",
   "Trailers": "Bandes-annonces",
-  "Play trailers automatically on movie and show pages": "Lecture automatique des bandes-annonces sur les pages de films et séries",
-  "On Fire TV sticks, the trailer plays full screen.": "Sur les Fire TV Stick, la bande-annonce s'affiche en plein écran.",
+  "Play trailers automatically on movie and show pages":
+      "Lecture automatique des bandes-annonces sur les pages de films et séries",
+  "On Fire TV sticks, the trailer plays full screen.":
+      "Sur les Fire TV Stick, la bande-annonce s'affiche en plein écran.",
   "Remove \"{title}\" from history?": "Retirer « {title} » de l’historique ?",
   "Import from storage": "Importer depuis un stockage",
   "Add M3U playlists and Media Hub sources from USB or external storage":
@@ -2184,7 +2092,8 @@ const Map<String, String> kFr = {
   'This programme is not available in catch-up.':
       'Cette émission n’est pas disponible en rattrapage.',
   "Hide Catch-up group": "Masquer le groupe Rattrapage",
-  "Removes the TV tab's Catch-up row (every channel you can replay).": "Retire la ligne Rattrapage de l'onglet TV (toutes les chaînes à revoir).",
+  "Removes the TV tab's Catch-up row (every channel you can replay).":
+      "Retire la ligne Rattrapage de l'onglet TV (toutes les chaînes à revoir).",
   "No channels with catch-up.": "Aucune chaîne avec rattrapage.",
   "Catch-up playlists": "Playlists du rattrapage",
   "Hidden here · {n} channels": "Masquée ici · {n} chaînes",
@@ -2207,6 +2116,25 @@ const Map<String, String> kFr = {
   "File size": "Taille du fichier",
 
   // Match-specific score alerts.
+  "Remove goals alert for {league}":
+      "Désactiver les alertes de buts pour {league}",
+  "Goals alert for all of {league}": "Alertes de buts pour toute la {league}",
+  "Notify me of every goal in this league (while VesperTV is open). Hide scores pauses alerts.":
+      "M'avertir de chaque but de cette ligue (quand VesperTV est ouvert). Masquer les scores met les alertes en pause.",
+  "Watch game button": "Bouton Regarder le match",
+  "A reminded game offers Watch game in the player at kickoff":
+      "Un match avec rappel propose Regarder le match dans le lecteur au coup d'envoi",
+  "When a reminded game is about to start, a Watch game button shows in the player for 10 minutes. Press Up from the player bar to reach it, then OK to switch to the game on its best channel. Set a reminder with a hold on the game. {app} must be open. Saved for this viewer.":
+      "Quand un match avec rappel va commencer, un bouton Regarder le match s'affiche dans le lecteur pendant 10 minutes. Appuyez sur Haut depuis la barre du lecteur pour l'atteindre, puis OK pour passer au match sur sa meilleure chaîne. Ajoutez un rappel en maintenant OK sur le match. {app} doit être ouvert. Enregistré pour ce profil.",
+  "Watch game": "Regarder le match",
+  "When the next episode starts by itself":
+      "Quand l'épisode suivant démarre tout seul",
+  "Play the next episode": "Lancer l'épisode suivant",
+  "30 seconds before the end": "30 secondes avant la fin",
+  "When the episode ends": "À la fin de l'épisode",
+  "Never": "Jamais",
+  "{when}. On TV show episodes, the Up Next card counts down and the next episode starts by itself. Never: no countdown; the episode plays to its end.":
+      "{when}. Sur les épisodes de séries, la carte À suivre fait un compte à rebours puis l'épisode suivant démarre tout seul. Jamais : pas de compte à rebours, l'épisode joue jusqu'à la fin.",
   "Set goals alert for this match": "Activer les alertes de buts pour ce match",
   "Remove goals alert for this match":
       "Supprimer les alertes de buts pour ce match",
@@ -2229,34 +2157,30 @@ const Map<String, String> kFr = {
   "Starts in 1 day": "Commence dans 1 jour",
   "Starts in 1 week": "Commence dans 1 semaine",
   "Schedule": "Calendrier",
-  "Every game of the season, cups included": "Tous les matchs de la saison, coupes comprises",
+  "Every game of the season, cups included":
+      "Tous les matchs de la saison, coupes comprises",
   "Could not load the schedule.": "Impossible de charger le calendrier.",
-  "OK: stats, watch or game menu · Hold OK: game menu · CH+/CH-: month": "OK : stats, regarder ou menu du match · Maintenir OK : menu du match · CH+/CH- : mois",
+  "OK: stats, watch or game menu · Hold OK: game menu · CH+/CH-: month":
+      "OK : stats, regarder ou menu du match · Maintenir OK : menu du match · CH+/CH- : mois",
   "No game this day.": "Aucun match ce jour-là.",
   "Next game": "Prochain match",
   "Newest": "Nouveautés",
   'What happens when a catch-up programme ends':
       "Ce qui se passe à la fin d'un programme en rattrapage",
-  'Keep playing after the programme':
-      "Continuer après le programme",
+  'Keep playing after the programme': "Continuer après le programme",
   "Off: catch-up pauses when the programme you picked ends, so the next one doesn't start on its own; press Play to carry on. On: it keeps going like the channel did.":
       "Désactivé : le rattrapage se met en pause à la fin du programme choisi, le suivant ne démarre pas tout seul ; appuyez sur Lecture pour continuer. Activé : la lecture continue comme sur la chaîne.",
-  "Channel schedule":
-      "Programme de la chaîne",
+  "Channel schedule": "Programme de la chaîne",
   "▲ ▼ programmes  ·  OK to watch  ·  Back to close":
       "▲ ▼ émissions  ·  OK pour regarder  ·  Retour pour fermer",
-  "On now  ·  OK to watch live":
-      "En cours  ·  OK pour regarder en direct",
+  "On now  ·  OK to watch live": "En cours  ·  OK pour regarder en direct",
   "Catch-up  ·  OK to watch from the start":
       "Rattrapage  ·  OK pour regarder depuis le début",
-  "Upcoming":
-      "À venir",
-  "Show group counts":
-      "Afficher le nombre par groupe",
+  "Upcoming": "À venir",
+  "Show group counts": "Afficher le nombre par groupe",
   "How many channels, movies or shows each group holds, beside its name.":
       "Le nombre de chaînes, films ou séries de chaque groupe, à côté de son nom.",
-  "{m} min back":
-      "{m} min en arrière",
+  "{m} min back": "{m} min en arrière",
 
   // Upcoming TV programmes
   "Starts in 5 minutes": "Commence dans 5 minutes",
@@ -2393,42 +2317,28 @@ const Map<String, String> kFr = {
   "Metadata provided by TMDB.": "Métadonnées fournies par TMDB.",
   "No matching title found in your playlists.":
       "Aucun titre correspondant trouvé dans vos playlists.",
-  "Skip intro":
-      "Passer l'intro",
-  "Skip recap":
-      "Passer le résumé",
-  "Skip credits":
-      "Passer le générique",
-  "Skip intro and credits button":
-      "Bouton pour passer l'intro et le générique",
+  "Skip intro": "Passer l'intro",
+  "Skip recap": "Passer le résumé",
+  "Skip credits": "Passer le générique",
+  "Skip intro and credits button": "Bouton pour passer l'intro et le générique",
   "Skip intros and credits on TV show episodes":
       "Passer l'intro et le générique des épisodes",
   "On TV show episodes, a button skips the intro, the recap and the credits (or plays the next episode). Press OK while it shows. Times come from IntroDB (introdb.app), a free community database: it is asked with the show's IMDb id, season and episode number, nothing else.":
       "Sur les épisodes de séries, un bouton passe l'intro, le résumé et le générique (ou lance l'épisode suivant). Appuyez sur OK quand il s'affiche. Les temps viennent d'IntroDB (introdb.app), une base communautaire gratuite : on lui envoie seulement l'identifiant IMDb de la série, la saison et le numéro d'épisode.",
-  "Betting odds":
-      "Cotes de paris",
-  "Show betting odds":
-      "Afficher les cotes",
+  "Betting odds": "Cotes de paris",
+  "Show betting odds": "Afficher les cotes",
   "The line and over/under on game cards, more in the game stats":
       "La ligne et le total (over/under) sur les cartes de match, plus de détails dans les stats",
   "Show the line and over/under on games":
       "Afficher la ligne et le total des matchs",
   "Odds come with the scores (one sportsbook, mostly North American leagues) and show before and during a game. Display only: {app} never takes bets or links to a sportsbook. Saved for this viewer.":
       "Les cotes arrivent avec les scores (un seul bookmaker, surtout les ligues nord-américaines) et s'affichent avant et pendant un match. Affichage seulement : {app} ne prend aucun pari et ne renvoie vers aucun bookmaker. Enregistré pour ce profil.",
-  "Moneyline":
-      "Vainqueur",
-  "Spread":
-      "Écart",
-  "Over":
-      "Plus",
-  "Under":
-      "Moins",
-  "Draw":
-      "Nul",
-  "Favourite":
-      "Favori",
-  "Total":
-      "Total",
-  "Betting odds · {book}":
-      "Cotes · {book}",
+  "Moneyline": "Vainqueur",
+  "Spread": "Écart",
+  "Over": "Plus",
+  "Under": "Moins",
+  "Draw": "Nul",
+  "Favourite": "Favori",
+  "Total": "Total",
+  "Betting odds · {book}": "Cotes · {book}",
 };

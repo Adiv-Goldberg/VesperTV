@@ -35,6 +35,7 @@ import '../../utils/constants.dart';
 import 'sports_country_settings_screen.dart';
 import 'sports_playlist_settings_screen.dart';
 import 'sports_league_visibility_settings_screen.dart';
+import 'sports_auto_play_settings_screen.dart';
 import 'sports_odds_settings_screen.dart';
 import 'sports_quality_settings_screen.dart';
 
@@ -238,6 +239,9 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
             if (Platform.isAndroid)
               _general('skipintro', Icons.skip_next_outlined, tr('Skip intro'),
                   tr('Skip intros and credits on TV show episodes')),
+            if (Platform.isAndroid)
+              _general('upnext', Icons.queue_play_next, tr('Up Next'),
+                  tr('When the next episode starts by itself')),
             _general('trailers', Icons.movie_outlined, tr('Trailers'),
                 tr('Play trailers automatically on movie and show pages')),
             if (!Platform.isWindows)
@@ -283,6 +287,11 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
                 tr('Betting odds'),
                 tr('Show the line and over/under on games'),
                 (_) => const SportsOddsSettingsScreen()),
+            _Entry(
+                Icons.play_circle_outline,
+                tr('Watch game button'),
+                tr('A reminded game offers Watch game in the player at kickoff'),
+                (_) => const SportsAutoPlaySettingsScreen()),
           ],
         ),
         _Category(

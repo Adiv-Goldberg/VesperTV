@@ -14,6 +14,7 @@ import '../widgets/archive_source_drawer.dart';
 import '../utils/playback_modal_back_guard.dart';
 import '../services/app_preferences.dart';
 import '../services/playback_service.dart';
+import '../services/watch_game_offer.dart';
 import '../services/playlist_manager.dart';
 import '../services/skip_segments.dart';
 import '../services/storage_service.dart';
@@ -25,6 +26,7 @@ import '../widgets/data_pool_card.dart';
 import '../widgets/epg_guide.dart';
 import '../widgets/player_controls.dart';
 import '../widgets/skip_segment_button.dart';
+import '../widgets/watch_game_button.dart';
 import '../widgets/subtitle_overlay.dart';
 import '../widgets/player_side_panel.dart';
 import 'multiview_screen.dart';
@@ -144,6 +146,66 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _onSkipChanged() {
     if (_skipFocus.hasFocus && !_skipShowing) _rootFocus.requestFocus();
+  }
+
+  /// Watch game pill (Settings > Sports Trak > Watch game button): a
+  /// reminded game started. Up from the bar (or from the skip pill) reaches
+  /// it, OK switches; it never switches by itself (owner, 1.0.51).
+  final FocusNode _watchFocus = FocusNode(debugLabel: 'player-watch-game');
+
+  /// Like the skip pill: 10 s when it arrives (once per game), then
+  /// only while the player bar shows or the pill has focus (owner, +544:
+  /// it stayed forever).
+  WatchGameOffer? get _watchOffer {
+    final offer = WatchGameOffer.current.value;
+    if (offer == null || offer.expired) return null;
+    final playing = _playback.currentChannel ?? widget.channel;
+    if (offer.channel.id == playing.id) return null;
+    final fresh =
+        _watchShownUntil != null && DateTime.now().isBefore(_watchShownUntil!);
+    return fresh || _bottomVisible || _watchFocus.hasFocus ? offer : null;
+  }
+
+  DateTime? _watchShownUntil;
+  Timer? _watchTimer;
+
+  /// The bottom bar's measured height: the Watch game pill hugs its top
+  /// edge (owner, +546), and the bar is taller with a seek bar (VOD).
+  final _bottomBarKey = GlobalKey();
+  double _bottomBarHeight = 96;
+
+  void _measureBottomBar() {
+    final box = _bottomBarKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
+    final h = box.size.height;
+    if ((h - _bottomBarHeight).abs() > 1 && mounted) {
+      setState(() => _bottomBarHeight = h);
+    }
+  }
+
+  void _armWatchTimer() {
+    _watchTimer?.cancel();
+    final offer = WatchGameOffer.current.value;
+    if (offer == null || offer.announced) return;
+    offer.announced = true;
+    const shown = Duration(seconds: 10);
+    _watchShownUntil = DateTime.now().add(shown);
+    _watchTimer = Timer(shown, () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  void _onWatchOfferChanged() {
+    if (!mounted) return;
+    _armWatchTimer();
+    if (_watchFocus.hasFocus && _watchOffer == null) _rootFocus.requestFocus();
+    setState(() {});
+  }
+
+  void _watchGame(WatchGameOffer offer) {
+    if (_watchFocus.hasFocus) _rootFocus.requestFocus();
+    WatchGameOffer.current.value = null;
+    _zapTo(offer.channel);
   }
 
   void _onOk() {
@@ -384,6 +446,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _topScope.addListener(_onBarFocusChange);
     _bottomScope.addListener(_onBarFocusChange);
     _skip.addListener(_onSkipChanged);
+    WatchGameOffer.current.addListener(_onWatchOfferChanged);
+    _armWatchTimer();
     _switchButtonFocus.addListener(_onBarFocusChange);
     _scheduleChipFocus.addListener(_onBarFocusChange);
     _resetHideTimer();
@@ -465,6 +529,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (_tryIntraBarMove(_bottomScope, TraversalDirection.up)) return;
       if (_skipShowing) {
         _skipFocus.requestFocus();
+        return;
+      }
+      if (_watchOffer != null) {
+        _watchFocus.requestFocus();
         return;
       }
       if (_hasSwitchButton) {
@@ -887,6 +955,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _skip.removeListener(_onSkipChanged);
     _skip.dispose();
     _skipFocus.dispose();
+    WatchGameOffer.current.removeListener(_onWatchOfferChanged);
+    _watchTimer?.cancel();
+    _watchFocus.dispose();
     _fileInfoRequests.dispose();
     _topScope.removeListener(_onBarFocusChange);
     _bottomScope.removeListener(_onBarFocusChange);
@@ -912,6 +983,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       );
 
   Widget _buildPlayer(BuildContext context, bool inPip) {
+    if (WatchGameOffer.current.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _measureBottomBar());
+    }
     final playback = context.watch<PlaybackService>();
     final controller = playback.controller;
     final prefs = context.watch<AppPreferences>();
@@ -1030,8 +1104,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     // froze solid until Android force-killed the app. Consume
                     // it even when no Media Hub sources exist;
                     // Media Hub playback uses it to open its source drawer.
-                    // Live: Right = last channel (owner, 2026-10-29).
-                    const SingleActivator(LogicalKeyboardKey.arrowRight): () {
+                    // Live: Right = last channel (owner, 2026-10-29). No
+                    // repeats: the Right held to resume this player (the
+                    // "Hold > to resume" pill) recalled the last channel on
+                    // arrival (owner, +545).
+                    const SingleActivator(LogicalKeyboardKey.arrowRight,
+                        includeRepeats: false): () {
                       if (channel.isLive || playback.catchup != null) {
                         _lastChannel();
                       } else {
@@ -1284,6 +1362,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               right: 0,
                               bottom: 0,
                               child: ExcludeFocus(
+                                key: _bottomBarKey,
                                 excluding: !_bottomVisible,
                                 child: AnimatedOpacity(
                                   opacity: _bottomVisible ? 1 : 0,
@@ -1367,10 +1446,37 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               onSkip: _skipSegment,
                               focusNode: _skipFocus,
                               onDown: _focusBottomBar,
+                              onUp: _watchOffer == null
+                                  ? null
+                                  : _watchFocus.requestFocus,
+                            ),
+
+                          if (!touchLocked)
+                            WatchGameButton(
+                              offer: _watchOffer,
+                              // Hugs the player bar (bottom corner while the
+                              // bar is hidden); above the skip pill when
+                              // both show.
+                              bottom: _skipShowing
+                                  ? 262
+                                  : _bottomVisible
+                                      ? _bottomBarHeight + 8
+                                      : 28,
+                              showUpHint: !_touch &&
+                                  _bottomScope.hasFocus &&
+                                  !_skipShowing,
+                              onWatch: _watchGame,
+                              focusNode: _watchFocus,
+                              onDown: _skipShowing
+                                  ? _skipFocus.requestFocus
+                                  : _focusBottomBar,
                             ),
 
                           if (controller != null && !touchLocked)
                             _UpNextBubble(
+                              mode: context
+                                  .read<StorageService>()
+                                  .getUpNextMode(),
                               controller: controller,
                               nextChannel: playback.nextUpChannel,
                               onPlayNow: () {
@@ -1465,12 +1571,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
 /// know the position every tick, the same way the seek bar does.
 class _UpNextBubble extends StatelessWidget {
   const _UpNextBubble({
+    required this.mode,
     required this.controller,
     required this.nextChannel,
     required this.onPlayNow,
     required this.onDismiss,
   });
 
+  /// [StorageService.getUpNextMode]: early / end / off (no bubble).
+  final String mode;
   final VideoPlayerHdrController controller;
   final Channel? nextChannel;
   final VoidCallback onPlayNow;
@@ -1497,16 +1606,23 @@ class _UpNextBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final next = nextChannel;
-    if (next == null) return _hidden;
+    if (next == null || mode == 'off') return _hidden;
+    final atEnd = mode == 'end';
     return ValueListenableBuilder<VideoPlayerHdrValue>(
       valueListenable: controller,
       builder: (context, value, _) {
         final duration = value.duration;
         if (duration <= Duration.zero) return _hidden;
         final remaining = duration - value.position;
-        if (remaining > _showAt || remaining < Duration.zero) return _hidden;
+        // When the episode ends: the last 15 s count down to the end.
+        if (remaining > (atEnd ? const Duration(seconds: 15) : _showAt) ||
+            remaining < Duration.zero) {
+          return _hidden;
+        }
 
-        final countdown = (remaining - _autoAdvanceAt).inSeconds.clamp(0, 999);
+        final countdown = (remaining - (atEnd ? Duration.zero : _autoAdvanceAt))
+            .inSeconds
+            .clamp(0, 999);
         final hasLogo = next.logoUrl != null && next.logoUrl!.isNotEmpty;
 
         return Positioned(

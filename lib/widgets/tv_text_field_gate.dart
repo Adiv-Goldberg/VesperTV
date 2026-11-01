@@ -59,14 +59,47 @@ class TvTextFieldGate extends StatefulWidget {
   State<TvTextFieldGate> createState() => _TvTextFieldGateState();
 }
 
-class _TvTextFieldGateState extends State<TvTextFieldGate> {
+class _TvTextFieldGateState extends State<TvTextFieldGate>
+    with WidgetsBindingObserver {
   bool _typing = false;
+
+  /// The keyboard took screen space while typing (it reports an inset).
+  bool _keyboardShown = false;
 
   @override
   void initState() {
     super.initState();
     widget.focusNode.addListener(_onFocus);
     HardwareKeyboard.instance.addHandler(_onKey);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// The keyboard closed (Back on it) while typing: back to read-only, so
+  /// the input connection closes and the D-pad moves focus again. Google
+  /// TV (Chromecast): with the connection left open, Gboard kept taking the
+  /// arrows as cursor moves and the remote could not leave the field (user
+  /// report, 1.0.51). Only when the keyboard reported an inset: Fire OS
+  /// draws its own over the app and keeps its existing handling.
+  @override
+  void didChangeMetrics() {
+    if (!_typing || !mounted) return;
+    final view = View.maybeOf(context);
+    if (view == null) return;
+    final inset = view.viewInsets.bottom;
+    if (inset > 0) {
+      _keyboardShown = true;
+      return;
+    }
+    if (!_keyboardShown) return;
+    _keyboardShown = false;
+    setState(() => _typing = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final now = FocusManager.instance.primaryFocus;
+      if (now == null || now is FocusScopeNode) {
+        widget.focusNode.requestFocus();
+      }
+    });
   }
 
   @override
@@ -82,6 +115,7 @@ class _TvTextFieldGateState extends State<TvTextFieldGate> {
   void dispose() {
     widget.focusNode.removeListener(_onFocus);
     HardwareKeyboard.instance.removeHandler(_onKey);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -92,6 +126,7 @@ class _TvTextFieldGateState extends State<TvTextFieldGate> {
   /// Max, 2026-10-19). One more OK per field, never stuck.
   void _onFocus() {
     if (widget.focusNode.hasFocus || !_typing) return;
+    _keyboardShown = false;
     setState(() => _typing = false);
     // Fire OS: Back on its keyboard drops Flutter's focus altogether.
     WidgetsBinding.instance.addPostFrameCallback((_) {

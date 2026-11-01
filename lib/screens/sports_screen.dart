@@ -44,6 +44,7 @@ import '../services/recording_service.dart';
 import '../services/sports_channel_matcher.dart';
 import '../services/sports_channel_library.dart';
 import '../services/sports_follows.dart';
+import '../services/sports_ranks.dart';
 import '../services/sports_service.dart';
 import '../services/storage_service.dart';
 import '../utils/time_format.dart';
@@ -365,7 +366,7 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
 
   DateTime get _day {
     final n = DateTime.now();
-    return DateTime(n.year, n.month, n.day).add(Duration(days: _dayOffset));
+    return DateTime(n.year, n.month, n.day + _dayOffset);
   }
 
   List<SportsLeague> get _shownLeagues => _leagueFilter == null
@@ -427,6 +428,10 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
           _defaultHero(games);
     });
     _ensureInitialFocus();
+    // Team ranks beside the names, from the cached standings tables.
+    unawaited(SportsRanks.ensure(games.map((g) => g.league)).then((changed) {
+      if (changed && mounted) setState(() {});
+    }));
     await _rematch(token);
   }
 
@@ -2857,7 +2862,7 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
     );
   }
 
-  void _focusModeCard(_Section section, String key) {
+  void _focusModeCard(_Section section, String key, {int delta = 0}) {
     final index = section.games.indexWhere((game) => _gameKey(game) == key);
     if (index < 0) return;
     final node = _cardNode(key);
@@ -2884,7 +2889,22 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
       final ctx = node.context;
       if (!mounted || ctx == null || !ctx.mounted) return;
       node.requestFocus();
-      Scrollable.ensureVisible(ctx);
+      // Left/Right: scroll only as far as needed (a plain ensureVisible put
+      // every card at the row's left edge: jumpy, and under the Live TV
+      // groups, owner photos 1.0.51). After the frame, on the whole card:
+      // its hold hint appears on focus and widens it.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !ctx.mounted) return;
+        var target = ctx;
+        ctx.visitAncestorElements((e) {
+          if (e.widget.key == ValueKey('card-$key')) {
+            target = e;
+            return false;
+          }
+          return true;
+        });
+        _revealInRow(target);
+      });
     }
 
     if (node.context != null) {
@@ -2892,6 +2912,39 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) => focus());
     }
+  }
+
+  /// Scrolls the card's row sideways just enough to show [card] with a
+  /// 20 px margin (its focus zoom, frame and shadow), and nothing else: an
+  /// ensureVisible re-aligned cards already in view (jumpy), and walking up
+  /// to the page scrolled it too; the first card then lost its left edge
+  /// behind the collapsed Sports Mode rail (owner photos, 1.0.51). The page
+  /// itself follows through [_ensureRowVisible].
+  static void _revealInRow(BuildContext card) {
+    final scrollable = Scrollable.maybeOf(card);
+    final box = card.findRenderObject();
+    final view = scrollable?.context.findRenderObject();
+    if (scrollable == null ||
+        box is! RenderBox ||
+        view is! RenderBox ||
+        !box.attached ||
+        !view.attached) {
+      return;
+    }
+    const margin = 20.0;
+    final left = box.localToGlobal(Offset.zero, ancestor: view).dx;
+    final right = left + box.size.width;
+    final position = scrollable.position;
+    final double to;
+    if (left < margin) {
+      to = position.pixels + left - margin;
+    } else if (right > view.size.width - margin) {
+      to = position.pixels + right - (view.size.width - margin);
+    } else {
+      return;
+    }
+    position
+        .jumpTo(to.clamp(position.minScrollExtent, position.maxScrollExtent));
   }
 
   /// Left/Right along a game row, explicitly (CLAUDE.md §10): the row is a
@@ -2919,7 +2972,7 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
       return KeyEventResult.handled;
     }
     if (_modeActive) {
-      _focusModeCard(s, _gameKey(s.games[target]));
+      _focusModeCard(s, _gameKey(s.games[target]), delta: delta);
       return KeyEventResult.handled;
     }
     final node = _cardNode(_gameKey(s.games[target]));
@@ -3012,47 +3065,54 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
                 canRequestFocus: false,
                 skipTraversal: true,
                 onKeyEvent: (_, event) => _onRowKey(s, event),
-                child: ListView(
-                  controller: _rowScrolls[s.id],
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  // Room for the focused card's 1.05 zoom: the page's scroll
-                  // view clipped its left edge in Sports Mode (owner photo).
-                  padding: _modeActive
-                      ? const EdgeInsets.symmetric(horizontal: 8)
-                      : null,
-                  children: [
-                    for (final (k, g) in s.games.indexed) ...[
-                      // A league divider where the league changes (and
-                      // before the first card) when the row mixes leagues.
-                      if (_leagueFilter == null &&
-                          s.games.any((x) => x.league.id != g.league.id) &&
-                          (k == 0 || s.games[k - 1].league.id != g.league.id))
-                        _LeagueDivider(league: g.league),
-                      _GameCard(
-                        key: ValueKey('card-${_gameKey(g)}'),
-                        cardHeight: cardHeight,
-                        focusNode: _cardNode(_gameKey(g)),
-                        game: g,
-                        match: _matches[_gameKey(g)]?.firstOrNull,
-                        matching: _matching,
-                        hideScores: _hideScores,
-                        starred: _follows.involves(g),
-                        previewing:
-                            preview != null && _gameKey(preview) == _gameKey(g),
-                        onFocus: () {
-                          _zone = zoneIndex;
-                          _lastCardInRow[s.id] = _gameKey(g);
-                          _ensureRowVisible(s.id);
-                          if (_heroGame != g || _heroPick != null) {
-                            _focusGame(g);
-                          }
-                        },
-                        onTap: () => _activateGame(g),
-                        onHold: () => _openGame(g),
-                      ),
+                // Clip.none below lets the focused card zoom past the row,
+                // but scrolled-away cards also drew to the left of it, under
+                // the Sports Mode Live TV groups (owner photo, 1.0.51): clip
+                // the sides just past the zoom room, never top/bottom.
+                child: ClipRect(
+                  clipper: const _RowSideClipper(),
+                  child: ListView(
+                    controller: _rowScrolls[s.id],
+                    scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    // Room for the focused card's 1.05 zoom: the page's scroll
+                    // view clipped its left edge in Sports Mode (owner photo).
+                    padding: _modeActive
+                        ? const EdgeInsets.symmetric(horizontal: 8)
+                        : null,
+                    children: [
+                      for (final (k, g) in s.games.indexed) ...[
+                        // A league divider where the league changes (and
+                        // before the first card) when the row mixes leagues.
+                        if (_leagueFilter == null &&
+                            s.games.any((x) => x.league.id != g.league.id) &&
+                            (k == 0 || s.games[k - 1].league.id != g.league.id))
+                          _LeagueDivider(league: g.league),
+                        _GameCard(
+                          key: ValueKey('card-${_gameKey(g)}'),
+                          cardHeight: cardHeight,
+                          focusNode: _cardNode(_gameKey(g)),
+                          game: g,
+                          match: _matches[_gameKey(g)]?.firstOrNull,
+                          matching: _matching,
+                          hideScores: _hideScores,
+                          starred: _follows.involves(g),
+                          previewing: preview != null &&
+                              _gameKey(preview) == _gameKey(g),
+                          onFocus: () {
+                            _zone = zoneIndex;
+                            _lastCardInRow[s.id] = _gameKey(g);
+                            _ensureRowVisible(s.id);
+                            if (_heroGame != g || _heroPick != null) {
+                              _focusGame(g);
+                            }
+                          },
+                          onTap: () => _activateGame(g),
+                          onHold: () => _openGame(g),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -3064,6 +3124,19 @@ class _SportsScreenState extends State<SportsScreen> with RouteAware {
 }
 
 // =================================================================== widgets
+
+/// A game row's clip: 10 px past each side (the focused card's 1.05 zoom),
+/// unbounded above and below (the zoom and the hold hint).
+class _RowSideClipper extends CustomClipper<Rect> {
+  const _RowSideClipper();
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(-10, -1000, size.width + 10, size.height + 1000);
+
+  @override
+  bool shouldReclip(_RowSideClipper oldClipper) => false;
+}
 
 /// Between two leagues' blocks in a game row: the league's logo and short
 /// name over a thin line. Not focusable (row navigation is by game).
@@ -3884,7 +3957,7 @@ class _Hero extends StatelessWidget {
                 fallback: t.abbreviation,
                 color: t.color),
             const SizedBox(height: 6),
-            Text(t.shortName,
+            Text(SportsRanks.name(game.league, t),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -3923,7 +3996,7 @@ class _Hero extends StatelessWidget {
       crossAxisAlignment:
           alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        Text(t.shortName,
+        Text(SportsRanks.name(game.league, t),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -4255,7 +4328,7 @@ class _GameCardState extends State<_GameCard> {
               color: t.color),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(t.shortName,
+            child: Text(SportsRanks.name(g.league, t),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
