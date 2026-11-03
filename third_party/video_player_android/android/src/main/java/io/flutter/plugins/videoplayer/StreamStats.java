@@ -25,6 +25,19 @@ final class StreamStats implements TransferListener {
   /** Total resource size, never downloaded bytes or an adaptive segment size. */
   final AtomicLong fileSizeBytes = new AtomicLong(-1);
   @Nullable private final Uri fileUri;
+  // LiveReconnectDataSource: allowed on the main player only, never for a movie /
+  // episode (onDemand) or catch-up (finite); set from VideoPlayer.
+  volatile boolean allowReconnect;
+  volatile boolean onDemand;
+  volatile boolean finite;
+  final java.util.concurrent.atomic.AtomicInteger reconnects =
+      new java.util.concurrent.atomic.AtomicInteger();
+  @Nullable volatile String lastReconnect;
+
+  /** A single progressive resource (not HLS/DASH): what LiveReconnectDataSource wraps. */
+  boolean isProgressive() {
+    return fileUri != null;
+  }
   private static final Pattern RANGE = Pattern.compile(
       "bytes\\s+(\\d+)-(\\d+)/(\\d+)", Pattern.CASE_INSENSITIVE);
 

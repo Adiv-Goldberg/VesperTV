@@ -192,6 +192,12 @@ public class PlatformViewVideoPlayer extends VideoPlayer {
     return player;
   }
 
+  /** Main player only: Multiview tiles keep their own recovery (one connection each). */
+  @Override
+  protected boolean reconnectLiveStreams() {
+    return true;
+  }
+
   @NonNull
   @Override
   protected ExoPlayerEventListener createExoPlayerEventListener(

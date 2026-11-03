@@ -99,7 +99,11 @@ final class HttpVideoAsset extends VideoAsset {
       Context context, DefaultHttpDataSource.Factory initialFactory) {
     unstableUpdateDataSourceFactory(initialFactory, httpHeaders, userAgent);
     initialFactory.setTransferListener(stats);
-    DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(context, initialFactory);
+    DataSource.Factory http = initialFactory;
+    if (stats.isProgressive()) {
+      http = () -> new LiveReconnectDataSource(initialFactory.createDataSource(), stats);
+    }
+    DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(context, http);
     return new DefaultMediaSourceFactory(dataSourceFactory, liveCaptionExtractors());
   }
 

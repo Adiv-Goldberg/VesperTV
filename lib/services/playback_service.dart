@@ -27,6 +27,7 @@ import 'display_match.dart';
 import 'archive_service.dart';
 import 'watch_tracker.dart';
 import 'vod_buffering.dart';
+import 'live_reconnect_log.dart';
 import '../l10n/l10n.dart';
 
 /// Owns the single, app-wide [VideoPlayerHdrController] for whatever channel
@@ -66,7 +67,15 @@ class PlaybackService extends ChangeNotifier {
   /// recorder's local tap while that channel records), or null.
   static Future<String?> Function(Channel channel)? openUrlFor;
 
-  PlaybackService(this._storage, this._playlistManager);
+  PlaybackService(this._storage, this._playlistManager) {
+    _reconnectLog.start();
+  }
+
+  /// Send log lines for the native player's silent live reconnects.
+  late final _reconnectLog = LiveReconnectLog(() {
+    final c = controller;
+    return currentChannel?.isLive == true ? c : null;
+  });
 
   static const _recentlyPlayedCacheKey = 'recently_played';
   static const _maxRecentlyPlayed = 30;
@@ -1400,6 +1409,7 @@ class PlaybackService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _reconnectLog.dispose();
     _nativeZapGeneration++;
     _cancelNativeSwitchHolds();
     _teardown();

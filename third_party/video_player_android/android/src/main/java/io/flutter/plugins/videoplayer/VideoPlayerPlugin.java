@@ -158,7 +158,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
             videoAsset,
             playerOptions);
 
-    videoPlayer.streamStats = videoAsset.streamStats();
+    videoPlayer.attachStreamStats(videoAsset.streamStats());
     registerPlayerInstance(videoPlayer, id);
     return id;
   }
@@ -198,7 +198,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
             videoAsset,
             playerOptions);
 
-    videoPlayer.streamStats = videoAsset.streamStats();
+    videoPlayer.attachStreamStats(videoAsset.streamStats());
     registerPlayerInstance(videoPlayer, id);
     return new TexturePlayerIds(id, handle.id());
   }

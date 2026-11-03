@@ -18,12 +18,14 @@ import androidx.media3.common.C;
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackParameters;
+import androidx.media3.common.Player;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
+import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import io.flutter.view.TextureRegistry.SurfaceProducer;
 import java.util.ArrayList;
@@ -135,7 +137,90 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     exoPlayer.prepare();
     exoPlayerEventListener = createExoPlayerEventListener(exoPlayer, surfaceProducer);
     exoPlayer.addListener(exoPlayerEventListener);
+    exoPlayer.addListener(liveQueue);
     setAudioAttributes(exoPlayer, options.mixWithOthers);
+  }
+
+  // VesperTV patch: seamless live reconnect. While a live progressive channel
+  // plays on the main player, a second copy of it waits in the playlist. When
+  // the provider closes the connection (or it drops, see
+  // LiveReconnectDataSource), the first copy plays out its buffer and ExoPlayer
+  // moves to the copy, which opens a new connection only after the old one
+  // closed. A playlist boundary absorbs the new connection's timestamp jump
+  // (splicing bytes did not: frozen picture, looping audio after a Tuliprox
+  // restart, +557). Replaces the decoder reset + buffer loss + jump to "now"
+  // of the in-place restart.
+  @Nullable private MediaSource.Factory liveSourceFactory;
+  private static final long LIVE_STALL_MS = 2500;
+  private final Runnable liveStallCheck = () -> {
+    // The copy could not be queued ahead of the end (duration still unknown):
+    // nothing left to load, still buffering = jump to the copy ourselves.
+    if (exoPlayer.getPlaybackState() == Player.STATE_BUFFERING
+        && !exoPlayer.isLoading()
+        && exoPlayer.hasNextMediaItem()) {
+      note("stalled at the end of a copy, moving on");
+      exoPlayer.seekToNextMediaItem();
+    }
+  };
+  private final Player.Listener liveQueue = new Player.Listener() {
+    @Override
+    public void onPlaybackStateChanged(int state) {
+      mainHandler.removeCallbacks(liveStallCheck);
+      if (state == Player.STATE_READY) {
+        queueLiveCopy();
+      } else if (state == Player.STATE_BUFFERING && exoPlayer.hasNextMediaItem()) {
+        mainHandler.postDelayed(liveStallCheck, LIVE_STALL_MS);
+      }
+    }
+
+    @Override
+    public void onMediaItemTransition(@Nullable MediaItem item, int reason) {
+      if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
+          && reason != Player.MEDIA_ITEM_TRANSITION_REASON_SEEK) {
+        return;
+      }
+      int index = exoPlayer.getCurrentMediaItemIndex();
+      if (index > 0) exoPlayer.removeMediaItems(0, index);
+      if (streamStats != null) {
+        int n = streamStats.reconnects.incrementAndGet();
+        String why = streamStats.lastReconnect;
+        streamStats.lastReconnect = "switched to copy " + n + (why == null ? "" : " after " + why);
+      }
+    }
+  };
+
+  private void note(@NonNull String what) {
+    android.util.Log.w("VesperReconnect", what);
+    if (streamStats != null) streamStats.lastReconnect = what;
+  }
+
+  private boolean liveCopiesWanted() {
+    StreamStats stats = streamStats;
+    return reconnectLiveStreams()
+        && stats != null
+        && stats.isProgressive()
+        && !stats.onDemand
+        && !stats.finite
+        && exoPlayer.isCurrentMediaItemLive();
+  }
+
+  private void queueLiveCopy() {
+    if (isDisposed || !liveCopiesWanted() || exoPlayer.hasNextMediaItem()) return;
+    MediaItem item = exoPlayer.getCurrentMediaItem();
+    if (item == null) return;
+    if (liveSourceFactory != null) {
+      exoPlayer.addMediaSource(liveSourceFactory.createMediaSource(item));
+    } else {
+      exoPlayer.addMediaItem(item);
+    }
+  }
+
+  /** A movie / episode / catch-up must never move on to a queued live copy. */
+  private void dropLiveCopies() {
+    mainHandler.removeCallbacks(liveStallCheck);
+    int next = exoPlayer.getCurrentMediaItemIndex() + 1;
+    int count = exoPlayer.getMediaItemCount();
+    if (count > next) exoPlayer.removeMediaItems(next, count);
   }
 
   public void setDisposeHandler(@Nullable DisposeHandler handler) {
@@ -156,9 +241,11 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
           .clearOverrides().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true));
     }
     streamStats = asset.streamStats();
+    if (streamStats != null) streamStats.allowReconnect = reconnectLiveStreams();
     frameRateProbe = new FrameRateProbe();
     exoPlayer.setVideoFrameMetadataListener(frameRateProbe);
-    exoPlayer.setMediaSource(asset.getMediaSourceFactory(context).createMediaSource(asset.getMediaItem()));
+    liveSourceFactory = asset.getMediaSourceFactory(context);
+    exoPlayer.setMediaSource(liveSourceFactory.createMediaSource(asset.getMediaItem()));
     exoPlayer.prepare();
     exoPlayer.play();
   }
@@ -241,6 +328,17 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     exoPlayer.seekTo(position);
   }
 
+  /** LiveReconnectDataSource: reconnect live streams underneath this player. */
+  protected boolean reconnectLiveStreams() {
+    return false;
+  }
+
+  /** Called by the plugin after creation (and by replaceNativeStream). */
+  void attachStreamStats(@Nullable StreamStats stats) {
+    streamStats = stats;
+    if (stats != null) stats.allowReconnect = reconnectLiveStreams();
+  }
+
   /** Factory-only wiring; one policy instance per main player. */
   protected void setOnDemandLoadControl(OnDemandLoadControl control) {
     onDemandLoadControl = control;
@@ -250,12 +348,16 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     if (onDemandLoadControl != null) onDemandLoadControl.setOnDemand(on);
     vodTrace.setEnabled(on);
     if (exoPlayerEventListener != null) exoPlayerEventListener.setOnDemand(on);
+    if (streamStats != null) streamStats.onDemand = on;
+    if (on) dropLiveCopies();
   }
 
   @NonNull
   /** Catch-up playback: see ExoPlayerEventListener.setFiniteMode. */
   void setFiniteMode(boolean on) {
     if (exoPlayerEventListener != null) exoPlayerEventListener.setFiniteMode(on);
+    if (streamStats != null) streamStats.finite = on;
+    if (on) dropLiveCopies();
   }
 
   public ExoPlayer getExoPlayer() {

@@ -67,6 +67,9 @@ final class StatsBridge implements MethodChannel.MethodCallHandler {
       m.put("bytes", stats.bytes.get());
       long fileSize = stats.fileSizeBytes.get();
       if (fileSize > 0) m.put("fileSizeBytes", fileSize);
+      m.put("reconnects", stats.reconnects.get());
+      String last = stats.lastReconnect;
+      if (last != null) m.put("lastReconnect", last);
     }
     @Nullable DecoderCounters video = player.getExoPlayer().getVideoDecoderCounters();
     if (video != null) {
