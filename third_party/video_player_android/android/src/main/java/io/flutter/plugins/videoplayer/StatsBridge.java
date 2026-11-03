@@ -84,6 +84,13 @@ final class StatsBridge implements MethodChannel.MethodCallHandler {
       String last = stats.lastReconnect;
       if (last != null) m.put("lastReconnect", last);
     }
+    // Live buffer diagnostics for Send log.
+    m.put("bufferedMs", player.getExoPlayer().getTotalBufferedDuration());
+    m.put("speed", (double) player.getExoPlayer().getPlaybackParameters().speed);
+    m.put("gradual", player.isLiveGradual());
+    m.put("cushionSlow", player.isCushionSlow());
+    m.put("stalls", player.stalls);
+    m.put("lastStallMs", player.lastStallMs);
     @Nullable DecoderCounters video = player.getExoPlayer().getVideoDecoderCounters();
     if (video != null) {
       video.ensureUpdated();

@@ -357,6 +357,8 @@ const Map<String, String> kFr = {
       "OK · Aperçu   Maintenir OK · Choisir une chaîne ou l'ajouter à une liste",
   "See all": "Tout voir",
   "Update automatically": "Mettre à jour automatiquement",
+  "Live stream format: HLS": "Format des flux en direct : HLS",
+  "Off: MPEG-TS (default, fastest start). On: HLS, like the HLS option in TiviMate. Plays about 10 seconds further behind live, but hides servers that send live TV in bursts. Applies from the next channel.": "Désactivé : MPEG-TS (par défaut, démarrage le plus rapide). Activé : HLS, comme l'option HLS de TiviMate. Joue environ 10 secondes plus loin du direct, mais masque les serveurs qui envoient la télé en direct par à-coups. S'applique à partir de la prochaine chaîne.",
   "On: when an update is due, it runs at launch without asking. Off: the app asks \"Update content now?\" first.":
       "Activé : quand une mise à jour est due, elle se lance au démarrage sans demander. Désactivé : l'appli demande d'abord « Mettre à jour le contenu maintenant ? ».",
   "Open on": "Ouvrir sur",
@@ -2379,6 +2381,8 @@ const Map<String, String> kFr = {
   "Live buffer": "Tampon du direct",
   "Hide short dropouts on live channels": "Masque les courtes coupures sur les chaînes en direct",
   "Small (1.5 seconds)": "Petit (1,5 seconde)",
+  "Gradual (starts fast, builds up)": "Progressif (démarre vite, se constitue)",
+  "building at 96 % speed": "constitution à 96 % de la vitesse",
   "4 seconds": "4 secondes",
   "8 seconds": "8 secondes",
   "12 seconds": "12 secondes",

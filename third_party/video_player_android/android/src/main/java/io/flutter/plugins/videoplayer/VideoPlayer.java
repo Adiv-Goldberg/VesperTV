@@ -138,6 +138,7 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     exoPlayerEventListener = createExoPlayerEventListener(exoPlayer, surfaceProducer);
     exoPlayer.addListener(exoPlayerEventListener);
     exoPlayer.addListener(liveQueue);
+    exoPlayer.addListener(stallCounter);
     setAudioAttributes(exoPlayer, options.mixWithOthers);
   }
 
@@ -248,6 +249,11 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     exoPlayer.setMediaSource(liveSourceFactory.createMediaSource(asset.getMediaItem()));
     exoPlayer.prepare();
     exoPlayer.play();
+    // The new channel starts with no reserve: build it again.
+    if (liveGradual) {
+      resetCushion();
+      mainHandler.postDelayed(cushionTick, CUSHION_SAMPLE_MS);
+    }
   }
 
   @NonNull
@@ -344,9 +350,108 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     onDemandLoadControl = control;
   }
 
-  /** See {@link OnDemandLoadControl#setLiveReserveMs}. Main player only. */
+  /**
+   * See {@link OnDemandLoadControl#setLiveReserveMs}. Main player only. A negative value is
+   * Gradual: normal fast start, then see {@link #cushionTick}.
+   */
   void setLiveBuffer(long ms) {
-    if (onDemandLoadControl != null) onDemandLoadControl.setLiveReserveMs(ms);
+    if (onDemandLoadControl == null) return;
+    onDemandLoadControl.setLiveReserveMs(Math.max(0, ms));
+    liveGradual = ms < 0;
+    resetCushion();
+    if (liveGradual) mainHandler.postDelayed(cushionTick, CUSHION_SAMPLE_MS);
+  }
+
+  // VesperTV patch: Live buffer > Gradual. IPTV servers send live .ts in bursts with
+  // 3-9 s of silence between them (Blcktv and another provider measured 2026-11-03);
+  // the server only sends at real-time speed, so the reserve held before playback
+  // never grows by itself and every long gap freezes the picture. Playing at 96 %
+  // speed (pitch kept) gains ~2.4 s of reserve a minute without a visible wait,
+  // until the lowest buffer seen over the last minute stays above 3 s; back to
+  // 96 % if it drops under 1.5 s. Adapts to each server: short gaps = a short
+  // reserve. Not with audio passthrough (the receiver cannot change speed).
+  private static final float CUSHION_SPEED = 0.96f;
+  private static final long CUSHION_SAMPLE_MS = 1000;
+  private static final long CUSHION_LOW_MS = 1500;
+  private static final long CUSHION_OK_MS = 3000;
+  private final long[] cushionSamples = new long[60];
+  private int cushionCount;
+  private int cushionNext;
+  private boolean liveGradual;
+  private boolean cushionSlow;
+
+  private final Runnable cushionTick = new Runnable() {
+    @Override
+    public void run() {
+      if (isDisposed || !liveGradual) return;
+      StreamStats stats = streamStats;
+      boolean eligible = !nativePassthrough
+          && stats != null && !stats.onDemand && !stats.finite
+          && exoPlayer.isCurrentMediaItemLive();
+      int state = exoPlayer.getPlaybackState();
+      if (!eligible) {
+        setCushionSlow(false);
+      } else if (exoPlayer.getPlayWhenReady()
+          && (state == Player.STATE_READY || state == Player.STATE_BUFFERING)) {
+        // A stall counts as an empty buffer.
+        long buffered = state == Player.STATE_READY ? exoPlayer.getTotalBufferedDuration() : 0;
+        cushionSamples[cushionNext] = buffered;
+        cushionNext = (cushionNext + 1) % cushionSamples.length;
+        cushionCount = Math.min(cushionCount + 1, cushionSamples.length);
+        long low = Long.MAX_VALUE;
+        for (int i = 0; i < cushionCount; i++) low = Math.min(low, cushionSamples[i]);
+        if (!cushionSlow && low < CUSHION_LOW_MS) {
+          setCushionSlow(true);
+        } else if (cushionSlow && cushionCount == cushionSamples.length && low >= CUSHION_OK_MS) {
+          setCushionSlow(false);
+        }
+      }
+      mainHandler.postDelayed(this, CUSHION_SAMPLE_MS);
+    }
+  };
+
+  // Send log (StatsBridge getStats -> Dart LiveReconnectLog): freezes while playing.
+  int stalls;
+  long lastStallMs;
+  private long stallStartedAt;
+  private final Player.Listener stallCounter = new Player.Listener() {
+    @Override
+    public void onPlaybackStateChanged(int state) {
+      long now = android.os.SystemClock.elapsedRealtime();
+      if (state == Player.STATE_BUFFERING && exoPlayer.getPlayWhenReady()
+          && stallStartedAt == 0 && exoPlayer.getCurrentPosition() > 0) {
+        stallStartedAt = now;
+      } else if (state != Player.STATE_BUFFERING && stallStartedAt != 0) {
+        stalls++;
+        lastStallMs = now - stallStartedAt;
+        stallStartedAt = 0;
+      }
+    }
+  };
+
+  boolean isLiveGradual() {
+    return liveGradual;
+  }
+
+  boolean isCushionSlow() {
+    return cushionSlow;
+  }
+
+  private void setCushionSlow(boolean slow) {
+    if (cushionSlow == slow) return;
+    float current = exoPlayer.getPlaybackParameters().speed;
+    // Never override a speed the user chose.
+    if (current != 1f && current != CUSHION_SPEED) return;
+    cushionSlow = slow;
+    exoPlayer.setPlaybackParameters(new PlaybackParameters(slow ? CUSHION_SPEED : 1f));
+    android.util.Log.i("VesperCushion", slow ? "building reserve" : "reserve ok");
+  }
+
+  private void resetCushion() {
+    mainHandler.removeCallbacks(cushionTick);
+    setCushionSlow(false);
+    cushionCount = 0;
+    cushionNext = 0;
   }
 
   void setOnDemandBuffering(boolean on) {

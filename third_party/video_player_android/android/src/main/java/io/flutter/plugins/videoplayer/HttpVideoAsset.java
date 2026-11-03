@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 
 final class HttpVideoAsset extends VideoAsset {
+  static final int LIVE_READ_TIMEOUT_MS = 30_000;
   @NonNull private final StreamingFormat streamingFormat;
   @NonNull private final Map<String, String> httpHeaders;
   @Nullable private final String userAgent;
@@ -129,6 +130,12 @@ final class HttpVideoAsset extends VideoAsset {
       @NonNull Map<String, String> httpHeaders,
       @Nullable String userAgent) {
     factory.setUserAgent(userAgent).setAllowCrossProtocolRedirects(true);
+    // VesperTV patch: wait up to 30 s for data, not media3's 8 s. Some IPTV servers send live
+    // .ts in bursts with 8-9.5 s of silence between them (Blcktv, measured 2026-11-03: 48
+    // such gaps in 30 min on one healthy connection). At 8 s the player timed out, reconnected
+    // and the server replayed seconds already shown: the "skips back 5-10 s" repeat. Opening
+    // still fails fast (connect timeout unchanged), so channel changes are not slower.
+    factory.setReadTimeoutMs(LIVE_READ_TIMEOUT_MS);
     if (!httpHeaders.isEmpty()) {
       factory.setDefaultRequestProperties(httpHeaders);
     }

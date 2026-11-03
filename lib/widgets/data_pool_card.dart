@@ -131,9 +131,16 @@ class _DataPoolCardState extends State<DataPoolCard> {
     }
     final value = c.value;
     Duration? buffered;
-    for (final r in value.buffered) {
-      if (r.start <= value.position && value.position <= r.end) {
-        buffered = r.end - value.position;
+    // The player's own reserve ahead of the playhead. The ranges below read
+    // ~400 s on live .ts, where the Dart position doesn't follow (+582).
+    final nativeMs = (sample?['bufferedMs'] as num?)?.toInt();
+    if (nativeMs != null) {
+      buffered = Duration(milliseconds: nativeMs);
+    } else {
+      for (final r in value.buffered) {
+        if (r.start <= value.position && value.position <= r.end) {
+          buffered = r.end - value.position;
+        }
       }
     }
     if (!mounted || widget.controller != c) return;
@@ -392,10 +399,15 @@ class _DataPoolCardState extends State<DataPoolCard> {
                       tr('Buffered'),
                       buffered == null
                           ? notReported
-                          : tr('{seconds} s', {
-                              'seconds': (buffered.inMilliseconds / 1000)
-                                  .toStringAsFixed(1)
-                            })),
+                          : [
+                              tr('{seconds} s', {
+                                'seconds': (buffered.inMilliseconds / 1000)
+                                    .toStringAsFixed(1)
+                              }),
+                              // Live buffer > Gradual (VideoPlayer.cushionTick).
+                              if (_last?['cushionSlow'] == true)
+                                tr('building at 96 % speed'),
+                            ].join(' · ')),
                   _row(
                       tr('State'),
                       value.isBuffering

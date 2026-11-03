@@ -79,6 +79,7 @@ public final class VideoAssetTest {
 
     verify(mockFactory).setUserAgent(userAgent);
     verify(mockFactory).setAllowCrossProtocolRedirects(true);
+    verify(mockFactory).setReadTimeoutMs(HttpVideoAsset.LIVE_READ_TIMEOUT_MS);
     verify(mockFactory, never()).setDefaultRequestProperties(anyMap());
   }
 

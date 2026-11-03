@@ -650,6 +650,15 @@ class _PlaylistDetailsPaneState extends State<_PlaylistDetailsPane> {
                             onChanged: (v) => playlist
                                 .updatePlaylist(profile.copyWith(autoSync: v)),
                           ),
+                          if (profile.isXtream)
+                            TvSwitchListTile(
+                              title: Text(tr('Live stream format: HLS')),
+                              subtitle: Text(tr(
+                                  'Off: MPEG-TS (default, fastest start). On: HLS, like the HLS option in TiviMate. Plays about 10 seconds further behind live, but hides servers that send live TV in bursts. Applies from the next channel.')),
+                              value: profile.liveHls,
+                              onChanged: (v) => playlist
+                                  .updatePlaylist(profile.copyWith(liveHls: v)),
+                            ),
                         ],
                       ),
                     ],

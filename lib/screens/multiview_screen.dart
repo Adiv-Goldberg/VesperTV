@@ -16,6 +16,7 @@ import '../services/playback_service.dart'
 import '../services/playlist_manager.dart';
 import '../services/real_4k_channels.dart';
 import '../services/storage_service.dart';
+import '../services/subtitle_tracks.dart';
 import '../widgets/auto_hide_overlay.dart';
 import '../widgets/game_channel_chooser.dart';
 import '../widgets/hold_to_activate.dart';
@@ -381,6 +382,8 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
     // player first (which releases its wakelock) — a Fire Stick fell into
     // its screensaver mid-test.
     unawaited(WakelockPlus.enable());
+    _statsTimer =
+        Timer.periodic(const Duration(seconds: 10), (_) => _logTiles());
     _headerScope.addListener(_onHeaderFocus);
     _hideHeaderSoon(const Duration(seconds: 4));
     final storage = context.read<StorageService>();
@@ -399,8 +402,45 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
     });
   }
 
+  /// Send log: one line per playing screen every 10 s (buffer, freezes,
+  /// frames shown per second, dropped frames), to tell a provider that
+  /// runs dry from a box that can't decode/draw every screen.
+  Timer? _statsTimer;
+  static const _stats = MethodChannel('vespertv/stats');
+  final _lastRendered = <VideoPlayerHdrController, int>{};
+  final _lastDropped = <VideoPlayerHdrController, int>{};
+
+  Future<void> _logTiles() async {
+    for (var i = 0; i < _cells.length; i++) {
+      final c = _cells[i].controller;
+      if (c == null || !c.value.isInitialized) continue;
+      try {
+        final m = await _stats.invokeMapMethod<Object?, Object?>(
+            'getStats', {'playerId': SubtitleTracks.playerIdOf(c)});
+        if (m == null || !mounted) return;
+        int n(String k) => (m[k] as num?)?.toInt() ?? 0;
+        final rendered = n('rendered'), dropped = n('dropped');
+        final fps = (rendered - (_lastRendered[c] ?? rendered)) / 10;
+        final newDrops = dropped - (_lastDropped[c] ?? dropped);
+        _lastRendered[c] = rendered;
+        _lastDropped[c] = dropped;
+        debugPrint('Multiview: screen ${i + 1} ${_cells[i].channel?.name}: '
+            'buffer ${(n('bufferedMs') / 1000).toStringAsFixed(1)} s, '
+            'freezes ${n('stalls')} (last ${(n('lastStallMs') / 1000).toStringAsFixed(1)} s), '
+            '${fps.toStringAsFixed(1)} fps, dropped +$newDrops, '
+            '${n('height')}p${c.value.isBuffering ? ', buffering now' : ''}');
+      } on MissingPluginException {
+        _statsTimer?.cancel();
+        return;
+      } on PlatformException {
+        // Screen changed between the check and the call.
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _statsTimer?.cancel();
     _headerTimer?.cancel();
     _headerScope.removeListener(_onHeaderFocus);
     _headerScope.dispose();

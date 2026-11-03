@@ -744,6 +744,9 @@ class _LiveBufferPicker extends StatefulWidget {
 class _LiveBufferPickerState extends State<_LiveBufferPicker> {
   static const _choices = [
     (0, 'Off'),
+    // Native player: fast start, then plays at 96 % until a reserve covers
+    // the server's gaps (VideoPlayer.cushionTick).
+    (-1, 'Gradual (starts fast, builds up)'),
     (1500, 'Small (1.5 seconds)'),
     (4000, '4 seconds'),
     (8000, '8 seconds'),

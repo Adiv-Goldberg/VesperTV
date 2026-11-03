@@ -28,6 +28,7 @@ import 'display_match.dart';
 import 'archive_service.dart';
 import 'watch_tracker.dart';
 import 'vod_buffering.dart';
+import 'live_stream_format.dart';
 import 'live_reconnect_log.dart';
 import 'channel_copy_fallback.dart';
 import '../l10n/l10n.dart';
@@ -1017,10 +1018,13 @@ class PlaybackService extends ChangeNotifier {
     reconnectStatus = null;
     notifyListeners();
     try {
+      final liveUrl = LiveStreamFormat.urlFor(url);
+      if (liveUrl != url) debugPrint('StreamFormat: HLS (playlist setting)');
       // The native response waits for READY; it never creates a new player.
       // ignore: invalid_use_of_visible_for_testing_member
-      final response = await NativeVideoSurface.replaceLive(c.textureId, url,
-          hls: _streamUsesHls(url));
+      final textureId = c.textureId;
+      final response = await NativeVideoSurface.replaceLive(textureId, liveUrl,
+          hls: _streamUsesHls(liveUrl) || liveUrl != url);
       if (generation != _nativeZapGeneration ||
           controller != c ||
           currentChannel?.id != channel.id) {
@@ -1213,8 +1217,8 @@ class PlaybackService extends ChangeNotifier {
     error = null;
     notifyListeners();
     currentChannel = null;
-    unawaited(play(
-        channel.copyWith(url: copy.url, httpHeaders: copy.httpHeaders)));
+    unawaited(
+        play(channel.copyWith(url: copy.url, httpHeaders: copy.httpHeaders)));
     return true;
   }
 
@@ -1618,7 +1622,9 @@ VideoPlayerHdrController streamController(
         closedCaptionFile: closedCaptionFile,
         videoPlayerOptions: videoPlayerOptions);
   }
-  final uri = Uri.parse(url);
+  // Stream format HLS (Playlist Manager): the account's .ts as .m3u8.
+  final link = LiveStreamFormat.urlFor(url);
+  final uri = Uri.parse(link);
   if (uri.scheme == 'file') {
     return VideoPlayerHdrController.file(File.fromUri(uri),
         closedCaptionFile: closedCaptionFile,
@@ -1629,7 +1635,8 @@ VideoPlayerHdrController streamController(
         closedCaptionFile: closedCaptionFile,
         videoPlayerOptions: videoPlayerOptions);
   }
-  final hls = _streamUsesHls(url);
+  final hls = _streamUsesHls(link) || link != url;
+  if (link != url) debugPrint('StreamFormat: HLS (playlist setting)');
   return VideoPlayerHdrController.networkUrl(
     uri,
     formatHint: hls ? VideoFormat.hls : null,

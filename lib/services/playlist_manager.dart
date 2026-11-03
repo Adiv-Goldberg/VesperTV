@@ -14,6 +14,7 @@ import '../utils/channel_name_matching.dart';
 import '../utils/constants.dart';
 import 'catalog_database.dart';
 import 'epg_service.dart';
+import 'live_stream_format.dart';
 import 'playlist_session.dart';
 import 'storage_service.dart';
 import 'local_playlist_files.dart';
@@ -196,6 +197,13 @@ class PlaylistManager extends ChangeNotifier {
 
   Future<void> init() async {
     _invalidateFavoriteCatalog(clear: true);
+    LiveStreamFormat.hlsAccounts = () => [
+          for (final s in _sessions)
+            if (s.profile.isXtream &&
+                s.profile.liveHls &&
+                (s.profile.xtreamUsername ?? '').isNotEmpty)
+              '/live/${s.profile.xtreamUsername}/${s.profile.xtreamPassword}/',
+        ];
     // Set synchronously, before the first `await` — matches the old
     // single-playlist behavior where whatever's on screen the instant it
     // renders needs to already read "loading", not a flash of "no

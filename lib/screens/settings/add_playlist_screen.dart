@@ -563,6 +563,7 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen> {
               AppConstants.defaultSyncFrequencyDays,
           syncFrequencyHours: _editingProfile?.syncFrequencyHours,
           autoSync: _editingProfile?.autoSync ?? false,
+          liveHls: _editingProfile?.liveHls ?? false,
           createdAt: _editingProfile?.createdAt ?? DateTime.now(),
         );
       } else {

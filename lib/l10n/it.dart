@@ -357,6 +357,8 @@ const Map<String, String> kIt = {
       "OK · Anteprima   Tieni OK · Scegli un canale o aggiungilo a una lista",
   "See all": "Vedi tutto",
   "Update automatically": "Aggiorna automaticamente",
+  "Live stream format: HLS": "Formato dello streaming live: HLS",
+  "Off: MPEG-TS (default, fastest start). On: HLS, like the HLS option in TiviMate. Plays about 10 seconds further behind live, but hides servers that send live TV in bursts. Applies from the next channel.": "Disattivato: MPEG-TS (predefinito, avvio più rapido). Attivato: HLS, come l'opzione HLS di TiviMate. Va circa 10 secondi più indietro rispetto alla diretta, ma nasconde i server che inviano la TV in diretta a scatti. Vale dal canale successivo.",
   "On: when an update is due, it runs at launch without asking. Off: the app asks \"Update content now?\" first.":
       "Attivo: quando un aggiornamento è dovuto, parte all'avvio senza chiedere. Disattivo: l'app chiede prima «Aggiornare i contenuti ora?».",
   "Open on": "Apri su",
@@ -2374,6 +2376,8 @@ const Map<String, String> kIt = {
   "Live buffer": "Buffer della diretta",
   "Hide short dropouts on live channels": "Nasconde le brevi interruzioni sui canali live",
   "Small (1.5 seconds)": "Piccolo (1,5 secondi)",
+  "Gradual (starts fast, builds up)": "Graduale (parte subito, si accumula)",
+  "building at 96 % speed": "accumulo al 96 % della velocità",
   "4 seconds": "4 secondi",
   "8 seconds": "8 secondi",
   "12 seconds": "12 secondi",

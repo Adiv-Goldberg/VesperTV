@@ -351,6 +351,8 @@ const Map<String, String> kEl = {
       "OK · Προεπισκόπηση   Κράτημα OK · Επιλογή καναλιού ή προσθήκη σε λίστα",
   "See all": "Όλα",
   "Update automatically": "Αυτόματη ενημέρωση",
+  "Live stream format: HLS": "Μορφή ζωντανής ροής: HLS",
+  "Off: MPEG-TS (default, fastest start). On: HLS, like the HLS option in TiviMate. Plays about 10 seconds further behind live, but hides servers that send live TV in bursts. Applies from the next channel.": "Ανενεργό: MPEG-TS (προεπιλογή, γρηγορότερη εκκίνηση). Ενεργό: HLS, όπως η επιλογή HLS του TiviMate. Παίζει περίπου 10 δευτερόλεπτα πιο πίσω από το ζωντανό, αλλά κρύβει διακομιστές που στέλνουν τη ζωντανή TV κατά ριπές. Ισχύει από το επόμενο κανάλι.",
   "On: when an update is due, it runs at launch without asking. Off: the app asks \"Update content now?\" first.":
       "Ενεργό: όταν οφείλεται ενημέρωση, γίνεται στην εκκίνηση χωρίς ερώτηση. Ανενεργό: η εφαρμογή ρωτά πρώτα «Ενημέρωση περιεχομένου τώρα;».",
   "Open on": "Άνοιγμα σε",
@@ -2327,6 +2329,8 @@ const Map<String, String> kEl = {
   "Live buffer": "Buffer ζωντανής μετάδοσης",
   "Hide short dropouts on live channels": "Κρύβει τις σύντομες διακοπές στα ζωντανά κανάλια",
   "Small (1.5 seconds)": "Μικρό (1,5 δευτερόλεπτο)",
+  "Gradual (starts fast, builds up)": "Σταδιακό (ξεκινά γρήγορα, χτίζεται)",
+  "building at 96 % speed": "χτίζεται στο 96 % της ταχύτητας",
   "4 seconds": "4 δευτερόλεπτα",
   "8 seconds": "8 δευτερόλεπτα",
   "12 seconds": "12 δευτερόλεπτα",

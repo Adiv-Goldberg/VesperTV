@@ -23,6 +23,7 @@ class PlaylistProfile {
     this.syncFrequencyDays = AppConstants.defaultSyncFrequencyDays,
     this.syncFrequencyHours,
     this.autoSync = false,
+    this.liveHls = false,
     required this.createdAt,
     this.expiresAt,
     this.maxConnections,
@@ -101,6 +102,13 @@ class PlaylistProfile {
   /// question (user request: "option to auto-update content"). Off keeps
   /// asking, as before.
   bool autoSync;
+
+  /// Playlist Manager > Stream format: Xtream live channels open as HLS
+  /// (`…/live/user/pass/id.m3u8`) instead of the default MPEG-TS `.ts`.
+  /// HLS starts ~3 segments behind live, which hides servers that send TS
+  /// in bursts with long gaps (Blcktv, 2026-11-03); TiviMate has the same
+  /// choice. Off by default (see the `.ts` comment in xtream_api_service).
+  bool liveHls;
 
   final DateTime createdAt;
 
@@ -200,6 +208,7 @@ class PlaylistProfile {
     int? syncFrequencyDays,
     int? syncFrequencyHours,
     bool? autoSync,
+    bool? liveHls,
     DateTime? expiresAt,
     int? maxConnections,
     List<String>? backupServers,
@@ -227,6 +236,7 @@ class PlaylistProfile {
         syncFrequencyHours: syncFrequencyHours ??
             (syncFrequencyDays != null ? null : this.syncFrequencyHours),
         autoSync: autoSync ?? this.autoSync,
+        liveHls: liveHls ?? this.liveHls,
         createdAt: createdAt,
         expiresAt: expiresAt ?? this.expiresAt,
         maxConnections: maxConnections ?? this.maxConnections,
@@ -253,6 +263,7 @@ class PlaylistProfile {
         if (syncFrequencyHours != null)
           'syncFrequencyHours': syncFrequencyHours,
         'autoSync': autoSync,
+        if (liveHls) 'liveHls': true,
         'createdAt': createdAt.toIso8601String(),
         'expiresAt': expiresAt?.toIso8601String(),
         'maxConnections': maxConnections,
@@ -281,6 +292,7 @@ class PlaylistProfile {
             AppConstants.defaultSyncFrequencyDays,
         syncFrequencyHours: json['syncFrequencyHours'] as int?,
         autoSync: json['autoSync'] as bool? ?? false,
+        liveHls: json['liveHls'] as bool? ?? false,
         createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
             DateTime.now(),
         expiresAt: json['expiresAt'] == null

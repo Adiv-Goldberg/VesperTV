@@ -42,6 +42,13 @@ class VodBuffering {
       });
       // Live only: catch-up and other finite streams keep the normal start.
       final live = channel.isLive && !channel.transientPlayback;
+      if (live) {
+        debugPrint('LiveBuffer: mode ${switch (liveBufferMs) {
+          < 0 => 'gradual',
+          0 => 'off',
+          _ => '$liveBufferMs ms',
+        }}');
+      }
       await _stats.invokeMethod<void>('setLiveBuffer', {
         'playerId': playerId,
         'ms': live ? liveBufferMs : 0,
