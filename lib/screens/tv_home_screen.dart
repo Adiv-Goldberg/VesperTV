@@ -549,6 +549,22 @@ class _TvHomeScreenState extends State<TvHomeScreen>
   /// groups or a Playlists-menu hide never touch them.
   static const _myGroupsId = '__my_groups__';
 
+  /// Playlist editor quick edit: '' (or the provider's own name) removes
+  /// the override. Matching keeps using `Channel.sourceName`.
+  Future<void> _renameChannel(Channel channel, String name) async {
+    final session =
+        context.read<PlaylistManager>().editorSession(channel.playlistId);
+    if (session == null) return;
+    final edits = session.edits;
+    if (name.isEmpty || name == channel.sourceName) {
+      edits.names.remove(channel.rawId);
+    } else {
+      edits.names[channel.rawId] = name;
+    }
+    await session.saveEdits(edits);
+    if (mounted) setState(() {});
+  }
+
   /// Group hold menu "New group…": an empty own group, on top.
   Future<void> _createMyGroup() async {
     final name = await askGroupName(context);
@@ -669,6 +685,60 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                 : ScrollPositionAlignmentPolicy.keepVisibleAtEnd);
       }
     });
+  }
+
+  /// Touch screens: big Up / Down / Done buttons while a channel or a
+  /// group is being moved. The rows' own little arrows were too small to hit
+  /// (Samsung report, 2026-11-02) and channel rows had none at all.
+  Widget _buildTouchMoveBar() {
+    Future<void> step(int delta) async {
+      if (_movingChannel != null) {
+        await _moveChannelStep(delta);
+        return;
+      }
+      final key = _movingGroupKey;
+      if (key == null) return;
+      final i = key.indexOf('::');
+      await _moveGroupStep(key.substring(0, i), key.substring(i + 2), delta);
+    }
+
+    void done() =>
+        _movingChannel != null ? _endChannelMove() : _endGroupMove();
+    Widget button(IconData icon, String label, VoidCallback onTap) =>
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: FilledButton.tonalIcon(
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 56)),
+            onPressed: onTap,
+            icon: Icon(icon, size: 28),
+            label: Text(label),
+          ),
+        );
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 16,
+      child: SafeArea(
+        child: Center(
+          child: Material(
+            color: Colors.black.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                runSpacing: 8,
+                children: [
+                  button(Icons.keyboard_arrow_up, tr('Up'), () => step(-1)),
+                  button(Icons.keyboard_arrow_down, tr('Down'), () => step(1)),
+                  button(Icons.check, tr('Done'), done),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _endGroupMove() {
@@ -800,6 +870,15 @@ class _TvHomeScreenState extends State<TvHomeScreen>
             onPressed: () => Navigator.of(context).pop('group'),
             child: Text(tr('Move to group…')),
           ),
+          TvDialogOption(
+            onPressed: () => Navigator.of(context).pop('rename'),
+            child: Text(tr('Rename…')),
+          ),
+          if (channel.nameOverride != null)
+            TvDialogOption(
+              onPressed: () => Navigator.of(context).pop('resetName'),
+              child: Text(tr("Use the provider's name")),
+            ),
           if (inMyGroup)
             TvDialogOption(
               onPressed: () => Navigator.of(context).pop('ungroup'),
@@ -843,6 +922,11 @@ class _TvHomeScreenState extends State<TvHomeScreen>
         await _recordChannel(channel, null, untilStopped: true);
       case 'group':
         await _moveChannelToGroup(channel);
+      case 'rename':
+        final name = await askChannelName(context, channel.name);
+        if (name != null && mounted) await _renameChannel(channel, name);
+      case 'resetName':
+        await _renameChannel(channel, '');
       case 'ungroup':
         await playlist.moveChannelToGroup(channel, null);
         if (!mounted) return;
@@ -1366,6 +1450,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
   /// across enabled playlists (Settings > Interface > Tabs can hide it).
   /// Android only — Windows has no catch-up playback yet.
   static const _catchupGroupSentinel = '__catchup__';
+  static const _recentGroupSentinel = '__recent__';
 
   final _catchupRowFocusNode = FocusNode(debugLabel: 'catchup-row');
 
@@ -1444,6 +1529,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
     _catchupRowFocusNode.requestFocus();
   }
 
+  bool get _showRecentGroup =>
+      context.read<AppPreferences>().recentChannelsGroup;
+
   bool get _showCatchupGroup =>
       defaultTargetPlatform != TargetPlatform.windows &&
       !context.read<AppPreferences>().hideCatchupGroup;
@@ -1466,7 +1554,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
       _guideFocusedProgram = null;
     });
     if (group == null) return;
-    if (group == _catchupGroupSentinel) {
+    if (group == _catchupGroupSentinel || group == _recentGroupSentinel) {
       // Xtream live lists load lazily per playlist (after launch).
       unawaited(context.read<PlaylistManager>().ensureLiveChannelsLoaded());
       _resetLiveListFocus();
@@ -2224,6 +2312,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
     if (_effectiveLiveGroup(playlist) == _catchupGroupSentinel) {
       return _catchupChannels(playlist);
     }
+    if (_effectiveLiveGroup(playlist) == _recentGroupSentinel) {
+      return playlist.recentLiveChannels();
+    }
     if (_effectiveLiveGroup(playlist) != _favoritesGroupSentinel) {
       return playlist.visibleChannels(
           groupTitle: _effectiveLiveGroup(playlist), category: 'tv');
@@ -2310,7 +2401,8 @@ class _TvHomeScreenState extends State<TvHomeScreen>
   String? _effectiveLiveGroup(PlaylistManager playlist) {
     // A Catch-up row hidden (Settings) while selected: as if none was.
     if (_selectedGroup != null &&
-        (_selectedGroup != _catchupGroupSentinel || _showCatchupGroup)) {
+        (_selectedGroup != _catchupGroupSentinel || _showCatchupGroup) &&
+        (_selectedGroup != _recentGroupSentinel || _showRecentGroup)) {
       return _selectedGroup;
     }
     final groups = _withoutHiddenPlaylists(
@@ -3315,6 +3407,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                             epg)),
                   ),
                 ),
+              if (!prefs.isTelevision &&
+                  (_movingChannel != null || _movingGroupKey != null))
+                _buildTouchMoveBar(),
             ],
           ),
         ),
@@ -3442,6 +3537,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
               null => tr(_tab == 'TV' ? 'TV' : 'All'),
               _favoritesGroupSentinel => tr('Favourites'),
               _catchupGroupSentinel => tr('Catch-up'),
+              _recentGroupSentinel => tr('Recently added'),
               final group => group,
             },
     };
@@ -4134,7 +4230,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
     }
     final playlistsRow = _playlistsRow(allGroups, groups, playlist,
         collapsed: collapsed,
-        rowsAbove: _showCatchupGroup ? 4 : 3,
+        rowsAbove: 3 + (_showCatchupGroup ? 1 : 0) + (_showRecentGroup ? 1 : 0),
         currentPlaylistId: currentPlaylistId);
 
     return Column(
@@ -4199,6 +4295,16 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                   onTap: () => _onGroupSelected(_catchupGroupSentinel),
                   onLongPress: _showCatchupPlaylists,
                 ),
+              ),
+            // Channels the providers added lately (Settings > Tabs).
+            if (_showRecentGroup)
+              _SelectableRow(
+                icon: Icons.fiber_new_outlined,
+                label: tr('Recently added'),
+                selected: effectiveGroup == _recentGroupSentinel,
+                collapsed: collapsed,
+                fontSize: _groupFontSize,
+                onTap: () => _onGroupSelected(_recentGroupSentinel),
               ),
             // The viewer's own groups (any playlist's channels): above every
             // playlist's groups, never hidden with one.
@@ -5066,6 +5172,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
               top: 12,
               right: 12,
               child: IconButton.filledTonal(
+                tooltip: tr('Full screen'),
                 icon: const Icon(Icons.fullscreen),
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => PlayerScreen(channel: channel))),
@@ -5173,7 +5280,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                   'No favorite channels yet — press Down while watching one to add it.')
               : _selectedGroup == _catchupGroupSentinel
                   ? tr('No channels with catch-up.')
-                  : tr('No channels found.'),
+                  : _selectedGroup == _recentGroupSentinel
+                      ? tr('No channels added in the last 14 days.')
+                      : tr('No channels found.'),
           textAlign: TextAlign.center,
         ),
       );
@@ -5289,6 +5398,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                 onPressed: () => _toggleHiddenWithFeedback(context, channel),
               ),
               IconButton(
+                tooltip: channel.isFavorite
+                    ? tr('Remove from Favourites')
+                    : tr('Add to Favourites'),
                 icon: Icon(channel.isFavorite ? Icons.star : Icons.star_border,
                     color: channel.isFavorite ? Colors.amber : Colors.white70),
                 onPressed: () => _toggleFavoriteWithFeedback(context, channel),
@@ -6548,9 +6660,11 @@ class _GroupRowState extends State<_GroupRow> {
       GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Icon(icon, size: 22, color: color),
+        // 44 dp: Android's minimum touch target (was 30 x 22).
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(icon, size: 24, color: color),
         ),
       );
 }
@@ -7592,31 +7706,43 @@ class _TvTopBar extends StatelessWidget {
               onPressed: onBack,
               icon: const Icon(Icons.arrow_back, color: Colors.white),
             ),
-          ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) => LinearGradient(colors: [
-              palette.primary,
-              if (palette.highlight != null) palette.highlight!,
-              palette.secondary,
-            ]).createShader(bounds),
-            child: const Text(
-              AppConstants.appName,
-              // Was bumped to 64 thinking this was the launcher banner text
-              // — it wasn't, that's a separate Android TV banner asset.
-              // Back to the original in-app header size.
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
+          // Shrinks (never overflows) with a phone's largest font.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => LinearGradient(colors: [
+                  palette.primary,
+                  if (palette.highlight != null) palette.highlight!,
+                  palette.secondary,
+                ]).createShader(bounds),
+                child: const Text(
+                  AppConstants.appName,
+                  // Was bumped to 64 thinking this was the launcher banner text
+                  // — it wasn't, that's a separate Android TV banner asset.
+                  // Back to the original in-app header size.
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ),
           if (showClock) ...[
             const SizedBox(width: 16),
-            _TvClockText(
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: Colors.white70)),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _TvClockText(
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: Colors.white70)),
+              ),
+            ),
           ],
           const Spacer(),
           if (isLoading) ...[
@@ -7627,8 +7753,12 @@ class _TvTopBar extends StatelessWidget {
                   strokeWidth: 2, color: Colors.white70),
             ),
             const SizedBox(width: 8),
-            Text(tr('Updating…'),
-                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Flexible(
+              child: Text(tr('Updating…'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            ),
           ],
         ],
       ),
@@ -8726,7 +8856,8 @@ class _TimelineGuideState extends State<_TimelineGuide> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    _rowHeight = context.watch<AppPreferences>().guideCompact ? 48 : _normalRowHeight;
+    _rowHeight =
+        context.watch<AppPreferences>().guideCompact ? 48 : _normalRowHeight;
     if (widget.channels.isEmpty) {
       return Center(child: Text(tr('No channels found.')));
     }
@@ -8977,51 +9108,56 @@ class _TimelineFilterButtonState extends State<_TimelineFilterButton> {
           child: Focus(
             focusNode: widget.focusNode,
             onFocusChange: (f) => setState(() => _focused = f),
-            child: InkWell(
-              // requestFocus() explicitly, not left to InkWell's own tap
-              // handling — confirmed elsewhere in this file
-              // (_ProgramBlockState) that a tap does NOT reliably focus its
-              // wrapping Focus node on its own here.
-              onTap: () {
-                widget.focusNode.requestFocus();
-                widget.onPressed();
-              },
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                decoration: RefinedFinish.decorate(
-                    context,
-                    BoxDecoration(
-                      color: _focused
-                          ? null
-                          : Colors.white.withValues(alpha: 0.06),
-                      gradient: _focused
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.black,
-                                Color.lerp(Colors.black,
-                                    scheme.primaryContainer, 0.4)!,
-                                Colors.black,
-                              ],
-                              stops: const [0.0, 0.5, 1.0],
-                            )
-                          : null,
-                      border: Border.all(
-                          color: _focused ? scheme.primary : Colors.white24),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    focused: _focused,
-                    focusOnly: true),
-                alignment: Alignment.center,
-                // `scheme.tertiary` — a dedicated icon/symbol-glyph
-                // accent, separate from the border/gradient accent
-                // (`scheme.primary`) — see `buildPaletteColorScheme`'s
-                // own doc comment for why (Habs: white contour, blue
-                // icons).
-                child: Icon(Icons.search,
-                    size: 16,
-                    color: _focused ? scheme.tertiary : Colors.white70),
+            // Icon only: TalkBack needs the name.
+            child: Semantics(
+              button: true,
+              label: tr('Search channels'),
+              child: InkWell(
+                // requestFocus() explicitly, not left to InkWell's own tap
+                // handling — confirmed elsewhere in this file
+                // (_ProgramBlockState) that a tap does NOT reliably focus its
+                // wrapping Focus node on its own here.
+                onTap: () {
+                  widget.focusNode.requestFocus();
+                  widget.onPressed();
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  decoration: RefinedFinish.decorate(
+                      context,
+                      BoxDecoration(
+                        color: _focused
+                            ? null
+                            : Colors.white.withValues(alpha: 0.06),
+                        gradient: _focused
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.black,
+                                  Color.lerp(Colors.black,
+                                      scheme.primaryContainer, 0.4)!,
+                                  Colors.black,
+                                ],
+                                stops: const [0.0, 0.5, 1.0],
+                              )
+                            : null,
+                        border: Border.all(
+                            color: _focused ? scheme.primary : Colors.white24),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      focused: _focused,
+                      focusOnly: true),
+                  alignment: Alignment.center,
+                  // `scheme.tertiary` — a dedicated icon/symbol-glyph
+                  // accent, separate from the border/gradient accent
+                  // (`scheme.primary`) — see `buildPaletteColorScheme`'s
+                  // own doc comment for why (Habs: white contour, blue
+                  // icons).
+                  child: Icon(Icons.search,
+                      size: 16,
+                      color: _focused ? scheme.tertiary : Colors.white70),
+                ),
               ),
             ),
           ),
@@ -9720,6 +9856,15 @@ class _ProgramBlock extends StatefulWidget {
 }
 
 class _ProgramBlockState extends State<_ProgramBlock> {
+  String _spokenLabel() {
+    final p = widget.program;
+    if (p == null) {
+      return widget.placeholderLabel ?? tr('No guide information');
+    }
+    return '${p.title}, ${TimeFormat.hm.format(p.start.toLocal())} – '
+        '${TimeFormat.hm.format(p.stop.toLocal())}';
+  }
+
   bool _focused = false;
   final FocusNode _node = FocusNode();
 
@@ -9809,123 +9954,132 @@ class _ProgramBlockState extends State<_ProgramBlock> {
               _revealHorizontally();
             }
           },
-          child: InkWell(
-            // One click/tap = preview in the corner box, a second one on
-            // the now-playing channel = fullscreen — that logic lives in
-            // onOpen (TvHomeScreen._previewOrOpenChannel), so a mouse
-            // double-click is simply two clicks and no onDoubleTap is
-            // needed (it would also delay every single click). The
-            // explicit requestFocus is still needed: InkWell doesn't focus
-            // a block on click by itself here (checked on Windows — no
-            // focus, no details panel).
-            onTap: () {
-              _node.requestFocus();
-              widget.onOpen();
-            },
-            child: Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: RefinedFinish.decorate(
-                  context,
-                  BoxDecoration(
-                    color: _focused
-                        ? null
-                        : widget.isNow
-                            ? (widget.translucent
-                                ? Colors.black.withValues(alpha: 0.45)
-                                : Colors.black87)
-                            : Colors.white.withValues(alpha: 0.06),
-                    // Same real diagonal sheen as `_SelectableRow`'s own focus
-                    // fix — see its doc comment for why a flat `black87` fill
-                    // photographed as more "filled" than it read live.
-                    gradient: _focused
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.black,
-                              Color.lerp(Colors.black, gradientAccent, 0.4)!,
-                              Colors.black,
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
-                          )
-                        : null,
-                    border: Border.all(
+          // TalkBack reads the programme and its time (the painted title
+          // can be scrolled out of the block).
+          child: Semantics(
+            button: true,
+            label: _spokenLabel(),
+            child: InkWell(
+              // One click/tap = preview in the corner box, a second one on
+              // the now-playing channel = fullscreen — that logic lives in
+              // onOpen (TvHomeScreen._previewOrOpenChannel), so a mouse
+              // double-click is simply two clicks and no onDoubleTap is
+              // needed (it would also delay every single click). The
+              // explicit requestFocus is still needed: InkWell doesn't focus
+              // a block on click by itself here (checked on Windows — no
+              // focus, no details panel).
+              onTap: () {
+                _node.requestFocus();
+                widget.onOpen();
+              },
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: RefinedFinish.decorate(
+                    context,
+                    BoxDecoration(
                       color: _focused
-                          ? accent
+                          ? null
                           : widget.isNow
-                              ? accent.withValues(alpha: 0.85)
-                              : Colors.white24,
-                      width: _focused ? 2 : (widget.isNow ? 1.5 : 1),
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: _focused
-                        ? [
-                            BoxShadow(
-                                color: accent.withValues(alpha: 0.5),
-                                blurRadius: 10)
-                          ]
-                        : const [],
-                  ),
-                  focused: _focused,
-                  focusOnly: true),
-              alignment: Alignment.centerLeft,
-              // A block wider than the viewport (a long "now playing"
-              // programme, or one that started before the guide's visible
-              // window and got clamped to the left edge) used to render as
-              // a solid block of color with its title anchored at the
-              // block's own literal left edge — which is exactly what
-              // scrolls out of view first, leaving no visible label at
-              // all. Reported directly on real hardware: "I can't see
-              // what's currently playing there." This nudges the label
-              // right by however far the viewport has scrolled past this
-              // block's own left edge, clamped so it never pushes past the
-              // block's own right edge — a plain sticky-header effect.
-              child: ListenableBuilder(
-                listenable: widget.hScroll,
-                builder: (context, _) {
-                  final scrollX =
-                      widget.hScroll.hasClients ? widget.hScroll.offset : 0.0;
-                  final maxInset =
-                      (widget.blockWidth - 40.0).clamp(0.0, double.infinity);
-                  final inset =
-                      (scrollX - widget.blockLeft).clamp(0.0, maxInset);
-                  final title = Text(
-                    widget.program?.title ?? widget.placeholderLabel ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                              ? (widget.translucent
+                                  ? Colors.black.withValues(alpha: 0.45)
+                                  : Colors.black87)
+                              : Colors.white.withValues(alpha: 0.06),
+                      // Same real diagonal sheen as `_SelectableRow`'s own focus
+                      // fix — see its doc comment for why a flat `black87` fill
+                      // photographed as more "filled" than it read live.
+                      gradient: _focused
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.black,
+                                Color.lerp(Colors.black, gradientAccent, 0.4)!,
+                                Colors.black,
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
+                            )
+                          : null,
+                      border: Border.all(
                         color: _focused
                             ? accent
-                            : widget.program == null
-                                ? Colors.white54
-                                : widget.ended
-                                    ? Colors.white60
-                                    : Colors.white,
-                        fontSize: 12,
-                        fontStyle: widget.program == null
-                            ? FontStyle.italic
-                            : FontStyle.normal,
-                        // Readable over the video in full-video mode.
-                        shadows: widget.translucent
-                            ? const [Shadow(color: Colors.black, blurRadius: 4)]
-                            : null),
-                  );
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(6 + inset, 2, 6, 2),
-                    // The mark only where it fits beside some title (a
-                    // few-minute block at the window's edge is narrow).
-                    child: widget.replayable && widget.blockWidth - inset >= 56
-                        ? Row(children: [
-                            const Padding(
-                              padding: EdgeInsets.only(right: 4),
-                              child: Icon(Icons.history,
-                                  size: 13, color: Colors.amber),
-                            ),
-                            Expanded(child: title),
-                          ])
-                        : title,
-                  );
-                },
+                            : widget.isNow
+                                ? accent.withValues(alpha: 0.85)
+                                : Colors.white24,
+                        width: _focused ? 2 : (widget.isNow ? 1.5 : 1),
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: _focused
+                          ? [
+                              BoxShadow(
+                                  color: accent.withValues(alpha: 0.5),
+                                  blurRadius: 10)
+                            ]
+                          : const [],
+                    ),
+                    focused: _focused,
+                    focusOnly: true),
+                alignment: Alignment.centerLeft,
+                // A block wider than the viewport (a long "now playing"
+                // programme, or one that started before the guide's visible
+                // window and got clamped to the left edge) used to render as
+                // a solid block of color with its title anchored at the
+                // block's own literal left edge — which is exactly what
+                // scrolls out of view first, leaving no visible label at
+                // all. Reported directly on real hardware: "I can't see
+                // what's currently playing there." This nudges the label
+                // right by however far the viewport has scrolled past this
+                // block's own left edge, clamped so it never pushes past the
+                // block's own right edge — a plain sticky-header effect.
+                child: ListenableBuilder(
+                  listenable: widget.hScroll,
+                  builder: (context, _) {
+                    final scrollX =
+                        widget.hScroll.hasClients ? widget.hScroll.offset : 0.0;
+                    final maxInset =
+                        (widget.blockWidth - 40.0).clamp(0.0, double.infinity);
+                    final inset =
+                        (scrollX - widget.blockLeft).clamp(0.0, maxInset);
+                    final title = Text(
+                      widget.program?.title ?? widget.placeholderLabel ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: _focused
+                              ? accent
+                              : widget.program == null
+                                  ? Colors.white54
+                                  : widget.ended
+                                      ? Colors.white60
+                                      : Colors.white,
+                          fontSize: 12,
+                          fontStyle: widget.program == null
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                          // Readable over the video in full-video mode.
+                          shadows: widget.translucent
+                              ? const [
+                                  Shadow(color: Colors.black, blurRadius: 4)
+                                ]
+                              : null),
+                    );
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(6 + inset, 2, 6, 2),
+                      // The mark only where it fits beside some title (a
+                      // few-minute block at the window's edge is narrow).
+                      child:
+                          widget.replayable && widget.blockWidth - inset >= 56
+                              ? Row(children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 4),
+                                    child: Icon(Icons.history,
+                                        size: 13, color: Colors.amber),
+                                  ),
+                                  Expanded(child: title),
+                                ])
+                              : title,
+                    );
+                  },
+                ),
               ),
             ),
           ),

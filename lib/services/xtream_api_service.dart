@@ -107,6 +107,19 @@ class XtreamApiService {
     return decoded.cast<Map<String, dynamic>>();
   }
 
+  /// The account's connection limit and how many are in use right now
+  /// (`user_info.max_connections` / `active_cons`; null when not reported,
+  /// max 0 = unlimited). Read before a playlist-editor stream test.
+  Future<({int? max, int? active})> connectionStatus() async {
+    final decoded = await _getJson('');
+    final info = decoded is Map ? decoded['user_info'] : null;
+    if (info is! Map) return (max: null, active: null);
+    return (
+      max: int.tryParse(info['max_connections']?.toString() ?? ''),
+      active: int.tryParse(info['active_cons']?.toString() ?? ''),
+    );
+  }
+
   /// Verifies the credentials and account status. Throws if invalid,
   /// expired, or disabled.
   Future<void> authenticate() async {
@@ -514,6 +527,7 @@ List<Channel> _buildLiveChannels(_LiveStreamsArgs args) {
         : 'xt_live_$streamId';
     final categoryId = item['category_id']?.toString() ?? '';
     final days = xtreamCatchupDays(item);
+    final added = int.tryParse(item['added']?.toString() ?? '');
     return Channel(
       id: '${args.playlistId}::$rawId',
       rawId: rawId,
@@ -535,6 +549,10 @@ List<Channel> _buildLiveChannels(_LiveStreamsArgs args) {
       streamId: streamId?.toString(),
       catchupDays: days,
       catchupKind: days > 0 ? CatchupKind.xc : null,
+      // "Recently added" group (opt in).
+      addedAt: (added != null && added > 0)
+          ? DateTime.fromMillisecondsSinceEpoch(added * 1000)
+          : null,
     );
   }).toList();
 }

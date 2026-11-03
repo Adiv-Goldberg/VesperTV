@@ -13,6 +13,7 @@ import '../services/storage_service.dart';
 import '../widgets/auto_hide_overlay.dart';
 import '../widgets/game_channel_chooser.dart';
 import '../l10n/l10n.dart';
+import '../services/desktop_stream_setup.dart';
 
 /// Windows-only: a grid of simultaneously-playing live channels —
 /// requested directly, citing TiviMate's own multiview (proven to run
@@ -107,8 +108,7 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
     // blocked read/write (including a hanging Range-reconnect attempt on a
     // server that doesn't support it) to a fixed ceiling instead of
     // letting it hang forever, so ffmpeg's own reconnect loop can retry.
-    (player.platform as NativePlayer).setProperty('demuxer-lavf-o',
-        'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,rw_timeout=15000000');
+    configureDesktopStreamPlayer(player, 'multiview');
     final controller = VideoController(player);
     player.open(Media(channel.url));
     player.setVolume(index == _activeCell ? 100 : 0);
@@ -176,6 +176,7 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
                 child: Row(
                   children: [
                     IconButton(
+                      tooltip: tr('Back'),
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.of(context).pop(),
                     ),

@@ -40,7 +40,14 @@ final class StatsBridge implements MethodChannel.MethodCallHandler {
   public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
     boolean finite = "setFiniteMode".equals(call.method);
     boolean onDemand = "setOnDemandBuffering".equals(call.method);
-    if (!finite && !onDemand && !"getStats".equals(call.method)) {
+    boolean liveBuffer = "setLiveBuffer".equals(call.method);
+    if ("setLiveBufferDefault".equals(call.method)) {
+      Number ms = call.argument("ms");
+      OnDemandLoadControl.setDefaultLiveReserveMs(ms == null ? 0 : ms.longValue());
+      result.success(null);
+      return;
+    }
+    if (!finite && !onDemand && !liveBuffer && !"getStats".equals(call.method)) {
       result.notImplemented();
       return;
     }
@@ -52,6 +59,12 @@ final class StatsBridge implements MethodChannel.MethodCallHandler {
     }
     if (finite) {
       player.setFiniteMode(Boolean.TRUE.equals(call.argument("on")));
+      result.success(null);
+      return;
+    }
+    if (liveBuffer) {
+      Number ms = call.argument("ms");
+      player.setLiveBuffer(ms == null ? 0 : ms.longValue());
       result.success(null);
       return;
     }

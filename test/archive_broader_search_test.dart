@@ -56,6 +56,8 @@ void main() {
     const source = ArchiveSource(
         manifestUrl: 'https://custom.example/manifest.json',
         name: 'Custom',
+        // Under Other only when the user says so (2026-11-02).
+        otherChoice: true,
         catalogs: [
           ArchiveCatalog(
               type: ArchiveType.movie,

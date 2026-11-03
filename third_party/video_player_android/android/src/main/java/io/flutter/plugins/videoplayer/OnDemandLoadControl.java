@@ -17,6 +17,25 @@ public final class OnDemandLoadControl implements LoadControl {
   private final DefaultLoadControl delegate;
   private volatile boolean onDemand;
 
+  /**
+   * Live buffer (VesperTV Settings > Playback > Live buffer): live playback
+   * starts, and restarts after a stall, only once this much is buffered,
+   * so short server dropouts play out of the cushion. 0 = the existing
+   * 500 ms start.
+   */
+  private volatile long liveReserveUs = -1;
+
+  /**
+   * The app's setting, applied from the very first start of every new main
+   * player (the per-player value only arrives after it is ready, too late
+   * to build a cushion). -1 per player = use this.
+   */
+  private static volatile long defaultLiveReserveUs;
+
+  public static void setDefaultLiveReserveMs(long ms) {
+    defaultLiveReserveUs = Math.max(0, ms) * 1000L;
+  }
+
   public OnDemandLoadControl(DefaultLoadControl delegate) {
     this.delegate = delegate;
   }
@@ -26,10 +45,16 @@ public final class OnDemandLoadControl implements LoadControl {
     onDemand = on;
   }
 
+  public void setLiveReserveMs(long ms) {
+    liveReserveUs = Math.max(0, ms) * 1000L;
+  }
+
   @Override
   public boolean shouldStartPlayback(Parameters p) {
-    long reserveUs = p.rebuffering ? 10_000_000L : 5_000_000L;
-    if (!onDemand || p.bufferedDurationUs / p.playbackSpeed >= reserveUs) {
+    long reserveUs = onDemand
+        ? (p.rebuffering ? 10_000_000L : 5_000_000L)
+        : (liveReserveUs >= 0 ? liveReserveUs : defaultLiveReserveUs);
+    if (reserveUs <= 0 || p.bufferedDurationUs / p.playbackSpeed >= reserveUs) {
       return delegate.shouldStartPlayback(p);
     }
     // Zero time asks the existing non-zero-threshold delegate whether its

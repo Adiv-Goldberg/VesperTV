@@ -170,6 +170,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(PlayerScreen), findsOneWidget);
       expect(find.byType(PlayerSidePanel), findsNothing);
+      // The unlock button fades away, and any touch brings it back.
+      expect(unlock.hitTestable(), findsNothing);
+      await tester.tapAt(const Offset(250, 300));
+      await tester.pumpAndSettle();
       expect(unlock.hitTestable(), findsOneWidget);
       expect(find.byTooltip('Lock touch controls').hitTestable(), findsNothing);
       expect(player.controller.value.isPlaying, isTrue);

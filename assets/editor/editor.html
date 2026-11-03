@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>VesperTV Playlist Editor</title>
+<style>
+:root{--bg:#0b0b0d;--panel:#16161a;--line:#2a2a31;--text:#ece9e1;--dim:#9a968c;--gold:#d8b25a;--red:#e0675a;--green:#6cc48a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#0b0b0d;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0 8px 0 0;color:var(--gold);letter-spacing:.5px}
+main{padding:12px 16px 90px;max-width:1200px;margin:0 auto}
+button,select,input{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+button{cursor:pointer}
+button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--gold)}
+.tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.tabs button.on{border-color:var(--gold);color:var(--gold)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+.dim{color:var(--dim)}
+.warn{border-color:var(--red)}
+table{width:100%;border-collapse:collapse}
+td,th{padding:6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--dim);font-weight:500;font-size:13px}
+td input.name{width:100%;min-width:140px}
+.tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin:1px 2px;white-space:nowrap}
+.tag.g{border-color:var(--gold);color:var(--gold)}.tag.r{border-color:var(--red);color:var(--red)}.tag.ok{border-color:var(--green);color:var(--green)}
+img.logo{width:36px;height:24px;object-fit:contain;background:#000;border-radius:4px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#141418f2;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:6}
+.grow{flex:1}
+#login{max-width:420px;margin:60px auto}
+#login input{font-size:28px;letter-spacing:8px;text-align:center;width:100%}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+.modal .card{max-width:640px;width:100%;max-height:85vh;overflow:auto}
+.hidden-row td{opacity:.55}
+@media (max-width:700px){.wide{display:none}td,th{padding:5px 3px}}
+</style>
+</head>
+<body>
+<div id="login" class="card">
+  <h2 style="color:var(--gold);margin-top:0">VesperTV Playlist Editor</h2>
+  <p class="dim">Enter the 6-digit code shown on your TV (Settings &gt; Playlists &amp; guide &gt; Playlist editor).</p>
+  <input id="code" inputmode="numeric" maxlength="6" autocomplete="off">
+  <div class="row"><button class="gold" id="go">Connect</button><span id="loginMsg" class="dim"></span></div>
+</div>
+
+<div id="app" style="display:none">
+<header>
+  <h1>VesperTV Editor <span style="font-size:11px;border:1px solid var(--gold);border-radius:6px;padding:1px 6px;vertical-align:middle">TEST FLIGHT</span></h1>
+  <select id="pl"></select>
+  <span class="grow"></span>
+  <span id="status" class="dim"></span>
+</header>
+<div id="probeBar" style="display:none;background:#1d1a10;border-bottom:1px solid var(--gold);padding:8px 16px">
+  <div class="row" style="margin:0"><b style="color:var(--gold)">Stream test</b><span id="probeBarText" class="grow"></span><button id="probeBarStop">Stop</button></div>
+  <div style="height:6px;background:#333;border-radius:3px;overflow:hidden"><div id="probeBarFill" style="height:6px;width:0;background:var(--gold)"></div></div>
+</div>
+<main>
+  <div class="tabs" id="tabs">
+    <button data-t="howto">How to</button>
+    <button data-t="channels" class="on">Channels</button>
+    <button data-t="groups">Groups</button>
+    <button data-t="dupes">Duplicates</button>
+    <button data-t="rules">Rules &amp; cleanup</button>
+    <button data-t="playlists">Playlists</button>
+    <button data-t="test">Stream test</button>
+  </div>
+
+  <section id="t-howto" style="display:none">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--gold)">How the editor works</h3>
+      <p class="dim"><b>Test flight:</b> this editor is new. Your provider's playlist is never changed, and every change can be undone, but please report anything odd (Settings &gt; Send log on the TV).</p>
+      <p>Everything here changes only what <b>this TV</b> shows. Your provider's playlist is never modified, and your changes are applied again every time the playlist updates. Pick the playlist at the top, make changes, then press <b>Save to TV</b> (bottom right) or the save button of the tab.</p>
+    </div>
+    <div class="card"><h3 style="margin-top:0">Channels</h3>
+      <p>Search or filter (hidden, renamed, copies, no guide, dead...). Type over a name to rename it. Tick channels, then use the bottom bar: <b>Hide</b>, <b>Show</b>, <b>Reset name</b>, <b>Set logo</b>. <b>Fallbacks</b> on a row: channels to play, in your order, if this one fails (from any playlist).</p></div>
+    <div class="card"><h3 style="margin-top:0">Groups</h3>
+      <p><b>Rename</b> a group by typing its new name. <b>Merge</b>: tick two or more groups, press <b>Merge selected</b> and give the new group a name (typing the same name on several groups does the same). <b>Move</b> groups with the arrows and <b>hide</b> them with the box. Press <b>Save groups</b>.</p></div>
+    <div class="card"><h3 style="margin-top:0">Duplicates &amp; cleanup</h3>
+      <p>In <b>Rules &amp; cleanup</b>, tick <b>Hide lower-quality copies</b>: only the best copy of each channel (4K / FHD / HD) stays listed, the others become automatic fallbacks. Add rules to rename (for example remove <code>US| </code>) or hide (for example <code>PPV</code>) many channels at once; they keep working after every update. <b>Preview</b> shows the effect before saving. The <b>Duplicates</b> tab shows which copy is kept.</p></div>
+    <div class="card"><h3 style="margin-top:0">Several playlists</h3>
+      <p>In <b>Playlists</b>: <b>use other playlists as fallback</b> (a failing channel switches to the same channel from another provider), and <b>Combine playlists</b> (one lineup: a channel the first playlist already has is hidden in the others and kept as a fallback). Playlist order is the order in Playlist Manager on the TV.</p></div>
+    <div class="card warn"><h3 style="margin-top:0">Stream test (careful)</h3>
+      <p>Opens each chosen stream for a few seconds to read its real quality and find dead links. Providers can block an account or your internet address after many connections in a row: test small batches (at most 60), stop any video on the TV first. Progress shows at the top of every tab.</p></div>
+    <div class="card"><h3 style="margin-top:0">Undo</h3>
+      <p>Untick a switch, delete a rule, select channels then <b>Show</b> / <b>Reset name</b>, clear a group's new name, then save. On the TV: hold OK on a channel, Use the provider's name.</p></div>
+  </section>
+
+  <section id="t-groups" style="display:none">
+    <div class="card dim">Type in a group's name box to <b>rename</b> it (in either list); give several groups the <b>same name to merge</b> them. The arrows move a group, the box hides it. Then <b>Save groups</b>.</div>
+    <div class="row"><input id="gq" placeholder="Search groups" class="grow"><button id="mergeGroups">Merge selected…</button><button class="gold" id="saveGroups">Save groups</button></div>
+    <h3>Order on the TV</h3>
+    <div id="groupOrder"></div>
+    <h3>Provider groups</h3>
+    <table><thead><tr><th>Provider group</th><th>Shown as</th><th>Channels</th></tr></thead><tbody id="groupRows"></tbody></table>
+  </section>
+
+  <section id="t-playlists" style="display:none">
+    <div class="card">
+      <div class="row"><label><input type="checkbox" id="xfb"> Use other playlists as fallback: a failing channel switches to the same channel in another playlist</label></div>
+      <div class="row"><label><input type="checkbox" id="merge"> Combine playlists: a channel already in a higher playlist is hidden in the lower ones (kept as a fallback); groups left empty are hidden</label></div>
+      <p class="dim">Playlist order is the order in Playlist Manager on the TV. These switches are for this TV.</p>
+      <button class="gold" id="savePl">Save</button> <span id="plMsg" class="dim"></span>
+    </div>
+  </section>
+
+  <section id="t-channels">
+    <div class="row">
+      <input id="q" placeholder="Search channels" class="grow">
+      <select id="grp"><option value="">All groups</option></select>
+      <select id="flt">
+        <option value="">Everything</option>
+        <option value="visible">Visible</option>
+        <option value="hidden">Hidden</option>
+        <option value="renamed">Renamed</option>
+        <option value="dupes">Has copies</option>
+        <option value="noguide">No guide data</option>
+        <option value="dead">Dead (tested)</option>
+        <option value="fallbacks">Has fallbacks</option>
+      </select>
+    </div>
+    <div class="row dim" id="count"></div>
+    <table>
+      <thead><tr><th><input type="checkbox" id="all"></th><th class="wide">Logo</th><th>Name</th><th class="wide">Group</th><th>Info</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="row"><button id="more">Show more</button></div>
+  </section>
+
+  <section id="t-dupes" style="display:none">
+    <div class="card dim">Copies of the same channel (TSN 1 4K / FHD / HD). With <b>Hide lower-quality copies</b> on, only the best is listed;
+      the others stay as automatic fallbacks when it fails. Ranking uses the stream test when there is one, else the name label.
+      Tick <b>Always show</b> to keep a copy listed anyway.</div>
+    <div class="row"><input id="dq" placeholder="Search" class="grow"></div>
+    <div id="dupeList"></div>
+  </section>
+
+  <section id="t-rules" style="display:none">
+    <div class="card">
+      <div class="row"><label><input type="checkbox" id="lower"> Hide lower-quality copies (they stay as fallbacks)</label></div>
+      <div class="row"><label><input type="checkbox" id="sep"> Hide separator rows (##### SPORTS #####)</label></div>
+      <div class="row"><label><input type="checkbox" id="cf"> Switch to another copy automatically when a channel fails (this device)</label></div>
+      <p class="dim">The guide only keeps programmes for visible channels: hiding channels here makes Update EPG faster and lighter on the next refresh.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Rules</h3>
+      <p class="dim">Run again on every content update. <b>Rename</b>: replace text in names (e.g. find <code>US| </code>, replace with nothing).
+        <b>Hide</b>: hide channels whose name or group contains the text. Tick regex for patterns like <code>^\[.*?\]\s*</code>.</p>
+      <table><thead><tr><th>Type</th><th>Find</th><th>Replace</th><th>In</th><th>Regex</th><th>On</th><th></th></tr></thead>
+      <tbody id="ruleRows"></tbody></table>
+      <div class="row"><button id="addRename">+ Rename rule</button><button id="addHide">+ Hide rule</button>
+        <button id="preview">Preview</button><span id="previewMsg" class="dim"></span></div>
+    </div>
+  </section>
+
+  <section id="t-test" style="display:none">
+    <div class="card warn">
+      <h3 style="margin-top:0;color:var(--red)">Before you test</h3>
+      <p>Testing opens each selected stream for a few seconds, one at a time, to read its real resolution and frame rate.
+        <b>If your provider allows only 1 connection, or watches for unusual activity, your account could be suspended.</b>
+        The test stops by itself if the provider refuses a connection.</p>
+      <p id="gate" class="dim">Checking your account…</p>
+      <div class="row"><label><input type="checkbox" id="accept"> I understand the risk</label></div>
+      <div class="row">
+        <button id="testDupes">Test channels that have copies</button>
+        <button id="testSel">Test selected channels</button>
+        <button id="testStop">Stop</button>
+      </div>
+      <p id="probeMsg"></p>
+    </div>
+  </section>
+</main>
+<div class="bar" id="chanBar">
+  <span id="selMsg" class="dim">0 selected</span>
+  <button id="bHide">Hide</button><button id="bShow">Show</button><button id="bReset">Reset name</button><button id="bLogo">Set logo…</button>
+  <span class="grow"></span>
+  <span id="dirty" class="dim"></span>
+  <button class="gold" id="save">Save to TV</button>
+</div>
+</div>
+
+<div class="modal" id="fbModal"><div class="card">
+  <h3 style="margin-top:0">Fallback channels for <span id="fbFor" style="color:var(--gold)"></span></h3>
+  <p class="dim">Tried in this order when the channel fails, before its automatic copies. Any playlist.</p>
+  <div id="fbList"></div>
+  <div class="row"><select id="fbPl"></select><input id="fbQ" placeholder="Search to add" class="grow"></div>
+  <div id="fbResults"></div>
+  <div class="row"><span class="grow"></span><button class="gold" id="fbDone">Done</button></div>
+</div></div>
+
+<script>
+'use strict';
+let probeMax = 60, groupData = null, groupOrder = [], groupHidden = new Set(), groupSel = new Set();
+let code = '', pl = '', data = null, edits = null, playlists = [], page = 300, sel = new Set(), dirty = false, tab = 'channels';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function api(path, body) {
+  const r = await fetch(path, {method: body === undefined ? 'GET' : 'POST',
+    headers: {'X-Editor-Code': code, 'Content-Type': 'application/json'},
+    body: body === undefined ? undefined : JSON.stringify(body)});
+  if (r.status === 401) { showLogin('Wrong or expired code. Check the TV.'); throw new Error('auth'); }
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+function showLogin(msg) { $('app').style.display = 'none'; $('login').style.display = ''; $('loginMsg').textContent = msg || ''; }
+async function login() {
+  code = $('code').value.trim();
+  try {
+    const p = await api('/api/playlists');
+    playlists = p.playlists; $('cf').checked = p.copyFallback;
+    $('xfb').checked = p.crossFallback; $('merge').checked = p.merge;
+    probeMax = p.probeMax || 60; pollProbe();
+    $('login').style.display = 'none'; $('app').style.display = '';
+    $('pl').innerHTML = playlists.map(x => `<option value="${esc(x.id)}">${esc(x.name)} (${x.count})${x.enabled ? '' : ' - off'}</option>`).join('');
+    $('fbPl').innerHTML = $('pl').innerHTML;
+    await load(playlists[0]?.id);
+  } catch (e) { if (e.message !== 'auth') $('loginMsg').textContent = 'Could not reach the TV: ' + e.message; }
+}
+async function load(id) {
+  if (!id) { $('status').textContent = 'No playlists on this TV.'; return; }
+  if (dirty && !confirm('Unsaved changes will be lost. Continue?')) { $('pl').value = pl; return; }
+  pl = id; $('status').textContent = 'Loading…';
+  data = await api('/api/channels?pl=' + encodeURIComponent(pl));
+  edits = Object.assign({names:{}, logos:{}, hidden:[], shown:[], fallbacks:{}, rules:[]}, data.edits);
+  for (const k of ['names','logos','fallbacks']) edits[k] = edits[k] || {};
+  for (const k of ['hidden','shown','rules']) edits[k] = edits[k] || [];
+  sel.clear(); setDirty(false);
+  const groups = [...new Set(data.channels.map(c => c.g))].sort((a, b) => a.localeCompare(b));
+  $('grp').innerHTML = '<option value="">All groups</option>' + groups.map(g => `<option>${esc(g)}</option>`).join('');
+  $('lower').checked = !!edits.hideLowerCopies; $('sep').checked = !!edits.hideSeparators;
+  $('status').textContent = data.channels.length + ' live channels';
+  renderAll();
+}
+function setDirty(v) { dirty = v; $('dirty').textContent = v ? 'Unsaved changes' : ''; }
+function copies() { const m = new Map(); for (const c of data.channels) if (c.k) { if (!m.has(c.k)) m.set(c.k, []); m.get(c.k).push(c); } return m; }
+function isHidden(c) { return c.th || c.gh || c.eh; }
+function info(c) {
+  const t = [];
+  if (c.th) t.push('<span class="tag">hidden on TV</span>');
+  if (c.gh) t.push('<span class="tag">group hidden</span>');
+  if (c.eh) t.push('<span class="tag r">hidden by editor</span>');
+  if (c.p) t.push(`<span class="tag ${c.p.startsWith('dead') ? 'r' : 'ok'}">${esc(c.p)}</span>`);
+  if (c.ne) t.push('<span class="tag">no guide</span>');
+  if (edits.fallbacks[c.r]) t.push(`<span class="tag g">${edits.fallbacks[c.r].length} fallback</span>`);
+  return t.join('');
+}
+let shown = [];
+function filtered() {
+  const q = $('q').value.trim().toLowerCase(), g = $('grp').value, f = $('flt').value, cp = f === 'dupes' ? copies() : null;
+  return data.channels.filter(c => {
+    if (g && c.g !== g) return false;
+    if (q && !(c.n.toLowerCase().includes(q) || (edits.names[c.r] || '').toLowerCase().includes(q))) return false;
+    switch (f) {
+      case 'visible': return !isHidden(c);
+      case 'hidden': return isHidden(c) || edits.hidden.includes(c.r);
+      case 'renamed': return !!(edits.names[c.r] || c.d);
+      case 'dupes': return c.k && cp.get(c.k).length > 1;
+      case 'noguide': return !!c.ne;
+      case 'dead': return c.p && c.p.startsWith('dead');
+      case 'fallbacks': return !!edits.fallbacks[c.r];
+    }
+    return true;
+  });
+}
+function renderChannels() {
+  shown = filtered();
+  $('count').textContent = shown.length + ' channels';
+  const rows = shown.slice(0, page).map(c => {
+    const logo = edits.logos[c.r] || c.l;
+    return `<tr class="${isHidden(c) || edits.hidden.includes(c.r) ? 'hidden-row' : ''}">
+      <td><input type="checkbox" data-s="${esc(c.r)}" ${sel.has(c.r) ? 'checked' : ''}></td>
+      <td class="wide">${logo ? `<img class="logo" loading="lazy" src="${esc(logo)}" referrerpolicy="no-referrer">` : ''}</td>
+      <td><input class="name" data-n="${esc(c.r)}" value="${esc(edits.names[c.r] || c.d || c.n)}" title="${esc(c.n)}"><div class="dim" style="font-size:12px">${esc(c.n)}</div></td>
+      <td class="wide dim">${esc(c.g)}</td><td>${info(c)}</td>
+      <td><button data-fb="${esc(c.r)}" title="Fallback channels">Fallbacks</button></td></tr>`;
+  }).join('');
+  $('rows').innerHTML = rows;
+  $('more').style.display = shown.length > page ? '' : 'none';
+  $('selMsg').textContent = sel.size + ' selected';
+}
+function renderDupes() {
+  const q = $('dq').value.trim().toLowerCase();
+  const groups = [...copies().values()].filter(l => l.length > 1 && (!q || l.some(c => c.n.toLowerCase().includes(q))));
+  $('dupeList').innerHTML = groups.slice(0, 300).map(l => {
+    l = [...l].sort((a, b) => b.q - a.q);
+    return `<div class="card"><table>${l.map(c => `<tr class="${c.eh ? 'hidden-row' : ''}"><td>${esc(c.n)}<div class="dim" style="font-size:12px">${esc(c.g)}</div></td>
+      <td>${c.eh ? '<span class="tag">fallback</span>' : '<span class="tag g">listed</span>'} ${c.p ? `<span class="tag ${c.p.startsWith('dead') ? 'r' : 'ok'}">${esc(c.p)}</span>` : ''}</td>
+      <td><label><input type="checkbox" data-shown="${esc(c.r)}" ${edits.shown.includes(c.r) ? 'checked' : ''}> Always show</label></td></tr>`).join('')}</table></div>`;
+  }).join('') + (groups.length > 300 ? `<p class="dim">${groups.length - 300} more, refine the search.</p>` : '') + (groups.length ? '' : '<p class="dim">No copies found.</p>');
+}
+function renderRules() {
+  $('ruleRows').innerHTML = edits.rules.map((r, i) => `<tr>
+    <td>${r.type === 'hide' ? 'Hide' : 'Rename'}</td>
+    <td><input data-rf="${i}" value="${esc(r.find)}"></td>
+    <td>${r.type === 'hide' ? '' : `<input data-rr="${i}" value="${esc(r.replace || '')}">`}</td>
+    <td>${r.type === 'hide' ? `<select data-rfield="${i}"><option value="name">Name</option><option value="group" ${r.field === 'group' ? 'selected' : ''}>Group</option></select>` : 'Name'}</td>
+    <td><input type="checkbox" data-rx="${i}" ${r.regex ? 'checked' : ''}></td>
+    <td><input type="checkbox" data-ron="${i}" ${r.enabled === false ? '' : 'checked'}></td>
+    <td><button data-rdel="${i}">Delete</button></td></tr>`).join('') || '<tr><td colspan="7" class="dim">No rules yet.</td></tr>';
+}
+function renderAll() { renderChannels(); renderDupes(); renderRules(); }
+function payload() {
+  const e = JSON.parse(JSON.stringify(edits));
+  e.hideLowerCopies = $('lower').checked; e.hideSeparators = $('sep').checked;
+  // A name equal to the provider's (or the rule result) isn't an override.
+  for (const c of data.channels) if (e.names[c.r] !== undefined && (e.names[c.r] === c.n || e.names[c.r].trim() === '')) delete e.names[c.r];
+  return e;
+}
+async function save() {
+  $('save').disabled = true;
+  try {
+    const r = await api('/api/edits?pl=' + encodeURIComponent(pl), {edits: payload()});
+    await api('/api/settings', {copyFallback: $('cf').checked});
+    setDirty(false); dirty = false;
+    await load(pl);
+    $('status').textContent = 'Saved. ' + r.hidden + ' channels hidden by the editor.';
+  } catch (e) { alert('Could not save: ' + e.message); }
+  $('save').disabled = false;
+}
+
+// Events
+$('go').onclick = login;
+$('code').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+$('pl').onchange = () => load($('pl').value);
+for (const id of ['q', 'grp', 'flt']) $(id).addEventListener('input', () => { page = 300; renderChannels(); });
+$('dq').addEventListener('input', renderDupes);
+$('more').onclick = () => { page += 300; renderChannels(); };
+$('tabs').onclick = e => {
+  const t = e.target.dataset.t; if (!t) return; tab = t;
+  for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.t === t);
+  for (const s of ['howto', 'channels', 'groups', 'dupes', 'rules', 'playlists', 'test']) $('t-' + s).style.display = s === t ? '' : 'none';
+  if (t === 'test') checkGate();
+  if (t === 'groups') loadGroups();
+  // The channel actions bar only belongs to the tabs it edits.
+  $('chanBar').style.display = ['channels', 'dupes', 'rules'].includes(t) ? '' : 'none';
+};
+$('rows').addEventListener('change', e => {
+  const s = e.target.dataset.s, n = e.target.dataset.n;
+  if (s !== undefined) { e.target.checked ? sel.add(s) : sel.delete(s); $('selMsg').textContent = sel.size + ' selected'; }
+  if (n !== undefined) { edits.names[n] = e.target.value; setDirty(true); }
+});
+$('rows').addEventListener('click', e => { const fb = e.target.dataset.fb; if (fb) openFallbacks(fb); });
+$('all').onchange = e => { for (const c of shown.slice(0, page)) e.target.checked ? sel.add(c.r) : sel.delete(c.r); renderChannels(); };
+$('dupeList').addEventListener('change', e => {
+  const r = e.target.dataset.shown; if (!r) return;
+  edits.shown = edits.shown.filter(x => x !== r); if (e.target.checked) edits.shown.push(r); setDirty(true);
+});
+function bulk(fn) { if (!sel.size) { alert('Select channels first (tick the boxes).'); return; } for (const r of sel) fn(r); setDirty(true); renderChannels(); }
+$('bHide').onclick = () => bulk(r => { if (!edits.hidden.includes(r)) edits.hidden.push(r); edits.shown = edits.shown.filter(x => x !== r); });
+$('bShow').onclick = () => bulk(r => { edits.hidden = edits.hidden.filter(x => x !== r); });
+$('bReset').onclick = () => bulk(r => { delete edits.names[r]; delete edits.logos[r]; });
+$('bLogo').onclick = () => { const u = prompt('Logo image address (https://…). Empty = provider logo.'); if (u === null) return; bulk(r => { if (u.trim()) edits.logos[r] = u.trim(); else delete edits.logos[r]; }); };
+for (const id of ['lower', 'sep', 'cf']) $(id).onchange = () => setDirty(true);
+$('addRename').onclick = () => { edits.rules.push({type: 'replace', find: '', replace: ''}); renderRules(); setDirty(true); };
+$('addHide').onclick = () => { edits.rules.push({type: 'hide', find: ''}); renderRules(); setDirty(true); };
+$('ruleRows').addEventListener('input', e => {
+  const d = e.target.dataset, i = +(d.rf ?? d.rr ?? d.rx ?? d.ron ?? d.rfield ?? -1); if (i < 0) return;
+  const r = edits.rules[i];
+  if (d.rf !== undefined) r.find = e.target.value;
+  if (d.rr !== undefined) r.replace = e.target.value;
+  if (d.rx !== undefined) r.regex = e.target.checked;
+  if (d.ron !== undefined) r.enabled = e.target.checked;
+  if (d.rfield !== undefined) r.field = e.target.value;
+  setDirty(true);
+});
+$('ruleRows').addEventListener('click', e => { const i = e.target.dataset.rdel; if (i === undefined) return; edits.rules.splice(+i, 1); renderRules(); setDirty(true); });
+$('preview').onclick = async () => {
+  try {
+    const r = await api('/api/preview?pl=' + encodeURIComponent(pl), {edits: payload()});
+    $('previewMsg').textContent = `${r.hidden.length} channels would be hidden, ${Object.keys(r.names).length} renamed.`;
+    const hid = new Set(r.hidden);
+    for (const c of data.channels) { c.eh = hid.has(c.r) ? 1 : 0; c.d = r.names[c.r]; }
+    renderChannels(); renderDupes();
+  } catch (e) { $('previewMsg').textContent = 'Preview failed: ' + e.message; }
+};
+$('save').onclick = save;
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+// Fallbacks
+let fbFor = null;
+function openFallbacks(r) {
+  fbFor = r; const c = data.channels.find(x => x.r === r);
+  $('fbFor').textContent = edits.names[r] || c.n; $('fbPl').value = pl; $('fbQ').value = '';
+  $('fbResults').innerHTML = ''; renderFb(); $('fbModal').style.display = 'flex';
+}
+const otherCache = {};
+async function channelsOf(id) { if (id === pl) return data.channels; if (!otherCache[id]) otherCache[id] = (await api('/api/channels?pl=' + encodeURIComponent(id))).channels; return otherCache[id]; }
+function fbName(id) {
+  const i = id.indexOf('::'), p = id.slice(0, i), r = id.slice(i + 2);
+  const list = p === pl ? data.channels : otherCache[p];
+  const c = list && list.find(x => x.r === r);
+  const pn = (playlists.find(x => x.id === p) || {}).name || p;
+  return (c ? c.n : r) + ' · ' + pn;
+}
+function renderFb() {
+  const l = edits.fallbacks[fbFor] || [];
+  $('fbList').innerHTML = l.map((id, i) => `<div class="row"><span class="grow">${i + 1}. ${esc(fbName(id))}</span>
+    <button data-up="${i}">▲</button><button data-down="${i}">▼</button><button data-rm="${i}">Remove</button></div>`).join('') || '<p class="dim">None yet.</p>';
+}
+$('fbList').onclick = e => {
+  const l = edits.fallbacks[fbFor] || [], d = e.target.dataset;
+  if (d.rm !== undefined) l.splice(+d.rm, 1);
+  if (d.up !== undefined && +d.up > 0) l.splice(+d.up - 1, 0, l.splice(+d.up, 1)[0]);
+  if (d.down !== undefined && +d.down < l.length - 1) l.splice(+d.down + 1, 0, l.splice(+d.down, 1)[0]);
+  if (l.length) edits.fallbacks[fbFor] = l; else delete edits.fallbacks[fbFor];
+  setDirty(true); renderFb();
+};
+async function fbSearch() {
+  const q = $('fbQ').value.trim().toLowerCase(); if (q.length < 2) { $('fbResults').innerHTML = ''; return; }
+  const p = $('fbPl').value, list = await channelsOf(p);
+  $('fbResults').innerHTML = list.filter(c => c.n.toLowerCase().includes(q) && !(p === pl && c.r === fbFor)).slice(0, 40)
+    .map(c => `<div class="row"><span class="grow">${esc(c.n)} <span class="dim">${esc(c.g)}</span></span><button data-add="${esc(p + '::' + c.r)}">Add</button></div>`).join('') || '<p class="dim">Nothing found.</p>';
+}
+$('fbQ').addEventListener('input', fbSearch); $('fbPl').onchange = fbSearch;
+$('fbResults').onclick = e => {
+  const id = e.target.dataset.add; if (!id) return;
+  const l = edits.fallbacks[fbFor] || []; if (!l.includes(id) && l.length < 10) l.push(id);
+  edits.fallbacks[fbFor] = l; setDirty(true); renderFb();
+};
+$('fbDone').onclick = () => { $('fbModal').style.display = 'none'; renderChannels(); };
+
+// Groups
+async function loadGroups() {
+  groupData = await api('/api/groups?pl=' + encodeURIComponent(pl));
+  for (const g of groupData.groups) g.d0 = g.d;
+  groupOrder = groupData.order.map(g => g.d);  // shown titles at load (d0)
+  groupHidden = new Set(groupData.order.filter(g => g.h).map(g => g.d));
+  groupSel = new Set();
+  renderGroups();
+}
+function renderGroups() {
+  if (!groupData) return;
+  const q = $('gq').value.trim().toLowerCase();
+  $('groupOrder').innerHTML = groupOrder.map((d, i) => (!q || d.toLowerCase().includes(q)) ? `<div class="row card" style="margin:4px 0;padding:6px 10px">
+    <input type="checkbox" data-gsel="${i}" ${groupSel.has(d) ? 'checked' : ''} aria-label="Select for merge">
+    <input class="grow" data-orename="${i}" value="${esc(shownOf(d))}" aria-label="Group name" style="min-width:120px">
+    <label class="dim"><input type="checkbox" data-gh="${i}" ${groupHidden.has(d) ? 'checked' : ''}> hide</label>
+    <button data-gup="${i}" aria-label="Move up">&#9650;</button><button data-gdn="${i}" aria-label="Move down">&#9660;</button></div>` : '').join('') || '<p class="dim">No groups.</p>';
+  $('groupRows').innerHTML = groupData.groups.filter(g => !q || g.t.toLowerCase().includes(q) || g.d.toLowerCase().includes(q)).slice(0, 600)
+    .map(g => `<tr><td>${esc(g.t)}</td><td><input data-gname="${esc(g.t)}" value="${esc(g.d)}" style="width:100%"></td><td class="dim">${g.n}</td></tr>`).join('');
+}
+$('gq').addEventListener('input', renderGroups);
+$('groupOrder').addEventListener('click', e => {
+  const d = e.target.dataset; const i = +(d.gup ?? d.gdn ?? -1); if (i < 0) return;
+  const j = d.gup !== undefined ? i - 1 : i + 1; if (j < 0 || j >= groupOrder.length) return;
+  [groupOrder[i], groupOrder[j]] = [groupOrder[j], groupOrder[i]]; renderGroups();
+});
+$('groupOrder').addEventListener('change', e => {
+  const sel = e.target.dataset.gsel;
+  if (sel !== undefined) { const d = groupOrder[+sel]; e.target.checked ? groupSel.add(d) : groupSel.delete(d); return; }
+  const i = e.target.dataset.gh; if (i === undefined) return; const d = groupOrder[+i]; e.target.checked ? groupHidden.add(d) : groupHidden.delete(d); });
+// Shown title at load -> shown title now (renames and merges).
+function shownOf(d) { const g = groupData.groups.find(x => x.d0 === d); return g ? g.d : d; }
+$('groupOrder').addEventListener('input', e => {
+  const i = e.target.dataset.orename; if (i === undefined) return;
+  const d0 = groupOrder[+i], name = e.target.value.trim();
+  for (const g of groupData.groups) if (g.d0 === d0) g.d = name || g.t;
+  for (const inp of $('groupRows').querySelectorAll('input[data-gname]')) {
+    const g = groupData.groups.find(x => x.t === inp.dataset.gname); if (g) inp.value = g.d;
+  }
+});
+$('groupRows').addEventListener('change', e => { const t = e.target.dataset.gname; if (t === undefined) return; const g = groupData.groups.find(x => x.t === t); if (g) g.d = e.target.value.trim() || t; });
+// Merge: the ticked groups become one group under the name given; it
+// takes the place of the first ticked one in the order.
+$('mergeGroups').onclick = () => {
+  const picked = groupOrder.filter(d => groupSel.has(d));
+  if (picked.length < 2) { alert('Tick at least two groups in "Order on the TV" first.'); return; }
+  const name = (prompt(`Merge ${picked.length} groups into one. Name of the merged group:`, shownOf(picked[0])) || '').trim();
+  if (!name) return;
+  for (const g of groupData.groups) if (picked.includes(g.d0)) g.d = name;
+  groupOrder = groupOrder.filter(d => d === picked[0] || !picked.includes(d));
+  if ([...groupHidden].some(d => picked.includes(d))) for (const d of picked) groupHidden.delete(d);
+  groupSel.clear(); renderGroups();
+  $('status').textContent = 'Merged. Press Save groups to apply on the TV.';
+};
+$('saveGroups').onclick = async () => {
+  const names = {}; for (const g of groupData.groups) if (g.d && g.d !== g.t) names[g.t] = g.d;
+  const order = []; for (const d of groupOrder) { const n = shownOf(d); if (!order.includes(n)) order.push(n); }
+  for (const g of groupData.groups) if (!order.includes(g.d)) order.push(g.d);
+  const hidden = [...groupHidden].map(shownOf);
+  try { await api('/api/groups?pl=' + encodeURIComponent(pl), {names, order, hidden}); $('status').textContent = 'Groups saved.'; await loadGroups(); await load(pl); }
+  catch (e) { alert('Could not save: ' + e.message); }
+};
+$('savePl').onclick = async () => {
+  try { await api('/api/settings', {crossFallback: $('xfb').checked, merge: $('merge').checked}); $('plMsg').textContent = 'Saved.'; }
+  catch (e) { $('plMsg').textContent = 'Could not save: ' + e.message; }
+};
+
+// Stream test
+async function checkGate() {
+  try {
+    const g = await api('/api/gate?pl=' + encodeURIComponent(pl));
+    let t = g.xtream ? (g.max ? `Your account allows ${g.max} connection(s), ${g.active ?? '?'} in use now.` : 'Your account did not report a connection limit.') : 'M3U playlist: the connection limit is unknown.';
+    if (g.playing) t += ' A video is playing on the TV: stop it first.';
+    $('gate').textContent = t;
+  } catch (e) { $('gate').textContent = 'Could not check the account.'; }
+}
+async function startTest(ids) {
+  if (!$('accept').checked) { alert('Tick "I understand the risk" first.'); return; }
+  if (!ids.length) { alert('Nothing to test.'); return; }
+  if (ids.length > probeMax) { alert(`At most ${probeMax} streams per test. You picked ${ids.length}: narrow the selection (search or a group) and test in small batches.`); return; }
+  const mins = Math.ceil(ids.length * 9 / 60);
+  if (!confirm(`Test ${ids.length} streams, one at a time? About ${mins} min. Keep the TV on the editor screen.`)) return;
+  const r = await api('/api/probe?pl=' + encodeURIComponent(pl), {accept: true, ids});
+  if (!r.started) { $('probeMsg').textContent = r.error; return; }
+  probeWasRunning = true;
+}
+let probeWasRunning = false;
+async function pollProbe() {
+  let s;
+  try { s = await api('/api/probe'); } catch (e) { setTimeout(pollProbe, 5000); return; }
+  const text = s.running ? `${s.done + 1} of ${s.total}: ${s.current || ''}` : `${s.stopped || ''} ${s.done}/${s.total} tested.`;
+  $('probeMsg').textContent = s.total ? text : '';
+  $('probeBar').style.display = s.running ? '' : 'none';
+  $('probeBarText').textContent = text;
+  $('probeBarFill').style.width = s.total ? Math.round(100 * s.done / s.total) + '%' : '0';
+  if (probeWasRunning && !s.running && s.pl === pl && !dirty) await load(pl);
+  probeWasRunning = s.running;
+  setTimeout(pollProbe, s.running ? 2000 : 6000);
+}
+$('probeBarStop').onclick = () => api('/api/probe/stop', {});
+$('testDupes').onclick = () => { const ids = []; for (const l of copies().values()) if (l.length > 1) for (const c of l) ids.push(c.r); startTest(ids); };
+$('testSel').onclick = () => startTest([...sel]);
+$('testStop').onclick = () => api('/api/probe/stop', {});
+
+const h = location.hash.slice(1);
+if (/^\d{6}$/.test(h)) { $('code').value = h; history.replaceState(null, '', '/'); login(); }
+</script>
+</body>
+</html>

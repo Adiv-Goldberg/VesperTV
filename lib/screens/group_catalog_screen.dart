@@ -170,6 +170,7 @@ class _GroupCatalogScreenState extends State<GroupCatalogScreen> {
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     leading: IconButton(
+                      tooltip: tr('Back'),
                       focusNode: _backButtonFocus,
                       autofocus: true,
                       icon: const Icon(Icons.arrow_back),

@@ -843,77 +843,85 @@ class _HomeScreenState extends State<HomeScreen> {
               opacity: _switching ? 0 : 1,
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOut,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hideProfiles && (Platform.isWindows || size.width >= 800))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 6),
-                      child: Row(children: [
-                        if (Platform.isWindows)
-                          ExcludeFocus(
-                              child: IconButton(
-                            tooltip: tr('Back'),
-                            icon: const Icon(Icons.arrow_back,
-                                color: Colors.white),
-                            onPressed: () => Navigator.of(context).maybePop(),
-                          )),
-                        const Spacer(),
-                        if (size.width >= 800) const _HomeClock(),
-                      ]),
+              // Below the phone's status bar / notch: the profile cards sat
+              // on the clock (owner, 2026-11-02). The backdrop stays full
+              // screen behind it.
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hideProfiles &&
+                        (Platform.isWindows || size.width >= 800))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 6),
+                        child: Row(children: [
+                          if (Platform.isWindows)
+                            ExcludeFocus(
+                                child: IconButton(
+                              tooltip: tr('Back'),
+                              icon: const Icon(Icons.arrow_back,
+                                  color: Colors.white),
+                              onPressed: () => Navigator.of(context).maybePop(),
+                            )),
+                          const Spacer(),
+                          if (size.width >= 800) const _HomeClock(),
+                        ]),
+                      ),
+                    if (!hideProfiles)
+                      _ProfilesStrip(
+                        compact: !_inProfiles,
+                        nodes: _profileNode,
+                        addNode: _addProfileNode,
+                        onPick: _switchProfile,
+                        onEdit: _editProfile,
+                        onAdd: _manageProfiles,
+                        onFocus: (i) {
+                          if (!_inProfiles || _profileIndex != i) {
+                            setState(() {
+                              _inProfiles = true;
+                              _profileIndex = i;
+                            });
+                          }
+                        },
+                      ),
+                    SizedBox(
+                      height: heroHeight,
+                      child: _Hero(item: focused, scheme: scheme),
                     ),
-                  if (!hideProfiles)
-                    _ProfilesStrip(
-                      compact: !_inProfiles,
-                      nodes: _profileNode,
-                      addNode: _addProfileNode,
-                      onPick: _switchProfile,
-                      onEdit: _editProfile,
-                      onAdd: _manageProfiles,
-                      onFocus: (i) {
-                        if (!_inProfiles || _profileIndex != i) {
-                          setState(() {
-                            _inProfiles = true;
-                            _profileIndex = i;
-                          });
-                        }
-                      },
-                    ),
-                  SizedBox(
-                    height: heroHeight,
-                    child: _Hero(item: focused, scheme: scheme),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: _pageScroll,
-                      padding: const EdgeInsets.only(bottom: 40),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_rows.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: _sidePad, vertical: 24),
-                              child: _loading
-                                  ? const SizedBox(
-                                      width: 28,
-                                      height: 28,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2.5))
-                                  : Text(
-                                      tr(
-                                          'Nothing here yet. Watch a channel, a movie or a show and it shows up on Home.'),
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 16)),
-                            ),
-                          for (var r = 0; r < _rows.length; r++)
-                            _buildRow(r, scheme),
-                        ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _pageScroll,
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_rows.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: _sidePad, vertical: 24),
+                                child: _loading
+                                    ? const SizedBox(
+                                        width: 28,
+                                        height: 28,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2.5))
+                                    : Text(
+                                        tr(
+                                            'Nothing here yet. Watch a channel, a movie or a show and it shows up on Home.'),
+                                        style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 16)),
+                              ),
+                            for (var r = 0; r < _rows.length; r++)
+                              _buildRow(r, scheme),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

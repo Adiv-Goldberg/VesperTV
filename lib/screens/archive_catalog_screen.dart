@@ -102,6 +102,7 @@ class _ArchiveCatalogScreenState extends State<ArchiveCatalogScreen> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               leading: IconButton(
+                tooltip: tr('Back'),
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.maybePop(context),
               ),

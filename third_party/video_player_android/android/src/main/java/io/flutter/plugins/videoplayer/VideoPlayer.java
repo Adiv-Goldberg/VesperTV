@@ -344,6 +344,11 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
     onDemandLoadControl = control;
   }
 
+  /** See {@link OnDemandLoadControl#setLiveReserveMs}. Main player only. */
+  void setLiveBuffer(long ms) {
+    if (onDemandLoadControl != null) onDemandLoadControl.setLiveReserveMs(ms);
+  }
+
   void setOnDemandBuffering(boolean on) {
     if (onDemandLoadControl != null) onDemandLoadControl.setOnDemand(on);
     vodTrace.setEnabled(on);

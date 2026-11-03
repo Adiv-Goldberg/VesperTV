@@ -66,12 +66,22 @@ void main() {
       return null;
     });
     final controller = _Controller();
+    VodBuffering.liveBufferMs = 4000;
+    addTearDown(() => VodBuffering.liveBufferMs = 0);
     await VodBuffering.configure(controller, _channel('arc_ep_1'));
     await VodBuffering.configure(controller, _channel('xt_live_1'));
-    expect(calls.map((c) => c.method), everyElement('setOnDemandBuffering'));
+    expect(calls.map((c) => c.method), [
+      'setOnDemandBuffering',
+      'setLiveBuffer',
+      'setOnDemandBuffering',
+      'setLiveBuffer',
+    ]);
+    // The live buffer applies to live channels only.
     expect(calls.map((c) => c.arguments), [
       {'playerId': 37, 'on': true},
+      {'playerId': 37, 'ms': 0},
       {'playerId': 37, 'on': false},
+      {'playerId': 37, 'ms': 4000},
     ]);
   });
 

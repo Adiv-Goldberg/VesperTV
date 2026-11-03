@@ -82,7 +82,7 @@ List<ChannelMatch> distinctCopiesFirst(List<ChannelMatch> sorted, int limit) {
   final leaders = <ChannelMatch>[];
   final copies = <String, List<ChannelMatch>>{};
   for (final m in sorted) {
-    final key = channelCopyKey(m.channel.name);
+    final key = channelCopyKey(m.channel.sourceName);
     final group = key.isEmpty ? null : copies[key];
     if (group != null) {
       group.add(m);
@@ -93,7 +93,7 @@ List<ChannelMatch> distinctCopiesFirst(List<ChannelMatch> sorted, int limit) {
   }
   return [
     ...leaders,
-    for (final m in leaders) ...?copies[channelCopyKey(m.channel.name)],
+    for (final m in leaders) ...?copies[channelCopyKey(m.channel.sourceName)],
   ];
 }
 
@@ -786,7 +786,7 @@ class SportsChannelMatcher {
     final names = List<String>.filled(hidden.length, '');
     for (var i = 0; i < hidden.length; i++) {
       if (i % 3000 == 2999) await Future<void>.delayed(Duration.zero);
-      names[i] = sportsNormalize(hidden[i].name);
+      names[i] = sportsNormalize(hidden[i].sourceName);
     }
     if (identical(hidden, _hidden)) _hiddenNames = names;
     return names;
@@ -822,7 +822,7 @@ class SportsChannelMatcher {
     var signature = Object.hash(channels.length, hidden.length);
     for (final list in [channels, hidden]) {
       for (final c in list) {
-        signature = Object.hash(signature, c.id, c.name, c.epgId);
+        signature = Object.hash(signature, c.id, c.sourceName, c.epgId);
       }
     }
     if (_preparedFor == signature) return;
@@ -837,7 +837,7 @@ class SportsChannelMatcher {
     for (var i = 0; i < channels.length; i++) {
       if (i % 3000 == 2999) await Future<void>.delayed(Duration.zero);
       final c = channels[i];
-      final norm = sportsNormalize(c.name);
+      final norm = sportsNormalize(c.sourceName);
       names[i] = norm;
       byId[c.id] = i;
       for (final t in norm.trim().split(' ')) {
@@ -845,10 +845,10 @@ class SportsChannelMatcher {
         final list = tokenIndex[t] ??= <int>[];
         if (list.isEmpty || list.last != i) list.add(i);
       }
-      final canon = canonicalChannelKey(c.name);
+      final canon = canonicalChannelKey(c.sourceName);
       if (canon.isNotEmpty) (byCanonical[canon] ??= <int>[]).add(i);
       (byEpgId[normalizeEpgId(c.epgId)] ??= <int>[]).add(i);
-      if (_parseAbbrEvent(i, c.name, c.group) case final e?) abbrEvents.add(e);
+      if (_parseAbbrEvent(i, c.sourceName, c.group) case final e?) abbrEvents.add(e);
     }
     _channels = channels;
     _abbrEvents = abbrEvents;
@@ -860,7 +860,7 @@ class SportsChannelMatcher {
     _hidden = hidden;
     _hiddenNames = null;
     _hiddenByEpgId = {
-      for (final c in hidden.reversed) normalizeEpgId(c.epgId): c.name,
+      for (final c in hidden.reversed) normalizeEpgId(c.epgId): c.sourceName,
     };
     _preparedFor = signature;
   }
@@ -1519,7 +1519,7 @@ class SportsChannelMatcher {
           final s = y.score.compareTo(x.score);
           return s != 0
               ? s
-              : x.channel.name.length.compareTo(y.channel.name.length);
+              : x.channel.sourceName.length.compareTo(y.channel.sourceName.length);
         });
       final key = SportsChannelPicks.eventKey(g);
       out[key] = distinctCopiesFirst(
@@ -1535,7 +1535,7 @@ class SportsChannelMatcher {
         for (var i = 0; i < names.length && i < hidden.length; i++) {
           if (i % 5000 == 4999) await Future<void>.delayed(Duration.zero);
           if (groups.every((group) => group.any(names[i].contains))) {
-            hiddenChannel = hidden[i].name;
+            hiddenChannel = hidden[i].sourceName;
             break;
           }
         }
@@ -1578,7 +1578,7 @@ class SportsChannelMatcher {
 
 int _sportsQuality(Channel c) {
   if (Real4kChannels.contains(c.id)) return 5;
-  final name = c.name.toUpperCase();
+  final name = c.sourceName.toUpperCase();
   if (RegExp(r'\b(4K|UHD|2160P?)\b').hasMatch(name)) return 4;
   if (RegExp(r'\b(FHD|1080P?)\b').hasMatch(name)) return 3;
   if (RegExp(r'\bHD\b').hasMatch(name)) return 2;
@@ -1591,7 +1591,7 @@ int _sportsQuality(Channel c) {
 List<ChannelMatch> preferSportsSources(List<ChannelMatch> matches) {
   final groups = <String, List<ChannelMatch>>{};
   for (final m in matches) {
-    final key = channelCopyKey(m.channel.name);
+    final key = channelCopyKey(m.channel.sourceName);
     (groups[key.isEmpty ? m.channel.id : key] ??= []).add(m);
   }
   for (final group in groups.values) {

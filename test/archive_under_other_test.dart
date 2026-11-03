@@ -41,8 +41,10 @@ void main() {
     return ArchiveService(storage);
   }
 
-  test('a source with a custom-type catalog is under Other by default', () {
-    expect(adult.underOther, isTrue);
+  // Owner, 2026-11-02: off for every source until the user turns it on.
+  test('no source is under Other until the user turns it on', () {
+    expect(adult.underOther, isFalse);
+    expect(adult.copyWith(otherChoice: true).underOther, isTrue);
     expect(normal.underOther, isFalse);
     // Stream-only sources never are.
     expect(
@@ -62,6 +64,7 @@ void main() {
 
   test('TV Shows offers Other for its shows; the switch moves it', () async {
     final s = await service();
+    await s.setUnderOther(s.sources.first, true);
     expect(s.genres(ArchiveType.series), [ArchiveService.otherGenre]);
 
     await s.setUnderOther(s.sources.first, false);

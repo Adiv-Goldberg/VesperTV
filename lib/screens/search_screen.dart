@@ -602,6 +602,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       actions: [
                         if (_query.isNotEmpty)
                           IconButton(
+                            tooltip: tr('Clear'),
                             icon: const Icon(Icons.clear),
                             onPressed: () {
                               _searchDebounce?.cancel();

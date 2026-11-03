@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player_hdr/video_player_hdr.dart';
@@ -28,6 +29,7 @@ import 'archive_service.dart';
 import 'watch_tracker.dart';
 import 'vod_buffering.dart';
 import 'live_reconnect_log.dart';
+import 'channel_copy_fallback.dart';
 import '../l10n/l10n.dart';
 
 /// Owns the single, app-wide [VideoPlayerHdrController] for whatever channel
@@ -68,6 +70,11 @@ class PlaybackService extends ChangeNotifier {
   static Future<String?> Function(Channel channel)? openUrlFor;
 
   PlaybackService(this._storage, this._playlistManager) {
+    try {
+      unawaited(VodBuffering.setLiveBufferDefault(_storage.getLiveBufferMs()));
+    } catch (_) {
+      // Storage not initialised (tests): the 500 ms default stays.
+    }
     _reconnectLog.start();
   }
 
@@ -460,6 +467,8 @@ class PlaybackService extends ChangeNotifier {
   }
 
   Future<void> _playChannel(Channel channel) async {
+    if (channel.id != _copyFallbackFor) copyFallbackName = null;
+    _announce(tr('Playing {name}', {'name': channel.name}));
     // A queued episode whose stream isn't known yet (Archive Next / auto-
     // advance): resolve it first. Guarded, so the position timer's repeat
     // calls near the end don't start a second lookup.
@@ -671,6 +680,7 @@ class PlaybackService extends ChangeNotifier {
         return;
       }
       if (await _retryOnBackupServers(channel, e)) return;
+      if (_retryOnCopy(channel)) return;
       error = sniff == null ? e.toString() : '$e\n${sniff.tag}';
       notifyListeners();
     });
@@ -1081,6 +1091,9 @@ class PlaybackService extends ChangeNotifier {
       final last = _restartLoopReloads[channel.id];
       if (!live ||
           (last != null && now.difference(last) < const Duration(minutes: 2))) {
+        // A live channel that keeps dying even after a reload: another
+        // copy of it before the error screen.
+        if (live && _retryOnCopy(channel)) return;
         error = raw;
         notifyListeners();
         return;
@@ -1162,6 +1175,47 @@ class PlaybackService extends ChangeNotifier {
     } finally {
       _reloadingCurrentChannel = false;
     }
+  }
+
+  /// TalkBack / screen readers: say what started (the video itself has
+  /// nothing to read). Only when a screen reader is on.
+  static void _announce(String message) {
+    final features =
+        SchedulerBinding.instance.platformDispatcher.accessibilityFeatures;
+    if (!features.accessibleNavigation) return;
+    // ignore: deprecated_member_use
+    SemanticsService.announce(message, TextDirection.ltr);
+  }
+
+  final _copyFallback = ChannelCopyFallback();
+
+  /// Set while a failover copy plays in place of the channel the viewer
+  /// picked (the info card / player bar say which). Cleared on a normal
+  /// play of another channel.
+  String? copyFallbackName;
+  String? _copyFallbackFor;
+
+  /// Backup servers didn't help: play the next quality copy of the same
+  /// channel (4K -> FHD -> HD) inside its playlist, decoder errors included
+  /// (a box that can't decode a 4K HDR copy usually plays the FHD one).
+  /// The requested channel keeps its id; only the URL changes, and [play]
+  /// tears the failed player down before the copy opens, so a 1-connection
+  /// account isn't hit twice.
+  bool _retryOnCopy(Channel channel) {
+    if (!_storage.getCopyFallback()) return false;
+    final copy = _copyFallback.next(
+        channel, _playlistManager.failoverCandidatesFor(channel));
+    if (copy == null || currentChannel?.id != channel.id) return false;
+    copyFallbackName = copy.name;
+    _copyFallbackFor = channel.id;
+    debugPrint('PlaybackService: copy fallback -> ${copy.name}');
+    reconnectStatus = tr('Trying another copy: {name}', {'name': copy.name});
+    error = null;
+    notifyListeners();
+    currentChannel = null;
+    unawaited(play(
+        channel.copyWith(url: copy.url, httpHeaders: copy.httpHeaders)));
+    return true;
   }
 
   /// Same spacing as `PlaylistSession`'s catalog-side fallback, for the

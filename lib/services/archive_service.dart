@@ -1073,8 +1073,14 @@ class ArchiveService extends ChangeNotifier {
       {ArchiveVideo? episode}) {
     final identity = archiveTitleIdentity(source, meta);
     if (!identity.startsWith('${meta.type.wire}:')) return;
-    final scope =
-        '${_storage.viewerGeneration}|${source.key}|${episode?.id ?? ''}';
+    // An episode the meta already lists is covered by the one whole-show
+    // registration below: keyed per episode, opening a 418-episode show
+    // rebuilt every alias 418 times (~175k ids) and froze the Formuler
+    // (LOG-YV5NC3, 2026-11-02).
+    final listed =
+        episode == null || meta.videos.any((v) => v.id == episode.id);
+    final scope = '${_storage.viewerGeneration}|${source.key}|'
+        '${listed ? '' : episode.id}';
     final registered = _registeredMetas[meta] ??= <String>{};
     if (!registered.add(scope)) return;
     final tmdb = meta.wireType == null &&
@@ -1101,7 +1107,7 @@ class ArchiveService extends ChangeNotifier {
     if (meta.type == ArchiveType.movie) {
       alias(meta.id, false, '');
     } else {
-      for (final v in [...meta.videos, if (episode != null) episode]) {
+      for (final v in [...meta.videos, if (!listed) episode]) {
         alias(v.id, true, ':${v.season}:${v.episode}');
       }
     }

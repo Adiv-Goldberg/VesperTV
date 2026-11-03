@@ -118,7 +118,9 @@ void main() {
 
   test('Movies genre filter offers Other only when a custom type exists',
       () async {
-    final own = await api.fetchManifest('https://x.org/own');
+    // Under Other only when the user turns it on (2026-11-02).
+    final own = (await api.fetchManifest('https://x.org/own'))
+        .copyWith(otherChoice: true);
     const plain = ArchiveSource(
       manifestUrl: 'https://p.org/manifest.json',
       name: 'Plain',

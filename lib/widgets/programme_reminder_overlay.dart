@@ -159,7 +159,8 @@ class _ProgrammeReminderOverlayState extends State<ProgrammeReminderOverlay>
                                         button: true,
                                         child: IconButton(
                                             onPressed: _next,
-                                            icon: const Icon(Icons.close)))),
+                                            icon: Icon(Icons.close,
+                                                semanticLabel: tr('Close'))))),
                               ]))),
                     )))));
   }

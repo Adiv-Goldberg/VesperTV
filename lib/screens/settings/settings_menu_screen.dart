@@ -38,6 +38,7 @@ import 'sports_league_visibility_settings_screen.dart';
 import 'sports_auto_play_settings_screen.dart';
 import 'sports_odds_settings_screen.dart';
 import 'sports_quality_settings_screen.dart';
+import 'playlist_editor_screen.dart';
 
 /// One destination row of a Settings category.
 class _Entry {
@@ -139,6 +140,11 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
                 tr('EPG'),
                 tr('Auto-refresh, channel matching & pairing, clear cache'),
                 (_) => const EpgSettingsScreen()),
+            _Entry(
+                Icons.edit_note,
+                tr('Playlist editor (Test flight)'),
+                tr('Rename, hide copies, fallbacks and stream test, from your phone or PC'),
+                (_) => const PlaylistEditorScreen()),
             _Entry(
                 Icons.people_outline,
                 tr('Profiles'),
@@ -242,6 +248,9 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
             if (Platform.isAndroid)
               _general('upnext', Icons.queue_play_next, tr('Up Next'),
                   tr('When the next episode starts by itself')),
+            if (Platform.isAndroid)
+              _general('livebuffer', Icons.av_timer, tr('Live buffer'),
+                  tr('Hide short dropouts on live channels')),
             _general('trailers', Icons.movie_outlined, tr('Trailers'),
                 tr('Play trailers automatically on movie and show pages')),
             if (!Platform.isWindows)

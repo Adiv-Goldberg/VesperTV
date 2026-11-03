@@ -109,3 +109,42 @@ Future<String?> askGroupName(BuildContext context) async {
   final name = entered?.trim();
   return name == null || name.isEmpty ? null : name;
 }
+
+/// Hold OK on a channel > Rename… (playlist editor quick edit). Returns the
+/// new display name, '' to go back to the provider's name, or null.
+Future<String?> askChannelName(BuildContext context, String current) async {
+  final controller = TextEditingController(text: current);
+  final entered = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(tr('Rename channel')),
+      content: FocusNodeOwner(
+        builder: (context, node) => TvTextFieldGate(
+          focusNode: node,
+          builder: (context, readOnly) => TextField(
+            controller: controller,
+            focusNode: node,
+            readOnly: readOnly,
+            autofocus: true,
+            decoration: InputDecoration(labelText: tr('Channel name')),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+          ),
+        ),
+      ),
+      actions: [
+        ModeButton(
+          label: tr('Cancel'),
+          selected: false,
+          onTap: () => Navigator.of(context).pop(),
+        ),
+        ModeButton(
+          label: tr('Save'),
+          selected: false,
+          onTap: () => Navigator.of(context).pop(controller.text),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  return entered?.trim();
+}

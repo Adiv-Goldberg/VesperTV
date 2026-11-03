@@ -276,6 +276,7 @@ class _SportsScheduleScreenState extends State<SportsScheduleScreen> {
         const SizedBox(width: 16),
         ExcludeFocus(
           child: IconButton(
+            tooltip: tr('Previous month'),
             icon: const Icon(Icons.chevron_left, color: Colors.white),
             onPressed: () => _moveMonths(-1),
           ),
@@ -287,6 +288,7 @@ class _SportsScheduleScreenState extends State<SportsScheduleScreen> {
                 fontWeight: FontWeight.w700)),
         ExcludeFocus(
           child: IconButton(
+            tooltip: tr('Next month'),
             icon: const Icon(Icons.chevron_right, color: Colors.white),
             onPressed: () => _moveMonths(1),
           ),

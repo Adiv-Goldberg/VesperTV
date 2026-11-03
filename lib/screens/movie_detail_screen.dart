@@ -391,6 +391,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         ),
         SingleChildScrollView(
           controller: _pageScroll,
+          // Below a phone's status bar / beside its notch (back arrow sat
+          // under the clock in landscape, owner 2026-11-02).
+          padding: EdgeInsets.only(
+              top: MediaQuery.paddingOf(context).top,
+              left: MediaQuery.paddingOf(context).left,
+              right: MediaQuery.paddingOf(context).right),
           child: Column(children: [
             ConstrainedBox(
               constraints: BoxConstraints(minHeight: h),

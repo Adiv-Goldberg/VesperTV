@@ -28,6 +28,7 @@ import '../widgets/player_side_panel.dart';
 import '../widgets/desktop_subtitles.dart';
 import '../widgets/player_bar_title.dart';
 import '../widgets/gold_tag.dart';
+import '../services/desktop_stream_setup.dart';
 
 /// A deliberately standalone, Windows-only playback screen — see
 /// `pubspec.yaml`'s media_kit comment for why this exists at all:
@@ -238,8 +239,7 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
       // mpv doesn't catch every way a live stream can end up here. The
       // real safety net is _completedSubscription below, which reacts at
       // the app level instead of depending on mpv's own reconnect logic.
-      (_player.platform as NativePlayer).setProperty('demuxer-lavf-o',
-          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,rw_timeout=15000000');
+      configureDesktopStreamPlayer(_player, 'player');
       _videoController = VideoController(_player);
       // The volume / mute set last time (a handed-over mini player
       // session already has it).
@@ -564,10 +564,12 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
               ),
             if (!_isLive)
               IconButton(
+                tooltip: tr('Back 10 seconds'),
                 icon: const Icon(Icons.replay_10, color: Colors.white),
                 onPressed: () => _skip(const Duration(seconds: -10)),
               ),
             IconButton(
+              tooltip: playing ? tr('Pause') : tr('Play'),
               iconSize: 40,
               color: Colors.white,
               icon: Icon(playing ? Icons.pause : Icons.play_arrow),
@@ -575,6 +577,7 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
             ),
             if (!_isLive)
               IconButton(
+                tooltip: tr('Forward 10 seconds'),
                 icon: const Icon(Icons.forward_10, color: Colors.white),
                 onPressed: () => _skip(const Duration(seconds: 10)),
               ),
@@ -791,6 +794,7 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: IconButton(
+                          tooltip: tr('Back'),
                           icon:
                               const Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: _handleBack,

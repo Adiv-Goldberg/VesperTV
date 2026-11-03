@@ -454,9 +454,15 @@ class _ArchiveDiscoveryPanelState extends State<ArchiveDiscoveryPanel> {
             Text(tr('No credits found.')),
           if (key.isEmpty)
             TextButton.icon(
+                // Left-aligned: centred, a large font broke it into a
+                // ragged block with the icon at the bottom.
+                style: TextButton.styleFrom(alignment: Alignment.centerLeft),
                 icon: const Icon(Icons.movie_outlined),
-                label: Text(
-                    tr('Add your TMDB key for collections and cast credits')),
+                label: Flexible(
+                  child: Text(
+                      tr('Add your TMDB key for collections and cast credits'),
+                      textAlign: TextAlign.start),
+                ),
                 onPressed: () async {
                   await Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const TmdbSettingsScreen()));

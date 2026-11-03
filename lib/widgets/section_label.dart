@@ -20,13 +20,19 @@ class SectionLabel extends StatelessWidget {
             height: 16,
             color: Theme.of(context).colorScheme.secondary),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: style ??
-              Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+        // Wraps with a phone's largest font; a heading for TalkBack.
+        Flexible(
+          child: Semantics(
+            header: true,
+            child: Text(
+              text,
+              style: style ??
+                  Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
       ],
     );

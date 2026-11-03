@@ -503,6 +503,31 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
               {'season': season}))));
   }
 
+  /// Phone season picker: every season in a scrollable list.
+  Future<void> _pickSeason(int current) async {
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(tr('Seasons')),
+        children: [
+          for (final x in _seasons)
+            TvDialogOption(
+              autofocus: x == current,
+              onPressed: () => Navigator.of(dialogContext).pop(x),
+              child: Row(children: [
+                Icon(x == current
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked),
+                const SizedBox(width: 12),
+                Flexible(child: Text(_seasonLabel(x))),
+              ]),
+            ),
+        ],
+      ),
+    );
+    if (picked != null && mounted) _selectSeason(picked);
+  }
+
   void _selectSeason(int season) {
     if (_season == season) return;
     setState(() => _season = season);
@@ -862,7 +887,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         ),
         SingleChildScrollView(
           controller: _pageScroll,
-          padding: EdgeInsets.only(top: 8 * s, bottom: 10 * s),
+          // Below a phone's status bar / beside its notch in landscape: the
+          // back arrow sat under the clock (owner, 2026-11-02).
+          padding: EdgeInsets.only(
+              top: 8 * s + MediaQuery.paddingOf(context).top,
+              bottom: 10 * s,
+              left: MediaQuery.paddingOf(context).left,
+              right: MediaQuery.paddingOf(context).right),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1267,6 +1298,14 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                           duration: Duration.zero,
                           alignmentPolicy:
                               ScrollPositionAlignmentPolicy.keepVisibleAtEnd);
+                      // keepVisibleAtEnd alone never scrolls back: Left to
+                      // a chip hidden past the left edge left the row stuck
+                      // (38-season show, owner 2026-11-02). Start policy is
+                      // a no-op unless the chip's start is off screen.
+                      Scrollable.ensureVisible(chipContext,
+                          duration: Duration.zero,
+                          alignmentPolicy:
+                              ScrollPositionAlignmentPolicy.keepVisibleAtStart);
                       _reveal(_episodesKey, atEnd: true);
                     },
                   ),
@@ -1343,27 +1382,22 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           ),
         if (_loaded && season != null) ...[
           SliverToBoxAdapter(
-            child: _seasons.isNotEmpty
-                ? SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+            // Phone: one Season button that opens a list, not a long
+            // sideways row of pills (vision-impaired user, large text,
+            // 2026-11-02). Hold = the season menu (mark watched...).
+            child: _seasons.length > 1
+                ? Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    child: Row(
-                      children: [
-                        for (final x in _seasons)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: DetailPillButton(
-                              focusNode: _seasonNode(x),
-                              label: _seasonLabel(x),
-                              selected: x == season,
-                              scale: 1,
-                              compact: true,
-                              onHold: () => _seasonMenu(x),
-                              onPressed: () => _selectSeason(x),
-                            ),
-                          ),
-                      ],
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        focusNode: _seasonNode(season),
+                        onPressed: () => _pickSeason(season),
+                        onLongPress: () => _seasonMenu(season),
+                        icon: const Icon(Icons.arrow_drop_down),
+                        label: Text(_seasonLabel(season)),
+                      ),
                     ),
                   )
                 : Padding(

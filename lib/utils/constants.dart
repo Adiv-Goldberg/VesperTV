@@ -107,6 +107,34 @@ class AppConstants {
   /// an option. Namespaced per playlist exactly like [keyHiddenGroups].
   static const String keyHiddenChannels = 'nox_hidden_channels';
 
+  /// Playlist editor layer (`PlaylistEdits` JSON): renames, logos, rules,
+  /// fallbacks, stream-test results. Per playlist and per viewer.
+  static const String keyPlaylistEdits = 'nox_playlist_edits';
+
+  /// Device-only: switch to another copy of a live channel when it fails.
+  static const String keyCopyFallback = 'vesper_copy_fallback';
+
+  /// Device-only: a failing channel may switch to the same channel in
+  /// another playlist (after its own copies). On unless turned off.
+  static const String keyCrossPlaylistFallback = 'vesper_cross_playlist_fallback';
+
+  /// Device-only: "Combine playlists" — a channel already shown by a
+  /// higher playlist is hidden in the lower ones (kept as a fallback).
+  static const String keyMergePlaylists = 'vesper_merge_playlists';
+
+  /// Device-only: live buffer in ms (0 = off, the 500 ms start). Live
+  /// playback starts, and restarts after a stall, once this much is
+  /// buffered, so short server dropouts don't show (BlckTV blips,
+  /// LOG-5DRCGF: the stream stalled every 2-5 minutes).
+  static const String keyLiveBufferMs = 'vesper_live_buffer_ms';
+
+  /// Device-only, off by default: the TV tab's "Recently added" group.
+  static const String keyRecentChannelsGroup = 'vesper_recent_channels_group';
+
+  /// Per playlist cache file: live rawId -> first time this device saw it
+  /// (ms), for channels without the provider's own "added" date.
+  static const String cacheFileLiveFirstSeen = 'live_first_seen';
+
   /// Manual EPG channel-id assignment (see `Channel.epgIdOverride`) —
   /// `Channel.rawId` -> the EPG feed's own `<channel id>`, JSON-encoded
   /// since a `Map`, unlike the `Set`s above, needs more than

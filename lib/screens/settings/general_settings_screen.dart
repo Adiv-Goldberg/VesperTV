@@ -9,6 +9,7 @@ import '../../services/device_defaults.dart';
 import '../../services/playback_service.dart';
 import '../../services/recording_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/vod_buffering.dart';
 import '../../services/subtitle_tracks.dart';
 import '../../utils/constants.dart';
 import '../../utils/tv_theme.dart';
@@ -435,6 +436,16 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                             .setHideCatchupGroup(v),
                       ),
                     TvSwitchListTile(
+                      title: Text(tr('Recently added channels')),
+                      subtitle: Text(tr(
+                          'Adds a TV tab group with the channels your playlists added in the last 14 days.')),
+                      value:
+                          context.watch<AppPreferences>().recentChannelsGroup,
+                      onChanged: (v) => context
+                          .read<AppPreferences>()
+                          .setRecentChannelsGroup(v),
+                    ),
+                    TvSwitchListTile(
                       title: Text(tr('Hide Multiview')),
                       subtitle: Text(tr(
                           'Removes the Multiview row and the player\'s Open in Multiview button.')),
@@ -622,6 +633,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   if (Platform.isAndroid)
                     _section('upnext', Icons.queue_play_next, tr('Up Next'),
                         children: [_UpNextPicker()]),
+                  if (Platform.isAndroid)
+                    _section('livebuffer', Icons.av_timer, tr('Live buffer'),
+                        children: [_LiveBufferPicker()]),
                   _section('trailers', Icons.movie_outlined, tr('Trailers'),
                       children: [
                         TvSwitchListTile(
@@ -719,6 +733,66 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
 
 /// Playback > Up Next ([StorageService.getUpNextMode]): when the next
 /// episode starts by itself. One row; OK opens the choices.
+/// Settings > Playback > Live buffer: how much live video is stored before
+/// playing (and after a stall). Bigger hides server dropouts, but the
+/// channel starts later and plays that much behind live.
+class _LiveBufferPicker extends StatefulWidget {
+  @override
+  State<_LiveBufferPicker> createState() => _LiveBufferPickerState();
+}
+
+class _LiveBufferPickerState extends State<_LiveBufferPicker> {
+  static const _choices = [
+    (0, 'Off'),
+    (1500, 'Small (1.5 seconds)'),
+    (4000, '4 seconds'),
+    (8000, '8 seconds'),
+    (12000, '12 seconds'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final storage = context.read<StorageService>();
+    final current = storage.getLiveBufferMs();
+    final name = _choices
+        .firstWhere((c) => c.$1 == current, orElse: () => _choices.first)
+        .$2;
+    return TvMenuTile(
+      leading: const Icon(Icons.av_timer),
+      title: tr('Live buffer'),
+      subtitle: tr(
+          '{size}. Live channels store this much before playing, so short dropouts from the server don\'t show. Bigger hides longer dropouts, but channels start later and play that much behind live. Applies from the next channel.',
+          {'size': tr(name)}),
+      onTap: () async {
+        final picked = await showDialog<int>(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            title: Text(tr('Live buffer')),
+            children: [
+              for (final (ms, label) in _choices)
+                TvDialogOption(
+                  autofocus: ms == current,
+                  onPressed: () => Navigator.of(dialogContext).pop(ms),
+                  child: Row(children: [
+                    Icon(ms == current
+                        ? Icons.check_circle
+                        : Icons.circle_outlined),
+                    const SizedBox(width: 12),
+                    Text(tr(label)),
+                  ]),
+                ),
+            ],
+          ),
+        );
+        if (picked == null) return;
+        await storage.setLiveBufferMs(picked);
+        await VodBuffering.setLiveBufferDefault(picked);
+        if (mounted) setState(() {});
+      },
+    );
+  }
+}
+
 class _UpNextPicker extends StatefulWidget {
   @override
   State<_UpNextPicker> createState() => _UpNextPickerState();

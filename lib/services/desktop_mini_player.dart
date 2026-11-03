@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../models/channel.dart';
+import 'desktop_stream_setup.dart';
 
 /// Windows-only holder for a live channel's `Player`/`VideoController`
 /// after `DesktopPlayerScreen`'s back button minimizes it — the Windows
@@ -53,8 +54,7 @@ class DesktopMiniPlayer {
       final created = Player();
       // Same reconnect tuning as DesktopPlayerScreen.initState — see its
       // comment.
-      (created.platform as NativePlayer).setProperty('demuxer-lavf-o',
-          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,rw_timeout=15000000');
+      configureDesktopStreamPlayer(created, 'mini');
       _player = created;
       _controller = VideoController(created);
     }

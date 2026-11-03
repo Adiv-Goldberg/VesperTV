@@ -240,7 +240,9 @@ class _GameReminderOverlayState extends State<GameReminderOverlay>
                           constraints: const BoxConstraints.tightFor(
                               width: 32, height: 32),
                           padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.close,
+                          // No tooltip: this popup sits above the Navigator (no Overlay).
+                          icon: Icon(Icons.close,
+                              semanticLabel: tr('Close'),
                               color: Colors.white70, size: 19),
                           onPressed: _showNext,
                         ),

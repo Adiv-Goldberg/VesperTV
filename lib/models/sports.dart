@@ -616,6 +616,37 @@ const List<SportsLeague> kSportsLeagueBank = [
       logoUrl: 'https://a.espncdn.com/i/leaguelogos/soccer/500/22.png',
       region: 'Americas',
       soccer: true),
+  // Chile on ESPN (checked 2026-11-02: league with standings, Copa Chile,
+  // Supercopa).
+  SportsLeague(
+      id: 'chi.1',
+      espnPath: 'soccer/chi.1',
+      homeTags: ['cl'],
+      name: 'Chilean Primera División',
+      shortName: 'CHI',
+      logoUrl: 'https://a.espncdn.com/i/leaguelogos/soccer/500/86.png',
+      region: 'Americas',
+      soccer: true),
+  SportsLeague(
+      id: 'chi.copa_chi',
+      espnPath: 'soccer/chi.copa_chi',
+      homeTags: ['cl'],
+      name: 'Copa Chile',
+      shortName: 'COPA CHI',
+      logoUrl: 'https://a.espncdn.com/i/leaguelogos/soccer/500/2331.png',
+      region: 'Americas',
+      soccer: true,
+      hasStandings: false),
+  SportsLeague(
+      id: 'chi.super_cup',
+      espnPath: 'soccer/chi.super_cup',
+      homeTags: ['cl'],
+      name: 'Chilean Supercopa',
+      shortName: 'SUPERCOPA',
+      logoUrl: 'https://a.espncdn.com/i/leaguelogos/soccer/500/86.png',
+      region: 'Americas',
+      soccer: true,
+      hasStandings: false),
   SportsLeague(
       id: 'arg.1',
       espnPath: 'soccer/arg.1',
@@ -956,6 +987,18 @@ const List<SportsLeague> kSportsLeagueBank = [
       // TheSportsDB's free key has no basketball tables (empty reply).
       hasStandings: false),
   SportsLeague(
+      id: 'basketball.mex.lnbp',
+      espnPath: 'basketball/mex.lnbp',
+      sportsDbId: '5119',
+      homeTags: ['mx'],
+      name: 'Mexican LNBP',
+      shortName: 'LNBP',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/4ik2mh1782888850.png',
+      region: 'Basketball',
+      // TheSportsDB's free key has no basketball tables.
+      hasStandings: false),
+  SportsLeague(
       id: 'basketball.mens-college-basketball',
       espnPath: 'basketball/mens-college-basketball',
       name: "NCAA Men's Basketball",
@@ -979,6 +1022,30 @@ const List<SportsLeague> kSportsLeagueBank = [
       logoUrl:
           'https://a.espncdn.com/combiner/i?img=/redesign/assets/img/icons/ESPN-icon-baseball.png',
       region: 'Baseball'),
+  // Mexico, not on ESPN: TheSportsDB (checked 2026-11-02). LMB plays the
+  // summer, the Pacific league (LMP) the winter.
+  SportsLeague(
+      id: 'baseball.mex.lmb',
+      espnPath: 'baseball/mex.lmb',
+      sportsDbId: '5064',
+      homeTags: ['mx'],
+      name: 'Liga Mexicana de Béisbol',
+      shortName: 'LMB',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/ri85ae1778742910.png',
+      region: 'Baseball',
+      hasStandings: false),
+  SportsLeague(
+      id: 'baseball.mex.lmp',
+      espnPath: 'baseball/mex.lmp',
+      sportsDbId: '5109',
+      homeTags: ['mx'],
+      name: 'Liga Mexicana del Pacífico',
+      shortName: 'LMP',
+      logoUrl:
+          'https://r2.thesportsdb.com/images/media/league/badge/vefg091641808224.png',
+      region: 'Baseball',
+      hasStandings: false),
   SportsLeague(
       id: 'hockey.mens-college-hockey',
       espnPath: 'hockey/mens-college-hockey',

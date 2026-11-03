@@ -685,6 +685,7 @@ class PlayerControls extends StatelessWidget {
                               },
                             ),
                           IconButton(
+                            tooltip: value.isPlaying ? tr('Pause') : tr('Play'),
                             focusNode: playFocusNode,
                             icon: Icon(
                                 value.isPlaying

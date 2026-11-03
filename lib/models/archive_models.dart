@@ -433,7 +433,10 @@ class ArchiveSource {
 
   /// Browsed only under Other: every one of its rows, search hits and
   /// Recently watched / Favourites titles.
-  bool get underOther => otherChoice ?? autoOther;
+  /// Off unless the user turns it on (owner, 2026-11-02: "off for
+  /// everything, on only by the user for sensitive content"). [autoOther]
+  /// was the automatic default before that.
+  bool get underOther => otherChoice ?? false;
 
   /// Where its resources live: the manifest URL minus `/manifest.json` (a
   /// media server: its API base, without the `#userId`).

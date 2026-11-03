@@ -114,6 +114,7 @@ class _TvTextFieldGateState extends State<TvTextFieldGate>
 
   @override
   void dispose() {
+    _rehide?.cancel();
     widget.focusNode.removeListener(_onFocus);
     HardwareKeyboard.instance.removeHandler(_onKey);
     WidgetsBinding.instance.removeObserver(this);
@@ -129,6 +130,7 @@ class _TvTextFieldGateState extends State<TvTextFieldGate>
     if (widget.focusNode.hasFocus || !_typing) return;
     _keyboardShown = false;
     setState(() => _typing = false);
+    if (!_isFireOs) _hideAgainLater();
     // Fire OS: Back on its keyboard drops Flutter's focus altogether.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -162,6 +164,7 @@ class _TvTextFieldGateState extends State<TvTextFieldGate>
         setState(() => _typing = false);
         SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
         _move(direction);
+        _hideAgainLater();
         return true;
       }
       // Keyboard dismissed but the field kept focus (Formuler): OK raises
@@ -180,6 +183,20 @@ class _TvTextFieldGateState extends State<TvTextFieldGate>
     // the keyboard (EditableText.didUpdateWidget).
     setState(() => _typing = true);
     return true;
+  }
+
+  /// Google TV: Gboard could stay up after focus left the field (the hide
+  /// came before the input connection closed) and keep the D-pad, so the
+  /// remote looked stuck on Add Playlist's source list (owner, 2026-11-02,
+  /// +568). Once the field is read-only and focus has moved, hide again.
+  Timer? _rehide;
+
+  void _hideAgainLater() {
+    _rehide?.cancel();
+    _rehide = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted || _typing) return;
+      SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+    });
   }
 
   static final _arrows = {

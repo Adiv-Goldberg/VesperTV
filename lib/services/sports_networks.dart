@@ -201,7 +201,7 @@ const kSportsNetworks = <SportsNetwork>[
 SportsNetwork? sportsNetworkOf(Channel channel) {
   final cached = _networkOf[channel];
   if (cached != null) return cached is SportsNetwork ? cached : null;
-  final name = channel.name.toUpperCase();
+  final name = channel.sourceName.toUpperCase();
   SportsNetwork? found;
   for (final n in kSportsNetworks) {
     if (n.regex.hasMatch(name)) {
@@ -239,7 +239,7 @@ final _uhd = RegExp(r'\b(4K|UHD|2160)');
 final _sd = RegExp(r'\bSD\b');
 
 (int, String, int) _orderKey(Channel c) => _orderKeys[c] ??= () {
-      final n = c.name.toUpperCase();
+      final n = c.sourceName.toUpperCase();
       final base = n
           .replaceAll(_qualityWords, '')
           .replaceAll(RegExp(r'\s+'), ' ')

@@ -699,8 +699,12 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
         padding: EdgeInsets.all(quad || main ? 1 : 3),
         child: _buildCell(i, quad || (main && i != 0),
             widthBoost: main && i == 0 ? 1.0 : 1.15));
+    // Below a phone's status bar (the back arrow sat under the clock,
+    // owner 2026-11-02); the gradient still reaches the top edge.
+    final inset = MediaQuery.paddingOf(context);
     final header = Container(
-      padding: const EdgeInsets.fromLTRB(4, 4, 12, 16),
+      padding: EdgeInsets.fromLTRB(
+          4 + inset.left, 4 + inset.top, 12 + inset.right, 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -729,6 +733,7 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
         child: Row(
           children: [
             IconButton(
+              tooltip: tr('Back'),
               focusNode: portrait ? _headerFirst : null,
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.of(context).pop(),
@@ -1365,12 +1370,13 @@ class _MultiviewFullscreenViewState extends State<_MultiviewFullscreenView> {
                   ),
                 ),
                 Positioned(
-                  left: 4,
-                  top: 4,
+                  left: 4 + MediaQuery.paddingOf(context).left,
+                  top: 4 + MediaQuery.paddingOf(context).top,
                   child: AnimatedOpacity(
                     opacity: _overlay ? 1 : 0,
                     duration: fade,
                     child: IconButton(
+                      tooltip: tr('Back'),
                       focusNode: _backFocus,
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.of(context).pop(),

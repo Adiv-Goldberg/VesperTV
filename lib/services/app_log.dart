@@ -31,6 +31,7 @@ class AppLog {
   static const _maxFileBytes = 1024 * 1024;
   static const _sendPrevBytes = 96 * 1024;
   static const _logcatLines = 2500;
+  static const _logcatMaxChars = 350 * 1024;
 
   static final _lines = ListQueue<String>();
   static IOSink? _sink;
@@ -176,9 +177,20 @@ class AppLog {
   /// An app may read its own process's logcat without any permission.
   static Future<String> _logcat() async {
     try {
-      final r = await Process.run('logcat',
-          ['-d', '-v', 'time', '-t', '$_logcatLines', '--pid', '$pid']);
-      final text = '${r.stdout}';
+      // Codec2 decoders log every frame's metadata (a Xiaomi phone's HEVC
+      // decoder: ~1,600 lines a second for a 4K channel with captions), which
+      // left 6 s of logcat and pushed the app section past the size cap
+      // (LOG-58LMP2). Silenced here.
+      final r = await Process.run('logcat', [
+        '-d', '-v', 'time', '-t', '$_logcatLines', '--pid', '$pid', //
+        'CCodecBuffers:S', 'CCodecConfig:S', 'CCodecBufferChannel:S',
+        'CCodec:S', 'InsetsSource:S', '*:V',
+      ]);
+      var text = '${r.stdout}';
+      // The app's own lines come first and must survive the send cap.
+      if (text.length > _logcatMaxChars) {
+        text = text.substring(text.length - _logcatMaxChars);
+      }
       return text.trim().isEmpty ? '(empty: ${r.stderr})'.trim() : text;
     } catch (e) {
       return '(logcat unavailable: $e)';

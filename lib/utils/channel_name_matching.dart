@@ -83,6 +83,8 @@ String canonicalChannelKey(String name) {
   return tokens.join('\u0000');
 }
 
+final _lettersThenDigits = RegExp(r'^([A-Z]+)(\d+)$');
+
 /// Resolution/format words that only say which copy of a channel this is.
 const Set<String> _copyTokens = {
   ..._qualityTokens,
@@ -107,6 +109,13 @@ String channelCopyKey(String name) {
       .replaceAll(RegExp(r'[^\w+]'), ' ')
       .split(RegExp(r'\s+'))
       .where((t) => t.isNotEmpty && !_copyTokens.contains(t))
+      // `TSN2` == `TSN 2` (Trex lists both spellings, playlist editor
+      // test 2026-11-02): letters followed by a number become two words.
+      // Quality tags were removed first, so `4K` is never split.
+      .expand((t) => switch (_lettersThenDigits.firstMatch(t)) {
+            final m? => [m[1]!, m[2]!],
+            null => [t],
+          })
       .toList()
     ..sort();
   return tokens.isEmpty

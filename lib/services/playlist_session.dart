@@ -18,6 +18,7 @@ import 'm3u_parser.dart';
 import 'storage_service.dart';
 import 'xtream_api_service.dart';
 import '../l10n/l10n.dart';
+import 'playlist_edits.dart';
 
 /// One playlist's own load/cache state — extracted from what used to be
 /// `PlaylistManager`'s entire body, back when only one playlist could
@@ -104,6 +105,128 @@ class PlaylistSession {
   /// for why this exists alongside whole-group hiding. Keyed by
   /// [Channel.rawId].
   Set<String> hiddenChannels = {};
+
+  /// Playlist editor layer (renames, logos, rules, Collapse copies), see
+  /// [PlaylistEdits]. Per viewer, reloaded with [hiddenChannels].
+  PlaylistEdits edits = PlaylistEdits();
+
+  /// Live rawIds the editor hides, recomputed by [applyEdits] on every
+  /// load. Kept apart from [hiddenChannels] (the TV's own Hide channel).
+  Set<String> editHidden = {};
+
+  /// Hidden by "Combine playlists" (a higher playlist shows the same
+  /// channel), set by `PlaylistManager.recomputeMerge`.
+  Set<String> mergeHidden = {};
+
+  /// Groups left with nothing to show after [mergeHidden].
+  Set<String> mergeHiddenGroups = {};
+
+  /// After every [applyEdits]: lets the manager redo "Combine playlists".
+  void Function()? onEditsApplied;
+
+  /// Hidden by the TV's Hide channel or by the editor (not by merging).
+  bool isOwnHidden(String rawId) =>
+      hiddenChannels.contains(rawId) || editHidden.contains(rawId);
+
+  /// Hidden by the TV's Hide channel, the editor or Combine playlists.
+  bool isLiveHidden(String rawId) =>
+      isOwnHidden(rawId) || mergeHidden.contains(rawId);
+
+  /// Every live channel of this playlist, hidden ones included.
+  Iterable<Channel> get allLiveChannels => isXtream
+      ? liveChannels
+      : channels.where((c) => _classifyGroup(c.group) == 'tv');
+
+  /// Live rawId -> first time this device saw it (ms); 0 = it was already
+  /// there when tracking started. See [AppConstants.cacheFileLiveFirstSeen].
+  Map<String, int> _firstSeen = {};
+  bool _firstSeenLoaded = false;
+
+  /// When [c] was added: the provider's date, else the first time this
+  /// device saw it; null when unknown (it was there from the start).
+  DateTime? addedAtOf(Channel c) {
+    if (c.addedAt != null) return c.addedAt;
+    final ms = _firstSeen[c.rawId];
+    return ms == null || ms == 0
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  /// After a live list load: remembers channels without a provider date
+  /// the first time they show up. The very first run only takes a
+  /// baseline (nothing counts as new).
+  Future<void> _trackFirstSeen() async {
+    final live = allLiveChannels.where((c) => c.addedAt == null).toList();
+    if (live.isEmpty) return;
+    final name = _cacheName(AppConstants.cacheFileLiveFirstSeen);
+    if (!_firstSeenLoaded) {
+      _firstSeenLoaded = true;
+      try {
+        final raw = await storage.readCacheFile(name);
+        if (raw != null) {
+          _firstSeen = {
+            for (final e in (jsonDecode(raw) as Map).entries)
+              if (e.value is int) e.key as String: e.value as int
+          };
+        }
+      } catch (_) {
+        _firstSeen = {};
+      }
+    }
+    final baseline = _firstSeen.isEmpty;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var changed = false;
+    for (final c in live) {
+      if (_firstSeen.containsKey(c.rawId)) continue;
+      _firstSeen[c.rawId] = baseline ? 0 : now;
+      changed = true;
+    }
+    if (changed) {
+      try {
+        await storage.writeCacheFile(name, jsonEncode(_firstSeen));
+      } catch (_) {}
+    }
+  }
+
+  /// Re-stamps editor names/logos and recomputes [editHidden].
+  /// Never lets a bad saved layer stop the playlist from loading (it runs
+  /// inside every load path): on any error the channels show unedited.
+  void applyEdits() {
+    try {
+      editHidden = edits.apply(allLiveChannels);
+    } catch (e) {
+      debugPrint('PlaylistSession[${profile.id}]: editor layer skipped: $e');
+      editHidden = {};
+    }
+    onEditsApplied?.call();
+    unawaited(_trackFirstSeen());
+  }
+
+  /// Playlist editor: the TV groups' order (shown titles) and which are
+  /// hidden. Movies / TV Shows groups in the same hidden set are kept.
+  Future<void> setTvGroupLayout(
+      {List<String>? order, Set<String>? hidden}) async {
+    if (order != null) {
+      groupOrder['tv'] = order;
+      await storage.setGroupOrder(profile.id, 'tv', order);
+    }
+    if (hidden != null && !isRestrictedViewer()) {
+      final tvTitles = {for (final g in _providerTvGroups) g.title};
+      hiddenGroups = {
+        ...hiddenGroups.where((t) => !tvTitles.contains(t)),
+        ...hidden.where(tvTitles.contains),
+      };
+      await storage.setHiddenGroups(profile.id, hiddenGroups);
+    }
+    onNotify();
+  }
+
+  Future<void> saveEdits(PlaylistEdits next) async {
+    edits = next;
+    applyEdits();
+    await storage.setPlaylistEditsJson(profile.id, next.encode());
+    onNotify();
+  }
 
   /// See [AppConstants.keyEpgIdOverrides]'s doc comment. Keyed by
   /// [Channel.rawId] -> the assigned EPG id; stamped onto each matching
@@ -244,6 +367,8 @@ class PlaylistSession {
     };
     channelOrder = storage.getChannelOrder(profile.id);
     hiddenChannels = storage.getHiddenChannels(profile.id);
+    edits = PlaylistEdits.decode(storage.getPlaylistEditsJson(profile.id));
+    applyEdits();
     if (isRestrictedViewer()) {
       hiddenGroups =
           _allKnownGroupTitles().difference(storage.getShownGroups(profile.id));
@@ -407,6 +532,7 @@ class PlaylistSession {
         channel.epgIdOverride = epgIdOverrides[channel.rawId];
       }
       channels = loaded;
+      applyEdits();
       return true;
     } catch (e) {
       debugPrint(
@@ -453,6 +579,7 @@ class PlaylistSession {
       await Future.delayed(const Duration(milliseconds: 400));
 
       channels = parsed;
+      applyEdits();
       lastLoadSummary = counts;
       lastLoaded = DateTime.now();
       profile = profile.copyWith(m3uUrl: url);
@@ -578,8 +705,19 @@ class PlaylistSession {
   /// caller's load to finish.
   Future<void> ensureLiveChannelsLoaded() {
     if (!isXtream || liveChannels.isNotEmpty) return Future<void>.value();
+    // A refused account (401/403/429) is not asked again for a minute:
+    // every build retried it, ~100 requests in 40 s (LOG-8VZE3G, Trex
+    // outage), which can turn a provider's short block into a long one.
+    final wait = _liveRetryAfter;
+    if (liveChannelsFuture == null &&
+        wait != null &&
+        DateTime.now().isBefore(wait)) {
+      return Future<void>.value();
+    }
     return liveChannelsFuture ??= _loadLiveChannelsOnce();
   }
+
+  DateTime? _liveRetryAfter;
 
   Future<void> _loadLiveChannelsOnce() async {
     // Deliberately doesn't touch the shared `isLoading` above (used to,
@@ -632,11 +770,15 @@ class PlaylistSession {
         channel.epgIdOverride = epgIdOverrides[channel.rawId];
       }
       liveChannels = loaded;
+      applyEdits();
       lastLoadSummary = {...?lastLoadSummary, 'tv': liveChannels.length};
     } catch (e) {
       debugPrint(
           'PlaylistSession[${profile.id}]: failed to load live channels: $e');
       liveChannelsFuture = null; // allow a retry on the next access
+      if (RegExp(r'HTTP (401|403|429)').hasMatch('$e')) {
+        _liveRetryAfter = DateTime.now().add(const Duration(minutes: 1));
+      }
     } finally {
       onNotify();
     }
@@ -786,6 +928,7 @@ class PlaylistSession {
         channel.epgIdOverride = epgIdOverrides[channel.rawId];
       }
       liveChannels = loadedLive;
+      applyEdits();
       await storage.writeCacheFile(
         _cacheName(AppConstants.cacheFileLiveChannels),
         await compute(
@@ -1280,10 +1423,66 @@ class PlaylistSession {
     return to;
   }
 
-  List<M3uGroup> get tvGroups => _ordered('tv', _providerTvGroups);
+  List<M3uGroup> get tvGroups {
+    final groups = _ordered('tv', _providerTvGroups);
+    if (mergeHiddenGroups.isEmpty) return groups;
+    return [
+      for (final g in groups)
+        mergeHiddenGroups.contains(g.title) && !g.isHidden
+            ? M3uGroup(
+                title: g.title,
+                playlistId: g.playlistId,
+                channels: g.channels,
+                isHidden: true)
+            : g
+    ];
+  }
 
+  /// Playlist editor group renames / merges ([PlaylistEdits.groupNames]):
+  /// the provider's groups under their shown titles, merged groups at the
+  /// first one's place.
   List<M3uGroup> get _providerTvGroups {
+    final groups = _sourceTvGroups;
+    if (edits.groupNames.isEmpty) return groups;
+    final byTitle = <String, M3uGroup>{};
+    for (final g in groups) {
+      final title = edits.groupTitle(g.title);
+      final prev = byTitle[title];
+      byTitle[title] = M3uGroup(
+        title: title,
+        playlistId: profile.id,
+        channels: prev == null
+            ? g.channels
+            : [...prev.channels, ...g.channels],
+        isHidden: hiddenGroups.contains(title),
+      );
+    }
+    return byTitle.values.toList();
+  }
+
+  /// The provider's live group titles, before editor renames.
+  List<String> get sourceTvGroupTitles =>
+      [for (final g in _sourceTvGroups) g.title];
+
+  List<M3uGroup> get _sourceTvGroups {
     if (isXtream) {
+      // No category list (not cached, and the provider refusing a fresh
+      // one: Trex 403 on the owner's home IP, 2026-11-02) but channels
+      // are there: build the groups from the channels' own group names,
+      // in provider order, instead of an empty groups column.
+      if (liveCategories.isEmpty && liveChannels.isNotEmpty) {
+        final titles = <String>{for (final c in liveChannels) c.group};
+        return [
+          for (final t in titles)
+            if (t.isNotEmpty)
+              M3uGroup(
+                title: t,
+                playlistId: profile.id,
+                channels: const [],
+                isHidden: hiddenGroups.contains(t),
+              )
+        ];
+      }
       return liveCategories
           .map((c) => M3uGroup(
                 title: c.name,
@@ -1342,7 +1541,7 @@ class PlaylistSession {
           // hiddenGroups above) — a hidden channel is usually a
           // duplicate *within* an otherwise-wanted group, so hiding the
           // whole group isn't the option the user actually wants.
-          return list.where((c) => !hiddenChannels.contains(c.rawId)).toList();
+          return list.where((c) => !isLiveHidden(c.rawId)).toList();
         case 'vod':
           return groupTitle != null
               ? (vodByCategoryName[groupTitle] ?? const [])
@@ -1361,7 +1560,7 @@ class PlaylistSession {
       final list =
           category == 'tv' ? _orderedChannels(groupTitle, inGroup) : inGroup;
       return (category == 'tv'
-              ? list.where((c) => !hiddenChannels.contains(c.rawId))
+              ? list.where((c) => !isLiveHidden(c.rawId))
               : list)
           .toList();
     }
@@ -1370,7 +1569,7 @@ class PlaylistSession {
             _classifyGroup(c.group) == category &&
             !hiddenGroups
                 .contains(category == 'tv' ? liveGroupOf(c) : c.group) &&
-            (category != 'tv' || !hiddenChannels.contains(c.rawId)))
+            (category != 'tv' || !isLiveHidden(c.rawId)))
         .toList();
   }
 
@@ -1382,8 +1581,7 @@ class PlaylistSession {
         : channels.where((c) => _classifyGroup(c.group) == 'tv');
     return live
         .where((c) =>
-            hiddenGroups.contains(liveGroupOf(c)) ||
-            hiddenChannels.contains(c.rawId))
+            hiddenGroups.contains(liveGroupOf(c)) || isLiveHidden(c.rawId))
         .toList();
   }
 
@@ -1412,7 +1610,7 @@ class PlaylistSession {
             groupTitle, source.where((c) => liveGroupOf(c) == groupTitle))
         .map((c) => c.rawId)
         .toList();
-    final visible = all.where((id) => !hiddenChannels.contains(id)).toList();
+    final visible = all.where((id) => !isLiveHidden(id)).toList();
     final from = visible.indexOf(rawId);
     if (from < 0) return null;
     final to = (from + delta).clamp(0, visible.length - 1);
@@ -1429,7 +1627,8 @@ class PlaylistSession {
 
   /// A live channel's group as shown: the viewer's own group it was moved
   /// into, else the provider's.
-  String liveGroupOf(Channel c) => myGroupOf?.call(c) ?? c.group;
+  String liveGroupOf(Channel c) =>
+      myGroupOf?.call(c) ?? edits.groupTitle(c.group);
 
   Future<void> toggleChannelHidden(String rawId) async {
     if (hiddenChannels.contains(rawId)) {

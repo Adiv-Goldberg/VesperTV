@@ -19,6 +19,7 @@ import 'storage_service.dart';
 import 'local_playlist_files.dart';
 import 'tmdb_enrichment_service.dart';
 import 'user_groups.dart';
+import 'channel_copy_fallback.dart';
 
 /// Holds every playlist's parsed catalog, group visibility, and the
 /// (per-viewer — see [applyActiveViewer]) favorites — a thin merge/dispatch
@@ -224,7 +225,7 @@ class PlaylistManager extends ChangeNotifier {
               isRestrictedViewer: () => _activeViewerRestricted,
               onNotify: notifyListeners,
               myGroupOf: _myGroupOf,
-            )));
+            )..onEditsApplied = recomputeMerge));
 
       notifyListeners();
       // Every enabled playlist restores (from its own cache, or a fresh
@@ -399,7 +400,7 @@ class PlaylistManager extends ChangeNotifier {
       isRestrictedViewer: () => _activeViewerRestricted,
       onNotify: notifyListeners,
       myGroupOf: _myGroupOf,
-    ));
+    )..onEditsApplied = recomputeMerge);
     notifyListeners();
   }
 
@@ -1089,6 +1090,116 @@ class PlaylistManager extends ChangeNotifier {
   /// resolve to a channel the user has deliberately hidden, since hiding
   /// it from normal browsing isn't the same as wanting it excluded from
   /// failover.
+  /// Ordered failover streams for a live [channel] (automatic inline
+  /// failover, `PlaybackService._retryOnCopy`): the editor's fallback
+  /// channels, the manual channel link, then the playlist's other quality
+  /// copies, best first. Hidden channels count: a copy hidden by Collapse
+  /// copies is exactly what should take over.
+  List<Channel> failoverCandidatesFor(Channel channel) {
+    final session = _sessionFor(channel.playlistId);
+    if (session == null) return const [];
+    final out = <Channel>[];
+    void add(Channel? c) {
+      if (c == null || c.url.isEmpty || c.url == channel.url) return;
+      if (out.any((o) => o.url == c.url)) return;
+      out.add(c);
+    }
+
+    for (final id in session.edits.fallbacks[channel.rawId] ?? const []) {
+      final i = id.indexOf('::');
+      if (i <= 0) continue;
+      add(resolveChannelLink(
+          (playlistId: id.substring(0, i), rawId: id.substring(i + 2))));
+    }
+    final link = channelLinkFor(channel);
+    if (link != null) add(resolveChannelLink(link));
+    for (final c in ChannelCopyFallback.copiesOf(
+        channel, session.allLiveChannels,
+        rank: session.edits.copyRank)) {
+      add(c);
+    }
+    // The same channel in the other playlists, in playlist order.
+    if (_storage.getCrossPlaylistFallback()) {
+      for (final other in _enabledSessionsSortedFor('tv')) {
+        if (identical(other, session)) continue;
+        for (final c in ChannelCopyFallback.copiesOf(
+            channel, other.allLiveChannels,
+            rank: other.edits.copyRank)) {
+          add(c);
+        }
+      }
+    }
+    return out;
+  }
+
+  bool _merging = false;
+
+  /// "Combine playlists" (playlist editor, [StorageService.getMergePlaylists]):
+  /// walking the playlists in their order, a live channel whose copy
+  /// ([channelCopyKey]) a higher playlist already shows is hidden in the
+  /// lower one; it stays an automatic fallback. A group left empty is
+  /// hidden too. Off = nothing hidden.
+  void recomputeMerge() {
+    if (_merging) return;
+    _merging = true;
+    try {
+      final on = _storage.getMergePlaylists();
+      final seen = <String>{};
+      for (final s in _sessions) {
+        s.mergeHidden = {};
+        s.mergeHiddenGroups = {};
+      }
+      if (!on) return;
+      for (final s in _enabledSessionsSortedFor('tv')) {
+        final hidden = <String>{};
+        final own = <String>{};
+        final groups = <String>{};
+        final shown = <String>{};
+        for (final c in s.allLiveChannels) {
+          if (s.isOwnHidden(c.rawId)) continue;
+          final g = s.liveGroupOf(c);
+          if (s.hiddenGroups.contains(g)) continue;
+          groups.add(g);
+          final k = channelCopyKey(c.sourceName);
+          if (k.isNotEmpty && seen.contains(k)) {
+            hidden.add(c.rawId);
+            continue;
+          }
+          if (k.isNotEmpty) own.add(k);
+          shown.add(g);
+        }
+        seen.addAll(own);
+        s.mergeHidden = hidden;
+        s.mergeHiddenGroups = groups.difference(shown);
+      }
+    } finally {
+      _merging = false;
+    }
+  }
+
+  /// "Recently added" (TV tab, opt in): visible live channels of every
+  /// enabled playlist added in the last [days] days, newest first.
+  List<Channel> recentLiveChannels({int days = 14, int limit = 300}) {
+    final since = DateTime.now().subtract(Duration(days: days));
+    final found = <(Channel, DateTime)>[];
+    for (final s in _enabledSessionsSortedFor('tv')) {
+      for (final c in s.allLiveChannels) {
+        final at = s.addedAtOf(c);
+        if (at == null || at.isBefore(since)) continue;
+        if (s.isLiveHidden(c.rawId) ||
+            s.hiddenGroups.contains(s.liveGroupOf(c))) {
+          continue;
+        }
+        found.add((c, at));
+      }
+    }
+    found.sort((a, b) => b.$2.compareTo(a.$2));
+    return [for (final f in found.take(limit)) f.$1];
+  }
+
+  /// Every playlist session, for the playlist editor.
+  PlaylistSession? editorSession(String playlistId) => _sessionFor(playlistId);
+
   Channel? resolveChannelLink(ChannelLink link) {
     final session = _sessionFor(link.playlistId);
     if (session == null) return null;
@@ -1107,7 +1218,7 @@ class PlaylistManager extends ChangeNotifier {
   Map<String, List<Channel>> _channelsByKey(Iterable<Channel> source) {
     final map = <String, List<Channel>>{};
     for (final c in source) {
-      final key = canonicalChannelKey(c.name);
+      final key = canonicalChannelKey(c.sourceName);
       if (key.isEmpty) continue;
       (map[key] ??= []).add(c);
     }
@@ -1155,7 +1266,7 @@ class PlaylistManager extends ChangeNotifier {
       final newLinks = <String, ChannelLink>{};
       for (final source in visibleBySession[session]!) {
         if (session.channelLinks.containsKey(source.rawId)) continue;
-        final key = canonicalChannelKey(source.name);
+        final key = canonicalChannelKey(source.sourceName);
         if (key.isEmpty) continue;
         Channel? found;
         var ambiguous = false;
@@ -1203,7 +1314,7 @@ class PlaylistManager extends ChangeNotifier {
           in visibleChannels(playlistId: session.profile.id, category: 'tv')) {
         if (channel.epgIdOverride != null) continue;
         if (epg.hasPrograms(channel.epgId)) continue;
-        final key = canonicalChannelKey(channel.name);
+        final key = canonicalChannelKey(channel.sourceName);
         if (key.isEmpty) continue;
         final candidates = byKey[key];
         if (candidates == null || candidates.length != 1) continue;
@@ -1365,8 +1476,8 @@ class PlaylistManager extends ChangeNotifier {
     // real low-memory kill on real hardware.
     return (session.isXtream ? session.liveChannels : session.channels)
         .where((c) =>
-            !session.hiddenGroups.contains(c.group) &&
-            !session.hiddenChannels.contains(c.rawId))
+            !session.hiddenGroups.contains(session.liveGroupOf(c)) &&
+            !session.isLiveHidden(c.rawId))
         .map((c) => c.epgId)
         .toSet();
   }
@@ -1383,8 +1494,8 @@ class PlaylistManager extends ChangeNotifier {
       for (final c
           in (session.isXtream ? session.liveChannels : session.channels)) {
         if (!c.hasCatchup ||
-            session.hiddenGroups.contains(c.group) ||
-            session.hiddenChannels.contains(c.rawId)) {
+            session.hiddenGroups.contains(session.liveGroupOf(c)) ||
+            session.isLiveHidden(c.rawId)) {
           continue;
         }
         final days = c.catchupDays.clamp(1, AppConstants.catchupEpgMaxDays);

@@ -111,9 +111,11 @@ class _ModeButtonState extends State<ModeButton> {
             onTap: widget.onTap,
             onFocusChange: (f) => setState(() => _focused = f),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                // The label wraps (Flexible) instead of overflowing with a
+                // phone's largest font.
                 children: [
                   if (widget.icon != null) ...[
                     // `scheme.tertiary` — a dedicated icon/symbol-glyph
@@ -125,9 +127,12 @@ class _ModeButtonState extends State<ModeButton> {
                         size: 18, color: _focused ? scheme.tertiary : null),
                     const SizedBox(width: 8),
                   ],
-                  Text(widget.label,
-                      style:
-                          TextStyle(color: _focused ? focusForeground : null)),
+                  Flexible(
+                    child: Text(widget.label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: _focused ? focusForeground : null)),
+                  ),
                 ],
               ),
             ),

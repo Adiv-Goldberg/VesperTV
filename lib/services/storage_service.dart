@@ -787,6 +787,37 @@ class StorageService {
       _prefs.setStringList(
           _vkp(AppConstants.keyHiddenChannels, playlistId), rawIds.toList());
 
+  /// See [AppConstants.keyPlaylistEdits].
+  String? getPlaylistEditsJson(String playlistId) =>
+      _prefs.getString(_vkp(AppConstants.keyPlaylistEdits, playlistId));
+  Future<void> setPlaylistEditsJson(String playlistId, String json) =>
+      _prefs.setString(_vkp(AppConstants.keyPlaylistEdits, playlistId), json);
+
+  /// See [AppConstants.keyCopyFallback]. On unless turned off.
+  bool getCopyFallback() =>
+      _prefs.getBool(AppConstants.keyCopyFallback) ?? true;
+  Future<void> setCopyFallback(bool value) =>
+      _prefs.setBool(AppConstants.keyCopyFallback, value);
+
+  bool getCrossPlaylistFallback() =>
+      _prefs.getBool(AppConstants.keyCrossPlaylistFallback) ?? true;
+  Future<void> setCrossPlaylistFallback(bool value) =>
+      _prefs.setBool(AppConstants.keyCrossPlaylistFallback, value);
+
+  bool getRecentChannelsGroup() =>
+      _prefs.getBool(AppConstants.keyRecentChannelsGroup) ?? false;
+  Future<void> setRecentChannelsGroup(bool value) =>
+      _prefs.setBool(AppConstants.keyRecentChannelsGroup, value);
+
+  int getLiveBufferMs() => _prefs.getInt(AppConstants.keyLiveBufferMs) ?? 0;
+  Future<void> setLiveBufferMs(int ms) =>
+      _prefs.setInt(AppConstants.keyLiveBufferMs, ms);
+
+  bool getMergePlaylists() =>
+      _prefs.getBool(AppConstants.keyMergePlaylists) ?? false;
+  Future<void> setMergePlaylists(bool value) =>
+      _prefs.setBool(AppConstants.keyMergePlaylists, value);
+
   /// Keyed by `Channel.rawId` -> the assigned EPG feed's own channel id —
   /// see [AppConstants.keyEpgIdOverrides]'s doc comment. A malformed/
   /// pre-Map value (there isn't one pre-existing, but a corrupt prefs

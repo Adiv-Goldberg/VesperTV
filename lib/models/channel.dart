@@ -16,10 +16,10 @@ class Channel {
     required this.id,
     required this.rawId,
     required this.playlistId,
-    required this.name,
+    required String name,
     required this.group,
     required this.url,
-    this.logoUrl,
+    String? logoUrl,
     this.subtitleUrl,
     this.subtitles = const [],
     this.httpHeaders = const {},
@@ -45,7 +45,8 @@ class Channel {
     this.catchupSource,
     this.streamId,
     this.imdbId,
-  });
+  })  : sourceName = name,
+        sourceLogoUrl = logoUrl;
 
   /// Stable identifier: the M3U `tvg-id` when present (used to match EPG
   /// programmes), otherwise a generated fallback. Already prefixed with
@@ -101,7 +102,15 @@ class Channel {
   /// Playlist B's groups), and to scope Group Management/favorites-group
   /// lookups.
   final String playlistId;
-  final String name;
+  /// The provider's own name. Matching (Sports, quality copies, EPG by
+  /// name) uses this; [name] is what the viewer sees.
+  final String sourceName;
+
+  /// Playlist editor rename (`PlaylistEdits`), stamped on every load like
+  /// [epgIdOverride]. Never persisted with the channel.
+  String? nameOverride;
+
+  String get name => nameOverride ?? sourceName;
   final String group;
   final String url;
 
@@ -123,7 +132,12 @@ class Channel {
         url: url,
         transientPlayback: true);
   }
-  final String? logoUrl;
+  final String? sourceLogoUrl;
+
+  /// Playlist editor logo, see [nameOverride].
+  String? logoOverride;
+
+  String? get logoUrl => logoOverride ?? sourceLogoUrl;
   final String? subtitleUrl;
 
   /// Per-file add-on data; never persisted in channel history.
@@ -301,10 +315,10 @@ class Channel {
         onDemand: onDemand ?? this.onDemand,
         epgKey: epgKey ?? this.epgKey,
         playlistId: playlistId,
-        name: name,
+        name: sourceName,
         group: group,
         url: url ?? this.url,
-        logoUrl: logoUrl,
+        logoUrl: sourceLogoUrl,
         subtitleUrl: subtitleUrl,
         subtitles: subtitles,
         httpHeaders: httpHeaders ?? this.httpHeaders,
@@ -328,7 +342,9 @@ class Channel {
         catchupSource: catchupSource,
         streamId: streamId,
         imdbId: imdbId,
-      );
+      )
+        ..nameOverride = nameOverride
+        ..logoOverride = logoOverride;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -336,10 +352,10 @@ class Channel {
         if (onDemand) 'onDemand': true,
         if (epgKey != null) 'epgKey': epgKey,
         'playlistId': playlistId,
-        'name': name,
+        'name': sourceName,
         'group': group,
         'url': url,
-        'logoUrl': logoUrl,
+        'logoUrl': sourceLogoUrl,
         'subtitleUrl': subtitleUrl,
         'isFavorite': isFavorite,
         'rating': rating,

@@ -22,6 +22,7 @@ import '../widgets/live_resume_hint.dart';
 import '../widgets/poster_card.dart';
 import '../widgets/roll_down_menu.dart';
 import '../widgets/tv_text_field_gate.dart';
+import '../services/app_preferences.dart';
 import 'archive_catalog_screen.dart';
 import 'archive_detail_screen.dart';
 import 'archive_playback.dart';
@@ -642,12 +643,29 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 Positioned(
                   top: 0,
                   right: 0,
-                  // Nuvio-style: the backdrop fills the top right and fades
-                  // into black under the hero text and the first row.
-                  left: narrow ? 0 : MediaQuery.sizeOf(context).width * 0.3,
-                  height:
-                      MediaQuery.sizeOf(context).height * (narrow ? 0.6 : 0.7),
-                  child: DetailBackdrop(url: backdrop, fadeLeft: true),
+                  bottom: 0,
+                  // Nuvio-style: the backdrop runs behind the posters all
+                  // the way down (it stopped in a hard edge above the first
+                  // row, owner 2026-11-02), darkened lower down so the rows
+                  // stay readable.
+                  left: narrow ? 0 : MediaQuery.sizeOf(context).width * 0.2,
+                  child: Stack(fit: StackFit.expand, children: [
+                    DetailBackdrop(url: backdrop, fadeLeft: true),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Color(0x99000000),
+                            Color(0xE6000000),
+                          ],
+                          stops: [0.35, 0.65, 1.0],
+                        ),
+                      ),
+                    ),
+                  ]),
                 ),
               SafeArea(
                 child: narrow
@@ -831,6 +849,29 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         color: Colors.white24,
       );
 
+  Future<void> _openTypeMenu() async {
+    final picked = await showRollDownMenu<ArchiveType>(
+      context,
+      anchor: rollDownAnchorOf(_firstRailNode.context),
+      title: tr('Media Hub'),
+      centered: false,
+      width: 240,
+      items: [
+        RollDownMenuItem(
+            value: ArchiveType.movie,
+            icon: Icons.movie,
+            label: tr('Movies'),
+            selected: _type == ArchiveType.movie),
+        RollDownMenuItem(
+            value: ArchiveType.series,
+            icon: Icons.video_library,
+            label: tr('TV Shows'),
+            selected: _type == ArchiveType.series),
+      ],
+    );
+    if (picked != null && mounted) _setType(picked);
+  }
+
   /// Phone / narrow window: the rail's two choices + sources as a row.
   Widget _buildTopBar(ArchiveService service) {
     return Padding(
@@ -839,35 +880,29 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         node: _railScope,
         child: Row(children: [
           IconButton(
+            tooltip: tr('Back'),
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: [
-                _RailTile(
-                  focusNode: _firstRailNode,
-                  icon: Icons.movie,
-                  label: tr('Movies'),
-                  selected: _type == ArchiveType.movie,
-                  onTap: () => _setType(ArchiveType.movie),
-                ),
-                const SizedBox(width: 8),
-                _RailTile(
-                  icon: Icons.video_library,
-                  label: tr('TV Shows'),
-                  selected: _type == ArchiveType.series,
-                  onTap: () => _setType(ArchiveType.series),
-                ),
-              ]),
-            ),
+          // One dropdown instead of two chips: on a phone (and with a big
+          // font) the second chip was cut off ("TV Sh…", owner 2026-11-02).
+          _RailTile(
+            focusNode: _firstRailNode,
+            icon:
+                _type == ArchiveType.movie ? Icons.movie : Icons.video_library,
+            label: _type == ArchiveType.movie ? tr('Movies') : tr('TV Shows'),
+            selected: true,
+            trailing: Icons.arrow_drop_down,
+            onTap: _openTypeMenu,
           ),
+          const Spacer(),
           IconButton(
+            tooltip: tr('Refresh'),
             icon: const Icon(Icons.refresh),
             onPressed: () => service.refresh(force: true, manifests: true),
           ),
           IconButton(
+            tooltip: tr('Media Hub sources'),
             icon: const Icon(Icons.extension_outlined),
             onPressed: _openSources,
           ),
@@ -1042,7 +1077,132 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   /// Recently watched...) and Genre, centred at the top in the phone
   /// tab bar's floating pill. D-pad: Left/Right along it (Left past the
   /// first = rail), Down = the rows.
+  /// Phone (touch, narrow): the floating bar only fitted one or two of its
+  /// buttons (owner + vision-impaired user, 2026-11-02). Search stays a
+  /// button; everything else is in one Menu list.
+  Widget _buildPhoneBar(ArchiveService service, List<ArchiveRow> rows) {
+    final query = service.searchQuery(_type);
+    final movies = _type == ArchiveType.movie;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Row(children: [
+        if (service.canSearch(_type))
+          Expanded(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.search),
+              label: Text(
+                service.searching
+                    ? tr('Searching…')
+                    : query ??
+                        (movies ? tr('Search movies') : tr('Search TV shows')),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onPressed: () => _openSearch(service),
+            ),
+          )
+        else
+          const Spacer(),
+        if (query != null)
+          IconButton(
+            tooltip: tr('Clear search'),
+            icon: const Icon(Icons.close),
+            onPressed: () => _clearSearch(service),
+          ),
+        const SizedBox(width: 8),
+        FilledButton.tonalIcon(
+          icon: const Icon(Icons.arrow_drop_down),
+          label: Text(tr('Menu')),
+          onPressed: () => _openPhoneMenu(service, rows),
+        ),
+      ]),
+    );
+  }
+
+  Future<void> _openPhoneMenu(
+      ArchiveService service, List<ArchiveRow> rows) async {
+    final movies = _type == ArchiveType.movie;
+    final genre = service.genre(_type);
+    final query = service.searchQuery(_type);
+    final items = <(IconData, String, bool, Future<void> Function())>[
+      if (_showNewest(service))
+        (
+          Icons.new_releases_outlined,
+          tr('Newest'),
+          service.newest(_type),
+          () => _toggleNewest(service)
+        ),
+      if (genre == ArchiveService.otherGenre)
+        (
+          Icons.arrow_back,
+          tr('Back to main'),
+          false,
+          () => _applyGenre(service, null)
+        ),
+      if (query != null)
+        (
+          Icons.filter_list,
+          tr('Sources'),
+          false,
+          () => _chooseSearchSource(service)
+        ),
+      for (final r in _barRows(rows))
+        (
+          rows[r].isHistory
+              ? Icons.history
+              : rows[r].isFavorites
+                  ? Icons.star_outline
+                  : Icons.grid_view_rounded,
+          _barRowLabel(rows[r]),
+          false,
+          () async => _focusRow(rows, r)
+        ),
+      if (service.genres(_type).isNotEmpty)
+        (
+          Icons.category_outlined,
+          genre == null
+              ? (movies ? tr('Movie genres') : tr('TV show genres'))
+              : _genreName(genre),
+          genre != null,
+          () => _pickGenre(service)
+        ),
+      (
+        Icons.tune,
+        tr('Customize'),
+        false,
+        () => showArchiveRowSettings(context, _type)
+      ),
+    ];
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: ConstrainedBox(
+          constraints:
+              BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.8),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (var i = 0; i < items.length; i++)
+                ListTile(
+                  leading: Icon(items[i].$1),
+                  title: Text(items[i].$2),
+                  trailing: items[i].$3 ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.of(sheet).pop(i),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null && mounted) await items[picked].$4();
+  }
+
   Widget _buildFloatingBar(ArchiveService service, List<ArchiveRow> rows) {
+    if (_narrow && !(context.read<AppPreferences?>()?.isTelevision ?? false)) {
+      return _buildPhoneBar(service, rows);
+    }
     final nodes = _barNodes(service, rows);
     if (nodes.isEmpty) return const SizedBox.shrink();
     final narrow = MediaQuery.sizeOf(context).width < 700;
@@ -1253,6 +1413,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
     final focused = _focused;
     final narrow = MediaQuery.sizeOf(context).width < 700;
+    // A phone on its side: wide enough for the TV layout, too short for its
+    // hero (rows were pushed to the bottom edge, owner 2026-11-02).
+    final short = MediaQuery.sizeOf(context).height < 520;
     return FocusScope(
       node: _contentScope,
       child: Focus(
@@ -1265,7 +1428,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             // description. Sized so a TV shows one row plus the next one's
             // top, which tells the user there is more below.
             SizedBox(
-              height: narrow ? 150 : 200,
+              height: narrow ? 150 : (short ? 96 : 200),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
                 child: focused == null
@@ -1276,14 +1439,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                           _HeroTitle(
                               key: ValueKey(focused.id),
                               meta: focused,
-                              height: narrow ? 36 : 64),
+                              height: narrow || short ? 36 : 64),
                           const SizedBox(height: 8),
                           _HeroInfoLine(
                               meta: focused,
                               sourceLabel: _focusedLabel,
                               imdbRating: !_focusedFromServer),
                           const SizedBox(height: 8),
-                          if (focused.description != null)
+                          if (focused.description != null && !short)
                             Flexible(
                               child: SizedBox(
                                 width: 520,
@@ -1398,9 +1561,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                         ? tr('Continue series')
                                         : tr('Next episode'))
                         : null,
+                    // Touch: first tap shows the title in the hero, a second
+                    // opens it, in both orientations (a phone on its side is
+                    // over 700 wide and opened at once, owner 2026-11-02).
                     tapToPreview:
                         Theme.of(context).platform == TargetPlatform.android &&
-                            MediaQuery.sizeOf(context).width < 700,
+                            !(context.read<AppPreferences?>()?.isTelevision ??
+                                false),
                     onTap: () => row.continuations != null
                         ? _openContinuation(row.continuations![i])
                         : _open(row.sourceAt(i), meta),
@@ -1732,6 +1899,7 @@ class _RailTile extends StatefulWidget {
     required this.onTap,
     this.selected = false,
     this.focusNode,
+    this.trailing,
   });
 
   final IconData icon;
@@ -1739,6 +1907,9 @@ class _RailTile extends StatefulWidget {
   final VoidCallback onTap;
   final bool selected;
   final FocusNode? focusNode;
+
+  /// A dropdown arrow after the label (the phone's Movies / TV Shows pick).
+  final IconData? trailing;
 
   @override
   State<_RailTile> createState() => _RailTileState();
@@ -1775,6 +1946,7 @@ class _RailTileState extends State<_RailTile> {
                       fontWeight:
                           widget.selected ? FontWeight.w700 : FontWeight.w500)),
             ),
+            if (widget.trailing != null) Icon(widget.trailing, color: fg),
           ]),
         ),
       ),

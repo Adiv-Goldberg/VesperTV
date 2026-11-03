@@ -218,19 +218,24 @@ class _HoldToActivateState extends State<HoldToActivate> {
         canRequestFocus: false,
         skipTraversal: true,
         onKeyEvent: _handleKeyEvent,
+        // MergeSemantics: TalkBack reads one item (the child's label) with
+        // both actions; double-tap-and-hold opens the hold menu. Unmerged,
+        // the long press was its own unlabeled node.
         child: widget.onHold == null
             ? widget.child
-            : RawGestureDetector(
-                gestures: <Type, GestureRecognizerFactory>{
-                  LongPressGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
-                          LongPressGestureRecognizer>(
-                    () => LongPressGestureRecognizer(
-                        duration: widget.holdDuration),
-                    (instance) => instance.onLongPress = widget.onHold,
-                  ),
-                },
-                child: widget.child,
+            : MergeSemantics(
+                child: RawGestureDetector(
+                  gestures: <Type, GestureRecognizerFactory>{
+                    LongPressGestureRecognizer:
+                        GestureRecognizerFactoryWithHandlers<
+                            LongPressGestureRecognizer>(
+                      () => LongPressGestureRecognizer(
+                          duration: widget.holdDuration),
+                      (instance) => instance.onLongPress = widget.onHold,
+                    ),
+                  },
+                  child: widget.child,
+                ),
               ),
       ),
     );

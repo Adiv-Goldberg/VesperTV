@@ -189,7 +189,7 @@ class SportsChannelLibrary {
         ...?store?.tags[c.id],
       };
   Map<String, List<String>> _infer(Channel c) {
-    final name = c.name.toUpperCase();
+    final name = c.sourceName.toUpperCase();
     final text = '$name ${c.group.toUpperCase()}';
     final country = RegExp(
             r'^\s*(US|USA|CA|CAFR|UK|GB|GR|FR|IT|ES|DE|BR|PT|AU|NZ|IE|RO|RS|HR|BG)\s*[:|\-]')
@@ -281,7 +281,7 @@ class SportsChannelLibrary {
     for (final c in channels) {
       if (category(c) != row) continue;
       final network = sportsNetworkOf(c);
-      final copy = channelCopyKey(c.name);
+      final copy = channelCopyKey(c.sourceName);
       final id = network?.id ?? 'own:${copy.isEmpty ? c.id : copy}';
       (byId[id] ??= SportsNetworkGroup(
               id, network?.name ?? _displayName(c.name), network))
@@ -340,9 +340,9 @@ class SportsChannelLibrary {
   }
 
   List<Channel> versions(Channel channel) {
-    final key = channelCopyKey(channel.name);
+    final key = channelCopyKey(channel.sourceName);
     return key.isEmpty
         ? [channel]
-        : channels.where((c) => channelCopyKey(c.name) == key).toList();
+        : channels.where((c) => channelCopyKey(c.sourceName) == key).toList();
   }
 }
