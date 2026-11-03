@@ -367,7 +367,14 @@ old ~50 s EPG delay is **fixed** by the SQLite EPG store (0.5 s on the Formuler)
 Timeline/Live guide, player secondary row + badges, Multiview, welcome prompt, hide channels, Expand catalog, backup servers, palettes, **viewer profiles** (never rewrite Main's storage keys), **languages** (EN/FR/ES/IT/EL), **Transfer to another device** (Wi-Fi + internet vault, built to grow into cloud sync). Read the file before changing any of these.
 
 ## 13. Status & open items (as of 2026-10-24)
-- **Claude, 2026-11-01 - hot fix release 1.0.53 (beta), +556 (latest):** Android only, Windows stays 1.0.45. VOD
+- **Claude, 2026-11-03 - release 1.0.55 (beta), +599 (latest):** owner said "cut it". Android only; Windows stays 1.0.45
+  (Windows parity work is committed in cd6654c but NOT shipped: no Windows build/zip; do it when the owner asks).
+  Multiview rework + Sports Trak league rail + Play in Multiview, Live now group, missing episodes (Up Next on one with no
+  stream shows "No playable stream for this title.", never skips), live read timeout 30 s + Gradual buffer + HLS format,
+  big-playlist diagnostics, catalog warm-up stops after a dead server (retry once), donations paused until GitHub Sponsors
+  (docs/support.html). Analyze 16, 1153 Flutter tests pass; native Java tests NOT run (no JDK 21 on this PC).
+  Notes: dev-notes/releases/1.0.55.md.
+- **Claude, 2026-11-01 - hot fix release 1.0.53 (beta), +556:** Android only, Windows stays 1.0.45. VOD
   recovery resumes at the position (was the live path: seekToDefaultPosition = 0; a stream cut mid-episode restarted it):
   `ExoPlayerEventListener` onDemand (from setOnDemandBuffering), `markResumePoint`, `cutShort` (early ENDED = reconnect at
   position), HTTP 416 = real end. Google TV keyboard: an arrow reaching a gated field while typing ends typing (Gboard reports
