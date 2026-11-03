@@ -367,7 +367,14 @@ old ~50 s EPG delay is **fixed** by the SQLite EPG store (0.5 s on the Formuler)
 Timeline/Live guide, player secondary row + badges, Multiview, welcome prompt, hide channels, Expand catalog, backup servers, palettes, **viewer profiles** (never rewrite Main's storage keys), **languages** (EN/FR/ES/IT/EL), **Transfer to another device** (Wi-Fi + internet vault, built to grow into cloud sync). Read the file before changing any of these.
 
 ## 13. Status & open items (as of 2026-10-24)
-- **Claude, 2026-11-03 - release 1.0.55 (beta), +599 (latest):** owner said "cut it". Android only; Windows stays 1.0.45
+- **Claude, 2026-11-03 - release 1.0.56 (beta), +606 (latest):** owner said "cut the release". Android only; Windows
+  stays 1.0.45. Big-playlist work from a 13-playlist / ~350k-channel user (Samsung + Onn 4K Pro logs): cached
+  `PlaylistManager.visibleChannels`/`catchupLiveChannels` (cleared in notifyListeners), catalog index
+  (playlist_id, category_name), single catalog DB open, cached catch-up days, 2-min pause for a server that doesn't
+  answer / refuses (lifted when it answers), SlowMain/SlowFrame diagnostics. Not a 100% fix for that user: one-time
+  ~17 s freeze when 13 live lists finish loading + 7 s rowCounts diagnostic remain (HANDOFF). Analyze 16, 1158 tests;
+  native unchanged since 1.0.55. Notes: dev-notes/releases/1.0.56.md.
+- **Claude, 2026-11-03 - release 1.0.55 (beta), +599:** owner said "cut it". Android only; Windows stays 1.0.45
   (Windows parity work is committed in cd6654c but NOT shipped: no Windows build/zip; do it when the owner asks).
   Multiview rework + Sports Trak league rail + Play in Multiview, Live now group, missing episodes (Up Next on one with no
   stream shows "No playable stream for this title.", never skips), live read timeout 30 s + Gradual buffer + HLS format,
