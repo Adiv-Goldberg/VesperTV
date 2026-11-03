@@ -3039,7 +3039,10 @@ class _TvHomeScreenState extends State<TvHomeScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      PerfDiagnostics.timedSync('homeBuild', () => _build(context));
+
+  Widget _build(BuildContext context) {
     PerfDiagnostics.homeBuilds++;
     final playlist = context.watch<PlaylistManager>();
     final epg = context.watch<EpgService>();

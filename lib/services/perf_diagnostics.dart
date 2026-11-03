@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 
 /// Send-log diagnostics for very large playlists (a 300k-channel user's
 /// phone and Onn box froze for 1-6 s per press, LOG-ARF5AW / LOG-A2BGZA,
@@ -23,6 +24,7 @@ class PerfDiagnostics {
   static int _stalls = 0;
   static int _maxStallMs = 0;
   static int _stallTotalMs = 0;
+  static bool _lifecycleChanged = false;
 
   static const _tickMs = 200;
   static const _stallMs = 700;
@@ -33,11 +35,29 @@ class PerfDiagnostics {
     if (_tick != null) return;
     _clock.start();
     _lastTickMs = _clock.elapsedMilliseconds;
+    // Time in the background is not a stall: the first tick after coming
+    // back counted the whole pause (a 5.7 s "stall" on resume, LOG-MP44ZB).
+    AppLifecycleListener(onStateChange: (_) => _lifecycleChanged = true);
+    // Whether a long stall is one frame's widget build/layout or work
+    // between frames (async callbacks, timers).
+    SchedulerBinding.instance.addTimingsCallback((timings) {
+      for (final t in timings) {
+        final build = t.buildDuration.inMilliseconds;
+        final raster = t.rasterDuration.inMilliseconds;
+        if (build >= 500 || raster >= 500) {
+          debugPrint('SlowFrame: build=${build}ms raster=${raster}ms');
+        }
+      }
+    });
     _tick = Timer.periodic(const Duration(milliseconds: _tickMs), (_) {
       final now = _clock.elapsedMilliseconds;
       final late = now - _lastTickMs - _tickMs;
       _lastTickMs = now;
-      if (late >= _stallMs) {
+      final state = WidgetsBinding.instance.lifecycleState;
+      final away = _lifecycleChanged ||
+          (state != null && state != AppLifecycleState.resumed);
+      _lifecycleChanged = false;
+      if (late >= _stallMs && !away) {
         _stalls++;
         _stallTotalMs += late;
         if (late > _maxStallMs) _maxStallMs = late;
@@ -65,6 +85,18 @@ class PerfDiagnostics {
       debugPrint('MainStall: n=$stalls max=${max}ms total=${total}ms '
           'notifies=$n homeBuilds=$builds dbWait ${waits.join(' ')}');
     });
+  }
+
+  /// Runs [body] on the UI thread and logs `SlowMain: label N ms` when it
+  /// took 200 ms or more (it blocked the UI that long).
+  static T timedSync<T>(String label, T Function() body) {
+    final sw = Stopwatch()..start();
+    try {
+      return body();
+    } finally {
+      final ms = sw.elapsedMilliseconds;
+      if (ms >= 200) debugPrint('SlowMain: $label ${ms}ms');
+    }
   }
 
   /// Runs [body] and logs `SlowDb: label N ms` when it took over 500 ms.

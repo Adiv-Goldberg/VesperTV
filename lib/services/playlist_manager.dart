@@ -69,6 +69,7 @@ class PlaylistManager extends ChangeNotifier {
     PerfDiagnostics.notifies++;
     // Anything changed (channels loaded, hidden, moved): count again.
     _liveCounts = null;
+    _visibleCache.clear();
     if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
       if (_deferredNotifyPending) return;
@@ -1384,7 +1385,30 @@ class PlaylistManager extends ChangeNotifier {
           ?.ensureCategoriesLoaded(categoryNames, tabCategory) ??
       Future.value();
 
+  /// Cached until the next [notifyListeners] (like [liveGroupCount]): one
+  /// group's channels came from a scan of every playlist's channels, at
+  /// least twice per TV home build: ~600 ms per remote press with 13
+  /// playlists / ~350k channels on an Onn box (LOG-SVXKB7). Callers get
+  /// their own copy, so sorting or editing it never touches the cache.
+  final Map<String, List<Channel>> _visibleCache = {};
+
   List<Channel> visibleChannels(
+      {String? playlistId, String? groupTitle, required String category}) {
+    final key =
+        '$category/${playlistId ?? '*'}/${groupTitle == null ? '*' : '=$groupTitle'}';
+    final cached = _visibleCache[key] ??=
+        playlistId == null && groupTitle == null
+            // Every playlist at once: ~350k channels for a 13-playlist user.
+            ? PerfDiagnostics.timedSync('visibleChannels($category)',
+                () => _visibleChannels(category: category))
+            : _visibleChannels(
+                playlistId: playlistId,
+                groupTitle: groupTitle,
+                category: category);
+    return List.of(cached);
+  }
+
+  List<Channel> _visibleChannels(
       {String? playlistId, String? groupTitle, required String category}) {
     if (playlistId != null) {
       return _sessionFor(playlistId)
@@ -1404,10 +1428,13 @@ class PlaylistManager extends ChangeNotifier {
 
   /// Every visible live channel with catch-up, playlist by playlist in the
   /// TV tab's priority order — the TV tab's Catch-up group.
-  List<Channel> catchupLiveChannels() => _enabledSessionsSortedFor('tv')
-      .expand(
-          (s) => s.visibleChannels(category: 'tv').where((c) => c.hasCatchup))
-      .toList();
+  /// Cached with [visibleChannels]: the Catch-up group asked for it on
+  /// every TV home build, a scan of every live channel each time.
+  List<Channel> catchupLiveChannels() =>
+      List.of(_visibleCache['catchup'] ??= _enabledSessionsSortedFor('tv')
+          .expand((s) =>
+              s.visibleChannels(category: 'tv').where((c) => c.hasCatchup))
+          .toList());
 
   /// Live channels hidden by the viewer, across enabled playlists — see
   /// [SportsChannelMatcher.whyNoMatch]. None for a restricted viewer: what
@@ -1500,7 +1527,37 @@ class PlaylistManager extends ChangeNotifier {
   /// visibility rule as [knownChannelIdsFor]). Capped at
   /// [AppConstants.catchupEpgMaxDays]; the longest wins when channels
   /// share an id. Feeds `EpgService.catchupDaysProvider`.
+  /// EpgService asks every 20 s, from screen builds: a full pass over
+  /// every live channel (~350k for a 13-playlist user) blocked an Onn box
+  /// (LOG-2L5D3S). Cached until a live list or hidden state changes, and
+  /// at most 5 minutes (own-group moves aren't in the key).
+  String? _catchupKey;
+  DateTime? _catchupAt;
+  Map<String, int> _catchupDays = const {};
+
   Map<String, int> catchupDaysByEpgId() {
+    final key = [
+      for (final s in _sessions)
+        if (s.profile.enabled)
+          '${s.profile.id}:${identityHashCode(s.isXtream ? s.liveChannels : s.channels)}'
+              ':${(s.isXtream ? s.liveChannels : s.channels).length}'
+              ':${s.hiddenGroups.length}:${s.hiddenChannels.length}'
+              ':${s.editHidden.length}:${s.mergeHidden.length}'
+    ].join('|');
+    final at = _catchupAt;
+    if (key == _catchupKey &&
+        at != null &&
+        DateTime.now().difference(at) < const Duration(minutes: 5)) {
+      return _catchupDays;
+    }
+    _catchupDays =
+        PerfDiagnostics.timedSync('catchupDays', _computeCatchupDaysByEpgId);
+    _catchupKey = key;
+    _catchupAt = DateTime.now();
+    return _catchupDays;
+  }
+
+  Map<String, int> _computeCatchupDaysByEpgId() {
     final out = <String, int>{};
     for (final session in _sessions) {
       if (!session.profile.enabled) continue;

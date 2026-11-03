@@ -51,9 +51,18 @@ class CatalogDatabase {
   bool Function(String channelId)? isVodFavorite;
   bool Function(String seriesId)? isSeriesFavorite;
 
-  Future<Database> get _database async {
+  /// One open for everyone: at launch ~165 callers each ran [_open]
+  /// (and its index step) at once, all queued behind a 28 s first index
+  /// build on an Onn box (LOG-2L5D3S).
+  Future<Database>? _opening;
+
+  Future<Database> get _database {
     final existing = _db;
-    if (existing != null) return existing;
+    if (existing != null) return Future.value(existing);
+    return _opening ??= _openOnce().whenComplete(() => _opening = null);
+  }
+
+  Future<Database> _openOnce() async {
     final path = _databasePath ??
         p.join(
             (await getApplicationDocumentsDirectory()).path, 'nox_catalog.db');
@@ -271,9 +280,14 @@ class CatalogDatabase {
         }
       },
     );
-    for (final (table, index) in [
-      ('vod_channels', 'idx_vod_added'),
-      ('series_items', 'idx_series_added'),
+    // Rows are read and replaced by playlist + category; category alone
+    // scanned that category in every playlist (13 playlists, ~1.2M rows,
+    // LOG-6LYY3R).
+    for (final (table, index, columns) in [
+      ('vod_channels', 'idx_vod_added', 'added_at'),
+      ('series_items', 'idx_series_added', 'added_at'),
+      ('vod_channels', 'idx_vod_playlist_cat', 'playlist_id, category_name'),
+      ('series_items', 'idx_series_playlist_cat', 'playlist_id, category_name'),
     ]) {
       // Optional speed-up: a failure must never reach [_database]'s
       // catch, which would delete the whole catalog.
@@ -281,7 +295,7 @@ class CatalogDatabase {
         await PerfDiagnostics.timed(
             'create $index',
             () => db.execute(
-                'CREATE INDEX IF NOT EXISTS $index ON $table(added_at)'));
+                'CREATE INDEX IF NOT EXISTS $index ON $table($columns)'));
       } catch (e) {
         debugPrint('CatalogDatabase: $index skipped: $e');
       }
