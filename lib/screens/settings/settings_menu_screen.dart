@@ -242,15 +242,18 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
             if (Platform.isAndroid)
               _general('catchup', Icons.history_toggle_off, tr('Catch-up'),
                   tr('What happens when a catch-up programme ends')),
-            if (Platform.isAndroid)
+            if (Platform.isAndroid || Platform.isWindows)
               _general('skipintro', Icons.skip_next_outlined, tr('Skip intro'),
                   tr('Skip intros and credits on TV show episodes')),
-            if (Platform.isAndroid)
+            if (Platform.isAndroid || Platform.isWindows)
               _general('upnext', Icons.queue_play_next, tr('Up Next'),
                   tr('When the next episode starts by itself')),
-            if (Platform.isAndroid)
+            if (Platform.isAndroid || Platform.isWindows)
               _general('livebuffer', Icons.av_timer, tr('Live buffer'),
                   tr('Hide short dropouts on live channels')),
+            if (Platform.isWindows)
+              _general('softvideo', Icons.memory, tr('Software video'),
+                  tr('For PCs where video stays black')),
             _general('trailers', Icons.movie_outlined, tr('Trailers'),
                 tr('Play trailers automatically on movie and show pages')),
             if (!Platform.isWindows)

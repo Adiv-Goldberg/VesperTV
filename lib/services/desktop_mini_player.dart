@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../models/channel.dart';
+import 'desktop_live_recovery.dart';
 import 'desktop_stream_setup.dart';
 
 /// Windows-only holder for a live channel's `Player`/`VideoController`
@@ -56,20 +57,16 @@ class DesktopMiniPlayer {
       // comment.
       configureDesktopStreamPlayer(created, 'mini');
       _player = created;
-      _controller = VideoController(created);
+      _controller = desktopVideoController(created);
     }
     final player = _player!;
-    _completedSub?.cancel();
-    _completedSub = player.stream.completed.listen((completed) {
-      final current = channel.value;
-      if (completed && current != null && _player == player) {
-        player.open(Media(current.url,
-            httpHeaders:
-                current.httpHeaders.isEmpty ? null : current.httpHeaders));
+    // Waits, retries and copies: DesktopLiveRecovery (it stays with the
+    // player when full screen takes it over).
+    unawaited(openDesktopStream(player, ch).then((_) {
+      if (_player == player && channel.value?.id == ch.id) {
+        DesktopLiveRecovery.of(player).watch(ch);
       }
-    });
-    player.open(Media(ch.url,
-        httpHeaders: ch.httpHeaders.isEmpty ? null : ch.httpHeaders));
+    }));
     channel.value = ch;
   }
 
@@ -80,10 +77,14 @@ class DesktopMiniPlayer {
     // pill) — if something else was already minimized, it has no other
     // reference anywhere, so it must be disposed here or it'd keep
     // decoding in the background forever with nothing left to stop it.
-    if (_player != null && _player != player) _player!.dispose();
+    if (_player != null && _player != player) {
+      DesktopLiveRecovery.disposePlayer(_player);
+    }
     _player = player;
     _controller = controller;
     channel.value = ch;
+    // A stream handed over from full screen had no recovery here before.
+    DesktopLiveRecovery.of(player).watch(ch);
   }
 
   /// Hands the live session back to a freshly reopened
@@ -115,7 +116,7 @@ class DesktopMiniPlayer {
   void clear() {
     _completedSub?.cancel();
     _completedSub = null;
-    _player?.dispose();
+    DesktopLiveRecovery.disposePlayer(_player);
     _player = null;
     _controller = null;
     channel.value = null;

@@ -71,6 +71,8 @@ import 'services/backup_service.dart';
 import 'services/tracker_sync.dart';
 import 'services/watch_tracker.dart';
 import 'services/perf_diagnostics.dart';
+import 'services/desktop_live_recovery.dart';
+import 'services/desktop_stream_setup.dart';
 
 // AppLog keeps print/errors for Settings > Send log; the binding must be
 // initialized inside its zone (same zone as runApp).
@@ -553,6 +555,12 @@ class _NoxIptvAppState extends State<NoxIptvApp>
       // below awaits the same future.
       unawaited(_epgService.init());
       // Send-log probes for very large playlists (stalls, database queue).
+      // Windows live recovery: a channel's other copies (Settings'
+      // automatic failover, same as Android's PlaybackService).
+      desktopSoftwareVideo = _storage.getDesktopSoftwareVideo();
+      DesktopLiveRecovery.copiesOf = (channel) => _storage.getCopyFallback()
+          ? _playlistManager.failoverCandidatesFor(channel)
+          : const [];
       PerfDiagnostics.start({
         'catalog': _playlistManager.pingCatalog,
         'epg': _epgService.pingDatabase,

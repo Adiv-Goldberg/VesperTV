@@ -2396,4 +2396,8 @@ const Map<String, String> kEs = {
   "{n} sources": "{n} fuentes",
   "Not listed yet": "Aún no listado",
   "The newest episode may not be in the catalog yet. Press Play to ask your sources.": "Puede que el episodio más reciente aún no esté en el catálogo. Pulsa Reproducir para consultar tus fuentes.",
+  "The channel stopped. Still trying to reconnect...": "El canal se detuvo. Seguimos intentando reconectar…",
+  "Software video": "Vídeo por software",
+  "Turn on if channels or movies stay black while the sound or the stream plays. Draws the video without the graphics card path. Uses more CPU on 4K. Applies from the next video.": "Actívalo si los canales o las películas se quedan en negro mientras suena el audio o se reproduce la emisión. Muestra el vídeo sin la tarjeta gráfica. Usa más CPU en 4K. Se aplica desde el siguiente vídeo.",
+  "For PCs where video stays black": "Para PC en los que el vídeo se queda en negro",
 };

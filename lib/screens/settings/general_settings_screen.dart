@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../services/desktop_stream_setup.dart';
 import '../../services/app_preferences.dart';
 import '../../services/archive_service.dart';
 import '../../services/device_defaults.dart';
@@ -615,7 +616,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                             },
                           ),
                         ]),
-                  if (Platform.isAndroid)
+                  if (Platform.isAndroid || Platform.isWindows)
                     _section(
                         'skipintro', Icons.skip_next_outlined, tr('Skip intro'),
                         children: [
@@ -630,12 +631,27 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                             },
                           ),
                         ]),
-                  if (Platform.isAndroid)
+                  if (Platform.isAndroid || Platform.isWindows)
                     _section('upnext', Icons.queue_play_next, tr('Up Next'),
                         children: [_UpNextPicker()]),
-                  if (Platform.isAndroid)
+                  if (Platform.isAndroid || Platform.isWindows)
                     _section('livebuffer', Icons.av_timer, tr('Live buffer'),
                         children: [_LiveBufferPicker()]),
+                  if (Platform.isWindows)
+                    _section('softvideo', Icons.memory, tr('Software video'),
+                        children: [
+                          TvSwitchListTile(
+                            title: Text(tr('Software video')),
+                            subtitle: Text(tr(
+                                'Turn on if channels or movies stay black while the sound or the stream plays. Draws the video without the graphics card path. Uses more CPU on 4K. Applies from the next video.')),
+                            value: _storage.getDesktopSoftwareVideo(),
+                            onChanged: (v) async {
+                              await _storage.setDesktopSoftwareVideo(v);
+                              desktopSoftwareVideo = v;
+                              if (mounted) setState(() {});
+                            },
+                          ),
+                        ]),
                   _section('trailers', Icons.movie_outlined, tr('Trailers'),
                       children: [
                         TvSwitchListTile(
@@ -757,8 +773,13 @@ class _LiveBufferPickerState extends State<_LiveBufferPicker> {
   Widget build(BuildContext context) {
     final storage = context.read<StorageService>();
     final current = storage.getLiveBufferMs();
-    final name = _choices
-        .firstWhere((c) => c.$1 == current, orElse: () => _choices.first)
+    // Windows (mpv) has no Gradual: it plays as Off there.
+    final choices = [
+      for (final c in _choices)
+        if (c.$1 >= 0 || !Platform.isWindows) c
+    ];
+    final name = choices
+        .firstWhere((c) => c.$1 == current, orElse: () => choices.first)
         .$2;
     return TvMenuTile(
       leading: const Icon(Icons.av_timer),
@@ -772,7 +793,7 @@ class _LiveBufferPickerState extends State<_LiveBufferPicker> {
           builder: (dialogContext) => SimpleDialog(
             title: Text(tr('Live buffer')),
             children: [
-              for (final (ms, label) in _choices)
+              for (final (ms, label) in choices)
                 TvDialogOption(
                   autofocus: ms == current,
                   onPressed: () => Navigator.of(dialogContext).pop(ms),

@@ -2356,4 +2356,8 @@ const Map<String, String> kEl = {
   "{n} sources": "{n} πηγές",
   "Not listed yet": "Δεν έχει καταχωριστεί ακόμη",
   "The newest episode may not be in the catalog yet. Press Play to ask your sources.": "Το νεότερο επεισόδιο ίσως δεν είναι ακόμη στον κατάλογο. Πατήστε Αναπαραγωγή για να ρωτήσετε τις πηγές σας.",
+  "The channel stopped. Still trying to reconnect...": "Το κανάλι σταμάτησε. Συνεχίζουμε να προσπαθούμε να επανασυνδεθούμε…",
+  "Software video": "Βίντεο λογισμικού",
+  "Turn on if channels or movies stay black while the sound or the stream plays. Draws the video without the graphics card path. Uses more CPU on 4K. Applies from the next video.": "Ενεργοποιήστε το αν τα κανάλια ή οι ταινίες μένουν μαύρα ενώ παίζει ο ήχος ή η ροή. Εμφανίζει το βίντεο χωρίς την κάρτα γραφικών. Χρησιμοποιεί περισσότερο τον επεξεργαστή στα 4K. Ισχύει από το επόμενο βίντεο.",
+  "For PCs where video stays black": "Για υπολογιστές όπου το βίντεο μένει μαύρο",
 };

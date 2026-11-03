@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player_hdr/video_player_hdr.dart';
 
@@ -24,6 +25,10 @@ class SkipSegmentWatcher extends ChangeNotifier {
   static const _minLeft = Duration(milliseconds: 1500);
 
   VideoPlayerHdrController? _controller;
+
+  /// Windows: the mpv player ([attachDesktop]) instead of [_controller].
+  Player? _desktop;
+  StreamSubscription<Duration>? _desktopTicks;
   String? _channelId;
   bool _requested = false;
   bool _missingLogged = false;
@@ -55,6 +60,33 @@ class SkipSegmentWatcher extends ChangeNotifier {
       _controller = controller;
       controller?.addListener(_onTick);
     }
+    _attachChannel(channelId,
+        enabled: enabled, episodeCandidate: episodeCandidate, tmdbKey: tmdbKey);
+  }
+
+  /// Windows ([DesktopPlayerScreen]): the same button over the mpv player.
+  void attachDesktop(Player player, String channelId,
+      {required bool enabled,
+      required bool episodeCandidate,
+      String? tmdbKey}) {
+    if (!identical(player, _desktop)) {
+      _desktopTicks?.cancel();
+      _desktop = player;
+      _desktopTicks = player.stream.position.listen((_) => _onTick());
+    }
+    _attachChannel(channelId,
+        enabled: enabled, episodeCandidate: episodeCandidate, tmdbKey: tmdbKey);
+  }
+
+  Duration? get _position =>
+      _desktop?.state.position ?? _controller?.value.position;
+  Duration get _duration =>
+      _desktop?.state.duration ?? _controller?.value.duration ?? Duration.zero;
+
+  void _attachChannel(String channelId,
+      {required bool enabled,
+      required bool episodeCandidate,
+      String? tmdbKey}) {
     if (channelId != _channelId) {
       // Called from the player's build: no notify (the button below is
       // rebuilt in the same pass anyway).
@@ -94,10 +126,9 @@ class SkipSegmentWatcher extends ChangeNotifier {
   }
 
   void _onTick() {
-    final value = _controller?.value;
-    if (value == null || _segments.isEmpty) return _setActive(null);
-    final position = value.position;
-    final duration = value.duration;
+    final position = _position;
+    if (position == null || _segments.isEmpty) return _setActive(null);
+    final duration = _duration;
     SkipSegment? found;
     for (final s in _segments) {
       final end =
@@ -137,14 +168,15 @@ class SkipSegmentWatcher extends ChangeNotifier {
   /// ([playNext]); otherwise the end of the range.
   Future<void> skip(SkipSegment segment, {VoidCallback? playNext}) async {
     final controller = _controller;
-    if (controller == null) return;
+    final desktop = _desktop;
+    if (controller == null && desktop == null) return;
     if (segment.kind == SkipKind.outro && playNext != null) {
       _skipped.add(segment);
       _setActive(null);
       playNext();
       return;
     }
-    final duration = controller.value.duration;
+    final duration = _duration;
     var target = segment.end;
     if (duration > Duration.zero &&
         target > duration - const Duration(milliseconds: 500)) {
@@ -153,13 +185,18 @@ class SkipSegmentWatcher extends ChangeNotifier {
     // Never offered again for this episode (the seek lands a moment later).
     _skipped.add(segment);
     _setActive(null);
-    await controller.seekTo(target);
+    if (desktop != null) {
+      await desktop.seek(target);
+    } else {
+      await controller!.seekTo(target);
+    }
   }
 
   @override
   void dispose() {
     _hideTimer?.cancel();
     _controller?.removeListener(_onTick);
+    _desktopTicks?.cancel();
     super.dispose();
   }
 }

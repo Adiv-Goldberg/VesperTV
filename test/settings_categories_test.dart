@@ -93,7 +93,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
     expect(
-        focusedLabel(), Platform.isWindows ? 'Trailers' : 'Background video');
+        focusedLabel(), Platform.isWindows ? 'Skip intro' : 'Background video');
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pumpAndSettle();
     expect(focusedLabel(), 'Playback');

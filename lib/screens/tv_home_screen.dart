@@ -20,6 +20,8 @@ import '../models/m3u_group.dart';
 import '../models/xtream_series.dart';
 import '../services/app_preferences.dart';
 import '../services/perf_diagnostics.dart';
+import '../services/desktop_live_recovery.dart';
+import '../widgets/desktop_reconnecting_badge.dart';
 import '../services/app_update_service.dart';
 import '../services/desktop_window.dart';
 import '../services/desktop_mini_player.dart';
@@ -4595,6 +4597,9 @@ class _TvHomeScreenState extends State<TvHomeScreen>
                     Video(controller: controller, controls: NoVideoControls)
                   else
                     const ColoredBox(color: Colors.black),
+                  if (controller != null)
+                    DesktopReconnectingBadge(
+                        recovery: DesktopLiveRecovery.of(controller.player)),
                   Positioned(
                     left: 0,
                     right: 0,

@@ -274,6 +274,13 @@ class StorageService {
       _prefs.getDouble(AppConstants.keyDesktopVolume) ?? 100;
   Future<void> setDesktopVolume(double value) =>
       _prefs.setDouble(AppConstants.keyDesktopVolume, value);
+  /// Windows: draw video without the GPU path (Settings > Playback >
+  /// Software video). Device-only.
+  bool getDesktopSoftwareVideo() =>
+      _prefs.getBool('vesper_desktop_software_video') ?? false;
+  Future<void> setDesktopSoftwareVideo(bool value) =>
+      _prefs.setBool('vesper_desktop_software_video', value);
+
   bool getDesktopMuted() =>
       _prefs.getBool(AppConstants.keyDesktopMuted) ?? false;
   Future<void> setDesktopMuted(bool value) =>

@@ -14,6 +14,7 @@ import '../widgets/auto_hide_overlay.dart';
 import '../widgets/game_channel_chooser.dart';
 import '../l10n/l10n.dart';
 import '../services/desktop_stream_setup.dart';
+import '../services/desktop_live_recovery.dart';
 
 /// Windows-only: a grid of simultaneously-playing live channels —
 /// requested directly, citing TiviMate's own multiview (proven to run
@@ -76,7 +77,7 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
       // hold a connection slot and a decoder for nothing visible.
       for (var i = 2; i < _cellCount; i++) {
         _cells[i].completedSubscription?.cancel();
-        _cells[i].player?.dispose();
+        DesktopLiveRecovery.disposePlayer(_cells[i].player);
         _cells[i] = _MultiviewCell();
       }
       if (_activeCell >= 2) _activeCell = 0;
@@ -88,7 +89,7 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
   void dispose() {
     for (final cell in _cells) {
       cell.completedSubscription?.cancel();
-      cell.player?.dispose();
+      DesktopLiveRecovery.disposePlayer(cell.player);
     }
     super.dispose();
   }
@@ -96,7 +97,7 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
   void _assign(int index, Channel channel) {
     final cell = _cells[index];
     cell.completedSubscription?.cancel();
-    cell.player?.dispose();
+    DesktopLiveRecovery.disposePlayer(cell.player);
     final player = Player();
     // See DesktopPlayerScreen's identical fix for the full story —
     // reconnect_streamed=1 is necessary (not optional) to recover from a
@@ -109,21 +110,16 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
     // server that doesn't support it) to a fixed ceiling instead of
     // letting it hang forever, so ffmpeg's own reconnect loop can retry.
     configureDesktopStreamPlayer(player, 'multiview');
-    final controller = VideoController(player);
-    player.open(Media(channel.url));
+    final controller = desktopVideoController(player);
+    unawaited(openDesktopStream(player, channel)
+        .then((_) => DesktopLiveRecovery.of(player).watch(channel)));
     player.setVolume(index == _activeCell ? 100 : 0);
-    final completedSubscription = player.stream.completed.listen((completed) {
-      if (completed && mounted) {
-        debugPrint(
-            '[auto-recover] multiview cell $index reported completed — reopening');
-        player.open(Media(channel.url));
-      }
-    });
+    // Reconnects: DesktopLiveRecovery (waits, retries, copies).
     setState(() {
       cell.channel = channel;
       cell.player = player;
       cell.controller = controller;
-      cell.completedSubscription = completedSubscription;
+      cell.completedSubscription = null;
     });
   }
 
@@ -135,12 +131,15 @@ class _DesktopMultiviewScreenState extends State<DesktopMultiviewScreen> {
     final cell = _cells[index];
     final channel = cell.channel;
     if (channel == null) return;
-    cell.player?.open(Media(channel.url));
+    final player = cell.player;
+    if (player == null) return;
+    unawaited(openDesktopStream(player, channel)
+        .then((_) => DesktopLiveRecovery.of(player).watch(channel)));
   }
 
   void _clear(int index) {
     _cells[index].completedSubscription?.cancel();
-    _cells[index].player?.dispose();
+    DesktopLiveRecovery.disposePlayer(_cells[index].player);
     setState(() => _cells[index] = _MultiviewCell());
   }
 

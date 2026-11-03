@@ -2408,4 +2408,8 @@ const Map<String, String> kFr = {
   "{n} sources": "{n} sources",
   "Not listed yet": "Pas encore répertorié",
   "The newest episode may not be in the catalog yet. Press Play to ask your sources.": "Le dernier épisode n'est peut-être pas encore au catalogue. Appuyez sur Lecture pour interroger vos sources.",
+  "The channel stopped. Still trying to reconnect...": "La chaîne s'est arrêtée. Nouvelle tentative de connexion…",
+  "Software video": "Vidéo logicielle",
+  "Turn on if channels or movies stay black while the sound or the stream plays. Draws the video without the graphics card path. Uses more CPU on 4K. Applies from the next video.": "Activez si les chaînes ou les films restent noirs alors que le son ou le flux joue. Affiche la vidéo sans passer par la carte graphique. Utilise plus le processeur en 4K. S'applique à la prochaine vidéo.",
+  "For PCs where video stays black": "Pour les PC où la vidéo reste noire",
 };

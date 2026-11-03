@@ -29,6 +29,10 @@ import '../widgets/desktop_subtitles.dart';
 import '../widgets/player_bar_title.dart';
 import '../widgets/gold_tag.dart';
 import '../services/desktop_stream_setup.dart';
+import '../services/desktop_live_recovery.dart';
+import '../widgets/desktop_reconnecting_badge.dart';
+import '../widgets/skip_segment_button.dart';
+import '../services/skip_segments.dart';
 
 /// A deliberately standalone, Windows-only playback screen — see
 /// `pubspec.yaml`'s media_kit comment for why this exists at all:
@@ -221,6 +225,7 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
       _player = widget.existingPlayer!;
       _videoController = widget.existingController!;
       _ownsPlayer = false;
+      DesktopLiveRecovery.of(_player).watch(widget.channel);
     } else {
       _player = Player();
       // Best-effort mpv/ffmpeg-level reconnect tuning for a live,
@@ -240,7 +245,7 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
       // real safety net is _completedSubscription below, which reacts at
       // the app level instead of depending on mpv's own reconnect logic.
       configureDesktopStreamPlayer(_player, 'player');
-      _videoController = VideoController(_player);
+      _videoController = desktopVideoController(_player);
       // The volume / mute set last time (a handed-over mini player
       // session already has it).
       final storage = context.read<StorageService>();
@@ -277,15 +282,53 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
       Real4kChannels.record(
           _currentChannel.id, _player.state.width ?? 0, height);
     });
-    if (_isLive) {
-      _completedSubscription = _player.stream.completed.listen((completed) {
-        if (completed && mounted) {
-          debugPrint(
-              '[auto-recover] live channel reported completed — reopening');
-          _reload();
-        }
-      });
+    // Live: DesktopLiveRecovery (waits, retries, copies). A movie or
+    // episode that ends early was a cut stream: continue at the position.
+    _completedSubscription = _player.stream.completed.listen((completed) {
+      if (completed && mounted && !_isLive) _resumeAfterCut();
+    });
+  }
+
+  int _cutRetries = 0;
+
+  /// Skip intro / recap / credits (IntroDB), same watcher as Android.
+  final _segments = SkipSegmentWatcher();
+
+  void _skipSegment(SkipSegment segment) {
+    final next = _nextEpisode;
+    _segments.skip(segment, playNext: next == null ? null : () => _switchTo(next));
+  }
+
+  /// The real end of a movie or episode: Settings > Playback > Up Next.
+  /// Android's 30-seconds-early countdown has no Windows version, so
+  /// "early" also starts the next episode at the end here.
+  void _onEpisodeEnded() {
+    final next = _nextEpisode;
+    if (next == null) return;
+    if (context.read<StorageService>().getUpNextMode() == 'off') return;
+    debugPrint('DesktopPlayer: episode ended, Up next');
+    unawaited(_switchTo(next));
+  }
+
+  /// Android's 1.0.53 fix on Windows: a stream that ends well before its
+  /// length reconnects at the position instead of stopping there.
+  void _resumeAfterCut() {
+    final position = _player.state.position;
+    final duration = _player.state.duration;
+    if (duration <= Duration.zero ||
+        duration - position < const Duration(seconds: 60) ||
+        _cutRetries >= 3) {
+      _onEpisodeEnded();
+      return;
     }
+    _cutRetries++;
+    debugPrint('DesktopPlayer: stream cut at ${position.inSeconds} s of '
+        '${duration.inSeconds} s, resuming (try $_cutRetries)');
+    final channel = _currentChannel;
+    unawaited(Future<void>.delayed(const Duration(seconds: 2), () {
+      if (!mounted || _currentChannel.id != channel.id) return;
+      unawaited(_openMedia(channel, start: position));
+    }));
   }
 
   /// Open at the saved time without briefly playing the beginning first.
@@ -300,10 +343,10 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
         _currentChannel.id == channel.id;
     try {
       final resume = start ?? _progress.resumePosition(channel);
-      await _player.open(
-          Media(channel.url, start: resume, httpHeaders: _headersOf(channel)),
-          play: play);
+      if (start == null) _cutRetries = 0;
+      await openDesktopStream(_player, channel, start: resume, play: play);
       if (!current()) return;
+      DesktopLiveRecovery.of(_player).watch(channel);
       if (resume == null) {
         // Trakt/Simkl may only know a fraction until the stream opens.
         final duration = _player.state.duration > Duration.zero
@@ -365,8 +408,12 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
     }
     _completedSubscription?.cancel();
     _heightSubscription?.cancel();
+    _segments.dispose();
     _rootFocus.dispose();
-    if (_ownsPlayer && !_handedOffToMiniPlayer) _player.dispose();
+    if (!_handedOffToMiniPlayer) DesktopLiveRecovery.of(_player).stop();
+    if (_ownsPlayer && !_handedOffToMiniPlayer) {
+      DesktopLiveRecovery.disposePlayer(_player);
+    }
     super.dispose();
   }
 
@@ -434,12 +481,14 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
   /// Manual reconnect for a stalled live stream — this screen has none of
   /// `PlaybackService`'s automatic backup-server retry, so a simple
   /// re-open is the only recovery available.
-  void _reload() => _player.open(
-      Media(_currentChannel.url, httpHeaders: _headersOf(_currentChannel)));
-
-  /// Headers a Media Hub add-on asked for (null keeps media_kit's cache).
-  static Map<String, String>? _headersOf(Channel channel) =>
-      channel.httpHeaders.isEmpty ? null : channel.httpHeaders;
+  void _reload() {
+    final channel = _currentChannel;
+    unawaited(openDesktopStream(_player, channel).then((_) {
+      if (mounted && _currentChannel.id == channel.id) {
+        DesktopLiveRecovery.of(_player).watch(channel);
+      }
+    }));
+  }
 
   void _skip(Duration amount) {
     final current = _player.state.position;
@@ -774,6 +823,23 @@ class _DesktopPlayerScreenState extends State<DesktopPlayerScreen> {
                             textScaler: TextScaler.linear(context
                                 .watch<AppPreferences>()
                                 .subtitleScale)))),
+                DesktopReconnectingBadge(
+                    recovery: DesktopLiveRecovery.of(_player)),
+                Builder(builder: (context) {
+                  final storage = context.read<StorageService>();
+                  _segments.attachDesktop(_player, _currentChannel.id,
+                      enabled: storage.getSkipSegments(),
+                      episodeCandidate:
+                          !_isLive && !_currentChannel.transientPlayback,
+                      tmdbKey: storage.getTmdbApiKey());
+                  return SkipSegmentButton(
+                    watcher: _segments,
+                    controlsVisible: _controlsVisible,
+                    hasNext: _nextEpisode != null,
+                    hint: SkipHint.none,
+                    onSkip: _skipSegment,
+                  );
+                }),
                 if (_controlsVisible) ...[
                   Positioned(
                     top: 0,

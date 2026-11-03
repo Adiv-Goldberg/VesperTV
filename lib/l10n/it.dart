@@ -2403,4 +2403,8 @@ const Map<String, String> kIt = {
   "{n} sources": "{n} fonti",
   "Not listed yet": "Non ancora in elenco",
   "The newest episode may not be in the catalog yet. Press Play to ask your sources.": "L'episodio più recente potrebbe non essere ancora nel catalogo. Premi Riproduci per chiedere alle tue fonti.",
+  "The channel stopped. Still trying to reconnect...": "Il canale si è fermato. Riprovo a riconnettermi…",
+  "Software video": "Video software",
+  "Turn on if channels or movies stay black while the sound or the stream plays. Draws the video without the graphics card path. Uses more CPU on 4K. Applies from the next video.": "Attiva se canali o film restano neri mentre l'audio o lo stream va. Mostra il video senza passare dalla scheda grafica. Usa più CPU in 4K. Vale dal prossimo video.",
+  "For PCs where video stays black": "Per i PC dove il video resta nero",
 };
