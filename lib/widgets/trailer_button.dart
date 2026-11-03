@@ -110,7 +110,7 @@ class _TrailerButtonState extends State<TrailerButton> {
         await playback.play(channel);
         if (!mounted) return;
         await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => PlayerScreen(channel: channel)));
+            PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)));
         opened = true;
       }
       if (!opened) throw StateError('No handler');

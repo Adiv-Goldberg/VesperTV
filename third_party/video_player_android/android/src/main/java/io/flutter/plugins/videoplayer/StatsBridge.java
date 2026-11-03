@@ -96,6 +96,15 @@ final class StatsBridge implements MethodChannel.MethodCallHandler {
       video.ensureUpdated();
       m.put("rendered", video.renderedOutputBufferCount);
       m.put("dropped", video.droppedBufferCount);
+      // Multiview diagnostics: dropped before decoding (catching up to a keyframe) vs late
+      // decoded frames, and how early/late frames reach the renderer on average.
+      m.put("queued", video.queuedInputBufferCount);
+      m.put("droppedInput", video.droppedInputBufferCount);
+      m.put("droppedToKeyframe", video.droppedToKeyframeCount);
+      m.put("skipped", video.skippedOutputBufferCount);
+      m.put("maxConsecutiveDropped", video.maxConsecutiveDroppedBufferCount);
+      m.put("offsetSumUs", video.totalVideoFrameProcessingOffsetUs);
+      m.put("offsetCount", video.videoFrameProcessingOffsetCount);
     }
     // The playing video format: Data pool's "Stream HDR" row and Match frame rate (Dart
     // DisplayMatch) read it. frameRate is -1 when the stream doesn't declare one (live TS).

@@ -19,6 +19,7 @@ import '../models/epg_program.dart';
 import '../models/m3u_group.dart';
 import '../models/xtream_series.dart';
 import '../services/app_preferences.dart';
+import '../services/perf_diagnostics.dart';
 import '../services/app_update_service.dart';
 import '../services/desktop_window.dart';
 import '../services/desktop_mini_player.dart';
@@ -702,10 +703,8 @@ class _TvHomeScreenState extends State<TvHomeScreen>
       await _moveGroupStep(key.substring(0, i), key.substring(i + 2), delta);
     }
 
-    void done() =>
-        _movingChannel != null ? _endChannelMove() : _endGroupMove();
-    Widget button(IconData icon, String label, VoidCallback onTap) =>
-        Padding(
+    void done() => _movingChannel != null ? _endChannelMove() : _endGroupMove();
+    Widget button(IconData icon, String label, VoidCallback onTap) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6),
           child: FilledButton.tonalIcon(
             style: FilledButton.styleFrom(minimumSize: const Size(64, 56)),
@@ -2530,8 +2529,8 @@ class _TvHomeScreenState extends State<TvHomeScreen>
     // inline preview built later, once the race had settled.
     await playback.play(channel);
     if (!mounted) return;
-    Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PlayerScreen(channel: channel)));
+    Navigator.of(context)
+        .push(PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)));
   }
 
   /// The last channel [_previewOrOpenChannel] started, and its still-running
@@ -2577,7 +2576,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
       final playing = playback.currentChannel;
       if (playing == null) return;
       Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PlayerScreen(channel: playing)));
+          PlayerPageRoute(builder: (_) => PlayerScreen(channel: playing)));
       return;
     }
     _catchupPreview = (id: channel.id, at: at);
@@ -2617,7 +2616,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
       if (pending != null) await pending;
       if (!mounted || playback.currentChannel?.id != channel.id) return;
       Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PlayerScreen(channel: channel)));
+          PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)));
       return;
     }
     // The plain Live list hands the playing row `_currentChannelFocusNode`
@@ -2671,8 +2670,8 @@ class _TvHomeScreenState extends State<TvHomeScreen>
   void _goFullscreenIfPlaying() {
     final channel = context.read<PlaybackService>().currentChannel;
     if (channel == null) return;
-    Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PlayerScreen(channel: channel)));
+    Navigator.of(context)
+        .push(PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)));
   }
 
   /// The catalog row a movie/series was just opened from — see
@@ -3039,6 +3038,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    PerfDiagnostics.homeBuilds++;
     final playlist = context.watch<PlaylistManager>();
     final epg = context.watch<EpgService>();
     final prefs = context.watch<AppPreferences>();
@@ -4662,7 +4662,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
         // Off while the pane shows an error: its buttons need the taps.
         onTap: context.watch<PlaybackService>().error != null
             ? null
-            : () => Navigator.of(context).push(MaterialPageRoute(
+            : () => Navigator.of(context).push(PlayerPageRoute(
                 builder: (_) => PlayerScreen(channel: channel))),
         // Same channel-id key as the full-size pane in the non-timeline
         // branch below — see the long comment there for why (stale-frame
@@ -5174,7 +5174,7 @@ class _TvHomeScreenState extends State<TvHomeScreen>
               child: IconButton.filledTonal(
                 tooltip: tr('Full screen'),
                 icon: const Icon(Icons.fullscreen),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                onPressed: () => Navigator.of(context).push(PlayerPageRoute(
                     builder: (_) => PlayerScreen(channel: channel))),
               ),
             ),

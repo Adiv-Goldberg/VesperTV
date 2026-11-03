@@ -36,6 +36,13 @@ import '../widgets/media_file_info_overlay.dart';
 import '../widgets/phone_picture_in_picture.dart';
 import '../widgets/player_touch_lock.dart';
 
+/// The route every full-screen player opens with. Plain [MaterialPageRoute]
+/// again: a native-surface glide between the preview and full screen was
+/// tried and dropped (owner, 2026-11-03: the snappy switch felt better).
+class PlayerPageRoute<T> extends MaterialPageRoute<T> {
+  PlayerPageRoute({required super.builder, super.settings});
+}
+
 /// Fullscreen playback screen. Pushed when a channel is tapped on a phone,
 /// or when the mini-player bar is tapped to expand back into fullscreen —
 /// either way it attaches to the same shared [PlaybackService] controller,

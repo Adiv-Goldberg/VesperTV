@@ -12,6 +12,7 @@ import '../models/channel.dart';
 import '../models/series_details.dart';
 import '../models/xtream_series.dart';
 import '../services/archive_service.dart';
+import '../services/missing_episodes.dart';
 import '../services/archive_playback_sources.dart';
 import '../services/archive_resume_source.dart';
 import '../services/archive_stream_size.dart';
@@ -337,7 +338,7 @@ Future<void> playArchiveTitle(
     // TvHomeScreen._selectChannel).
     await playback.play(channel);
     if (!context.mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute(
+    await Navigator.of(context).push(PlayerPageRoute(
         builder: (_) => PlayerScreen(channel: channel, sources: sources)));
   }
 }
@@ -378,12 +379,21 @@ Future<void> openArchiveSeries(
   var meta = preview;
   final videosById = <String, ArchiveVideo>{};
 
+  final tmdbKey = context.read<StorageService>().getTmdbApiKey() ?? '';
+
   Future<SeriesEpisodesResult> load() async {
     meta = await service.meta(source, preview) ?? preview;
+    // Cinemeta can be days behind on new episodes (a daily soap's newest
+    // one); stream-only add-ons already stream them.
+    final missing = source.suppliesOwnMetadata || source.server != null
+        ? const <ArchiveVideo>[]
+        : await MissingEpisodes.instance.find(meta, tmdbKey: tmdbKey).timeout(
+            const Duration(seconds: 8),
+            onTimeout: () => const <ArchiveVideo>[]);
     final episodes = <int, List<Channel>>{};
     final details = <String, EpisodeDetails>{};
     videosById.clear();
-    for (final v in meta.videos) {
+    for (final v in [...meta.videos, ...missing]) {
       final placeholder = service
           .channelFor(source, meta, const ArchiveStream(url: ''), episode: v);
       videosById[placeholder.id] = v;

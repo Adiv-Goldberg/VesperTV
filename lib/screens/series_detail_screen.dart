@@ -400,7 +400,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
       // end (see `PlaybackService._nextInQueue`), across seasons too.
       context.read<PlaybackService>().setUpNextQueue(_allEpisodes);
       await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PlayerScreen(channel: episode)));
+          PlayerPageRoute(builder: (_) => PlayerScreen(channel: episode)));
     }
     _refreshProgress();
   }

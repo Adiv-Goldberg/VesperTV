@@ -16,6 +16,7 @@ import 'package:nox_iptv/models/channel.dart';
 import 'package:nox_iptv/models/epg_program.dart';
 import 'package:nox_iptv/models/sports.dart';
 import 'package:nox_iptv/screens/sports_screen.dart';
+import 'package:nox_iptv/screens/multiview_screen.dart';
 import 'package:nox_iptv/services/guide_key.dart';
 import 'package:nox_iptv/screens/player_screen.dart';
 import 'package:nox_iptv/screens/sports_live_list_screen.dart';
@@ -43,6 +44,8 @@ import 'package:nox_iptv/utils/route_observer.dart';
 import 'package:nox_iptv/utils/tv_theme.dart';
 import 'package:nox_iptv/widgets/sports_mode_toggle.dart';
 import 'package:nox_iptv/widgets/sports_mode_shell.dart';
+import 'package:nox_iptv/widgets/sports_league_rail.dart';
+import 'package:nox_iptv/widgets/sports_mode_live_panel.dart';
 
 class _Storage extends StorageService {
   @override
@@ -704,9 +707,30 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  SportsChip chip(WidgetTester tester, String label) => tester
-      .widgetList<SportsChip>(find.byType(SportsChip))
-      .firstWhere((widget) => widget.label == label);
+  /// A league / tool control: a chip, or a row of regular Sports Trak's
+  /// league rail ('All' = its All leagues row).
+  ({FocusNode focusNode, String label, bool selected}) chip(
+      WidgetTester tester, String label) {
+    for (final c in tester.widgetList<SportsChip>(find.byType(SportsChip))) {
+      if (c.label == label) {
+        return (focusNode: c.focusNode, label: c.label, selected: c.selected);
+      }
+    }
+    for (final rail
+        in tester.widgetList<SportsLeagueRail>(find.byType(SportsLeagueRail))) {
+      for (final item in rail.items) {
+        if (item.label == label ||
+            (label == 'All' && item.id == 'league:all')) {
+          return (
+            focusNode: item.focusNode,
+            label: label,
+            selected: item.selected
+          );
+        }
+      }
+    }
+    throw StateError('No control "$label"');
+  }
 
   Future<void> manyLeagues() async {
     await storage.setSportsAddedLeagues([college]);
@@ -840,7 +864,9 @@ void main() {
     final target =
         find.byKey(const ValueKey('league:basketball.mens-college-basketball'));
     expect(tester.getRect(target).left, greaterThan(960));
-    final all = chip(tester, 'All');
+    final all = tester
+        .widgetList<SportsChip>(find.byType(SportsChip))
+        .firstWhere((c) => c.label == 'All');
     expect(
         find.descendant(
             of: find.byWidget(all), matching: find.byIcon(Icons.expand_more)),
@@ -921,7 +947,7 @@ void main() {
     await disposePage(tester);
   });
 
-  testWidgets('regular Sports Trak keeps All tap and horizontal league reorder',
+  testWidgets('regular Sports Trak keeps All tap and rail league reorder',
       (tester) async {
     await prefs.setSportsMode(false);
     await storage.setSportsFavoriteLeague('mlb');
@@ -941,7 +967,7 @@ void main() {
     chip(tester, 'NFL').focusNode.requestFocus();
     await tester.pumpAndSettle();
     await holdSelect(tester);
-    await press(tester, LogicalKeyboardKey.arrowLeft);
+    await press(tester, LogicalKeyboardKey.arrowUp);
     expect(storage.getSportsLeagues()!.first, 'nfl');
     await press(tester, LogicalKeyboardKey.select);
     expect(tester.takeException(), isNull);
@@ -973,7 +999,9 @@ void main() {
       chip(tester, 'Edit leagues').focusNode.requestFocus();
       await tester.pumpAndSettle();
       // Removing the quality chip must not leave a dead remote-focus slot.
-      await press(tester, LogicalKeyboardKey.arrowRight);
+      // Regular Sports Trak: the league rail runs top to bottom.
+      await press(tester,
+          mode ? LogicalKeyboardKey.arrowRight : LogicalKeyboardKey.arrowDown);
       expect(getFocus(), 'sports-chip-league:scores');
       chip(tester, 'Edit leagues').focusNode.requestFocus();
       await tester.pumpAndSettle();
@@ -1480,11 +1508,7 @@ void main() {
     await prefs.setSportsMode(false);
     await open(tester, games: []);
     expect(find.byKey(const ValueKey('sports-mode-rail')), findsNothing);
-    tester
-        .widgetList<SportsChip>(find.byType(SportsChip))
-        .firstWhere((chip) => chip.label == 'Sports Mode')
-        .focusNode
-        .requestFocus();
+    chip(tester, 'Sports Mode').focusNode.requestFocus();
     await tester.pump();
     await press(tester, LogicalKeyboardKey.select);
     expect(find.byType(SportsModeToggle), findsOneWidget);
@@ -1564,6 +1588,7 @@ void main() {
 
   Finder leagueControl(String id) => find.byWidgetPredicate((widget) =>
       widget.key == ValueKey('league:$id') ||
+      widget.key == ValueKey('rail-league:$id') ||
       widget.key == ValueKey('sports-mode-league:$id'));
 
   for (final mode in [false, true]) {
@@ -1796,4 +1821,146 @@ void main() {
     expect(tester.takeException(), isNull);
     await disposePage(tester);
   });
+
+  testWidgets('regular Sports Trak: league rail expands and links to the page',
+      (tester) async {
+    await prefs.setSportsMode(false);
+    await open(tester, games: []);
+    await tester.pumpAndSettle();
+    expect(find.byType(SportsLeagueRail), findsOneWidget);
+    expect(getFocus(), 'sports-chip-league:all');
+    expect(find.text('All leagues'), findsNothing);
+    await press(tester, LogicalKeyboardKey.arrowUp);
+    expect(getFocus(), 'sports-chip-rail:expand');
+    await press(tester, LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    expect(storage.getSportsRailExpanded(), isTrue);
+    expect(find.text('All leagues'), findsOneWidget);
+    await press(tester, LogicalKeyboardKey.arrowDown);
+    await press(tester, LogicalKeyboardKey.arrowDown);
+    expect(getFocus(), 'sports-chip-league:nhl');
+    await press(tester, LogicalKeyboardKey.arrowRight);
+    expect(getFocus(), startsWith('sports-chip-day:'));
+    chip(tester, 'Yesterday').focusNode.requestFocus();
+    await tester.pump();
+    await press(tester, LogicalKeyboardKey.arrowLeft);
+    expect(getFocus(), 'sports-chip-league:all');
+    expect(tester.takeException(), isNull);
+    await disposePage(tester);
+  });
+
+  testWidgets('hold OK > Play in Multiview opens the checked live games',
+      (tester) async {
+    await prefs.setSportsMode(false);
+    final games = await matchedGames();
+    final routes = _MultiviewRoutes();
+    await open(tester, games: games, observer: routes);
+    await tester.pumpAndSettle();
+    InkWell card(String id) => tester.widget<InkWell>(find.byWidgetPredicate(
+        (w) => w is InkWell && w.focusNode?.debugLabel == 'sports-card-$id'));
+    card('nhl:game100').focusNode!.requestFocus();
+    await tester.pump();
+    await holdSelect(tester);
+    final entry = find.text('Play in Multiview');
+    await tester.scrollUntilVisible(entry, 120,
+        scrollable: find
+            .descendant(
+                of: find.byType(Dialog), matching: find.byType(Scrollable))
+            .first);
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    card('nhl:game101').focusNode!.requestFocus();
+    await tester.pump();
+    await press(tester, LogicalKeyboardKey.select);
+    expect(find.byIcon(Icons.check), findsNWidgets(2));
+    expect(playback.plays, isEmpty);
+    await press(tester, LogicalKeyboardKey.mediaPlayPause);
+    await tester.pumpAndSettle();
+    expect(routes.channels.map((c) => c.id), ['p1::0', 'p1::1']);
+    expect(find.byIcon(Icons.check), findsNothing);
+    expect(tester.takeException(), isNull);
+    await disposePage(tester);
+  });
+
+  testWidgets('Live now group: one row per game, hold OK = its sources',
+      (tester) async {
+    Channel ch(String id) => Channel(
+        id: 'p1::$id',
+        rawId: id,
+        playlistId: 'p1',
+        name: 'Channel $id',
+        group: 'Sports',
+        url: 'https://test/$id');
+    final played = <String>[];
+    final panel = GlobalKey<SportsModeLivePanelState>();
+    tester.view.physicalSize = const Size(960, 540);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MultiProvider(
+        providers: [
+          Provider<StorageService>.value(value: storage),
+          ChangeNotifierProvider<AppPreferences>.value(value: prefs),
+          ChangeNotifierProvider<PlaylistManager>.value(value: playlist),
+          ChangeNotifierProvider<EpgService>(create: (_) => _Epg(storage)),
+          ChangeNotifierProvider<PlaybackService>.value(value: playback),
+        ],
+        child: MaterialApp(
+            home: Scaffold(
+                body: Align(
+          alignment: Alignment.centerLeft,
+          child: SportsModeLivePanel(
+            key: panel,
+            onPlay: (c, _) async => played.add(c.id),
+            liveGames: () async => [
+              (
+                id: 'g1',
+                title: 'A vs B',
+                note: "16'",
+                channels: [ch('1'), ch('2')]
+              ),
+              (id: 'g2', title: 'C vs D', note: "18'", channels: [ch('3')]),
+            ],
+          ),
+        )))));
+    await tester.pumpAndSettle();
+    final group = find.text('Live now');
+    expect(group, findsOneWidget);
+    await tester.tap(group);
+    await tester.pumpAndSettle();
+    expect(find.text('Channel 1'), findsOneWidget);
+    expect(find.text('Channel 2'), findsNothing);
+    expect(find.text('Channel 3'), findsOneWidget);
+    expect(find.textContaining('2 sources'), findsOneWidget);
+    // Hold OK on the first game: its sources.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    expect(played, isEmpty);
+    expect(find.text('Channel 2'), findsOneWidget);
+    expect(find.text('Channel 3'), findsNothing);
+    // Back: the games again; a short OK plays the best channel.
+    expect(panel.currentState!.back(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Channel 3'), findsOneWidget);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump();
+    expect(played, ['p1::1']);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+/// Records Multiview pushes and removes them (no video in a widget test).
+class _MultiviewRoutes extends NavigatorObserver {
+  final List<Channel> channels = [];
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (previousRoute == null || route is! MaterialPageRoute) return;
+    final page = route.builder(navigator!.context);
+    if (page is! MultiviewScreen) return;
+    channels.addAll(page.initialChannels);
+    scheduleMicrotask(() => navigator!.removeRoute(route));
+  }
 }

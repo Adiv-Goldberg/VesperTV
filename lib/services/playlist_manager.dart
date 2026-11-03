@@ -21,6 +21,7 @@ import 'local_playlist_files.dart';
 import 'tmdb_enrichment_service.dart';
 import 'user_groups.dart';
 import 'channel_copy_fallback.dart';
+import 'perf_diagnostics.dart';
 
 /// Holds every playlist's parsed catalog, group visibility, and the
 /// (per-viewer — see [applyActiveViewer]) favorites — a thin merge/dispatch
@@ -65,6 +66,7 @@ class PlaylistManager extends ChangeNotifier {
   /// notifies mid-frame is deferred to the end of that frame instead.
   @override
   void notifyListeners() {
+    PerfDiagnostics.notifies++;
     // Anything changed (channels loaded, hidden, moved): count again.
     _liveCounts = null;
     if (SchedulerBinding.instance.schedulerPhase ==
@@ -163,8 +165,9 @@ class PlaylistManager extends ChangeNotifier {
   /// .sortOrder] — see [PlaylistProfile.sortOrderFor]'s doc comment. Used
   /// by every getter below whose order is actually what the user sees
   /// rendered in that specific tab (channels/tvGroups/vodGroups/
-  /// seriesGroups); everything else (connection retries, counts, favorite
-  /// lists, ...) stays on the plain base order above since nothing about
+  /// seriesGroups, the Live TV Favourites and all-playlist channel lists);
+  /// everything else (connection retries, counts, ...) stays on the plain
+  /// base order above since nothing about
   /// those is tab-specific or genuinely order-sensitive to the viewer.
   List<PlaylistSession> _enabledSessionsSortedFor(String tabCategory) =>
       _sessions.where((s) => s.profile.enabled).toList()
@@ -1388,7 +1391,9 @@ class PlaylistManager extends ChangeNotifier {
               ?.visibleChannels(groupTitle: groupTitle, category: category) ??
           const [];
     }
-    final all = _enabledSessionsSorted
+    // The tab's own playlist priority (Live TV can differ from the base
+    // order): Multiview's picker and Search list playlists like the tab.
+    final all = _enabledSessionsSortedFor(category)
         .expand((s) =>
             s.visibleChannels(groupTitle: groupTitle, category: category))
         .toList();
@@ -1553,7 +1558,7 @@ class PlaylistManager extends ChangeNotifier {
   /// channel of a favourited live group, per playlist in order (starred
   /// first within each playlist).
   List<Channel> get favoriteLiveChannelsWithGroups =>
-      _enabledSessionsSorted.expand((s) {
+      _enabledSessionsSortedFor('tv').expand((s) {
         final live = s.isXtream
             ? s.liveChannels
             : s.channels.where((c) => _classifyGroupPublic(c.group) == 'tv');
@@ -1613,7 +1618,7 @@ class PlaylistManager extends ChangeNotifier {
     return to;
   }
 
-  List<Channel> get favoriteLiveChannels => _enabledSessionsSorted
+  List<Channel> get favoriteLiveChannels => _enabledSessionsSortedFor('tv')
       .expand((s) => s.isXtream
           ? s.liveChannels.where((c) => c.isFavorite)
           : s.channels.where(
@@ -2060,6 +2065,27 @@ class PlaylistManager extends ChangeNotifier {
     }
     _invalidateFavoriteCatalog(clear: true);
     await ensureFavoriteCatalogLoaded();
+  }
+
+  /// The catalog database's queue wait ([PerfDiagnostics]).
+  Future<void> pingCatalog() => _catalogDb.ping();
+
+  /// Send log, once: how big each playlist is (`CatalogSize:`).
+  Future<void> logCatalogSize() async {
+    final rows =
+        await PerfDiagnostics.timed('rowCounts', () => _catalogDb.rowCounts());
+    for (final s in _sessions) {
+      final (vod, series) = rows[s.profile.id] ?? (0, 0);
+      debugPrint('CatalogSize: playlist=${s.profile.id} '
+          'enabled=${s.profile.enabled} xtream=${s.isXtream} '
+          'live=${s.liveChannels.length} all=${s.channels.length} '
+          'liveCats=${s.liveCategories.length} '
+          'vodCats=${s.vodCategories.length} '
+          'seriesCats=${s.seriesCategories.length} '
+          'vodRows=$vod seriesRows=$series '
+          'vodLoaded=${s.vodByCategoryName.length} '
+          'hiddenGroups=${s.hiddenGroups.length}');
+    }
   }
 
   Future<void> warmAllCategories(String playlistId) =>

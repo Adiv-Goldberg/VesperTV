@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/channel.dart';
 import '../models/xtream_series.dart';
 import '../utils/title_search.dart';
+import 'perf_diagnostics.dart';
 
 /// Local database of VOD/series catalog items, keyed by category — the
 /// on-disk replacement for what used to be one JSON file per category.
@@ -270,7 +271,43 @@ class CatalogDatabase {
         }
       },
     );
+    for (final (table, index) in [
+      ('vod_channels', 'idx_vod_added'),
+      ('series_items', 'idx_series_added'),
+    ]) {
+      // Optional speed-up: a failure must never reach [_database]'s
+      // catch, which would delete the whole catalog.
+      try {
+        await PerfDiagnostics.timed(
+            'create $index',
+            () => db.execute(
+                'CREATE INDEX IF NOT EXISTS $index ON $table(added_at)'));
+      } catch (e) {
+        debugPrint('CatalogDatabase: $index skipped: $e');
+      }
+    }
     return db;
+  }
+
+  /// A trivial query: how long it waits = the database's queue
+  /// ([PerfDiagnostics]).
+  Future<void> ping() async => (await _database).rawQuery('SELECT 1');
+
+  /// Rows per playlist: `vod_channels` / `series_items` (Send log only).
+  Future<Map<String, (int, int)>> rowCounts() async {
+    final db = await _database;
+    final out = <String, (int, int)>{};
+    for (final (i, table) in ['vod_channels', 'series_items'].indexed) {
+      final rows = await db.rawQuery(
+          'SELECT playlist_id, COUNT(*) AS cnt FROM $table GROUP BY playlist_id');
+      for (final r in rows) {
+        final id = r['playlist_id'] as String;
+        final n = r['cnt'] as int? ?? 0;
+        final old = out[id] ?? (0, 0);
+        out[id] = i == 0 ? (n, old.$2) : (old.$1, n);
+      }
+    }
+    return out;
   }
 
   /// `ALTER TABLE ... ADD COLUMN` has no `IF NOT EXISTS` in SQLite, and
@@ -400,7 +437,11 @@ class CatalogDatabase {
   /// Items per category of every playlist, keyed `playlistId` + `\u0000` +
   /// category name — [table] is `vod_channels` or `series_items`. One
   /// grouped query (group counts in the Movies/TV Shows groups column).
-  Future<Map<String, int>> categoryCounts(String table) async {
+  Future<Map<String, int>> categoryCounts(String table) =>
+      PerfDiagnostics.timed(
+          'categoryCounts $table', () => _categoryCounts(table));
+
+  Future<Map<String, int>> _categoryCounts(String table) async {
     assert(table == 'vod_channels' || table == 'series_items');
     final db = await _database;
     final rows = await db.rawQuery(
@@ -412,6 +453,11 @@ class CatalogDatabase {
   }
 
   Future<void> upsertVodCategory(
+          String playlistId, String categoryName, List<Channel> items) =>
+      PerfDiagnostics.timed('upsertVod n=${items.length}',
+          () => _upsertVodCategory(playlistId, categoryName, items));
+
+  Future<void> _upsertVodCategory(
       String playlistId, String categoryName, List<Channel> items) async {
     writeGeneration++;
     final db = await _database;
@@ -478,6 +524,11 @@ class CatalogDatabase {
   /// passes only the currently-*enabled* ones, so a disabled playlist's
   /// stale cached rows don't leak into search results.
   Future<List<Channel>> searchVod(String query, List<String> playlistIds,
+          {int limit = 200}) =>
+      PerfDiagnostics.timed(
+          'searchVod', () => _searchVod(query, playlistIds, limit: limit));
+
+  Future<List<Channel>> _searchVod(String query, List<String> playlistIds,
       {int limit = 200}) async {
     final search = TitleSearch(query);
     if (playlistIds.isEmpty || search.isEmpty) return [];
@@ -536,6 +587,11 @@ class CatalogDatabase {
   /// ancient, so a provider that doesn't report the field contributes
   /// nothing here instead of filling the carousel with arbitrary titles.
   Future<List<Channel>> getRecentlyAddedVod(List<String> playlistIds,
+          {int limit = 5}) =>
+      PerfDiagnostics.timed(
+          'recentVod', () => _getRecentlyAddedVod(playlistIds, limit: limit));
+
+  Future<List<Channel>> _getRecentlyAddedVod(List<String> playlistIds,
       {int limit = 5}) async {
     if (playlistIds.isEmpty) return [];
     final db = await _database;
@@ -552,6 +608,11 @@ class CatalogDatabase {
   }
 
   Future<void> upsertSeriesCategory(
+          String playlistId, String categoryName, List<XtreamSeries> items) =>
+      PerfDiagnostics.timed('upsertSeries n=${items.length}',
+          () => _upsertSeriesCategory(playlistId, categoryName, items));
+
+  Future<void> _upsertSeriesCategory(
       String playlistId, String categoryName, List<XtreamSeries> items) async {
     writeGeneration++;
     final db = await _database;
@@ -580,6 +641,11 @@ class CatalogDatabase {
 
   /// See [searchVod]'s doc comment — same idea for series.
   Future<List<XtreamSeries>> searchSeries(
+          String query, List<String> playlistIds, {int limit = 200}) =>
+      PerfDiagnostics.timed('searchSeries',
+          () => _searchSeries(query, playlistIds, limit: limit));
+
+  Future<List<XtreamSeries>> _searchSeries(
       String query, List<String> playlistIds,
       {int limit = 200}) async {
     final search = TitleSearch(query);
@@ -608,6 +674,11 @@ class CatalogDatabase {
 
   /// See [getRecentlyAddedVod]'s doc comment — same idea for series.
   Future<List<XtreamSeries>> getRecentlyAddedSeries(List<String> playlistIds,
+          {int limit = 5}) =>
+      PerfDiagnostics.timed('recentSeries',
+          () => _getRecentlyAddedSeries(playlistIds, limit: limit));
+
+  Future<List<XtreamSeries>> _getRecentlyAddedSeries(List<String> playlistIds,
       {int limit = 5}) async {
     if (playlistIds.isEmpty) return [];
     final db = await _database;

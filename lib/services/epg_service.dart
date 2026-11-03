@@ -87,6 +87,9 @@ class EpgService extends ChangeNotifier {
   final StorageService _storage;
   final EpgDatabase _db;
 
+  /// The guide database's queue wait ([PerfDiagnostics]).
+  Future<void> pingDatabase() => _db.ping();
+
   /// How far ahead [_soon] reaches — comfortably past "next" for any
   /// channel, and reloaded every [_soonReloadEvery] so it never runs dry.
   static const _soonAhead = Duration(hours: 4);

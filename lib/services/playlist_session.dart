@@ -1041,9 +1041,13 @@ class PlaylistSession {
     if (loadingCategoryNames.contains(key)) return;
     if ((categoryFailureCounts[key] ?? 0) >= _maxCategoryFailures) return;
 
+    // Only the first load in flight changes what's on screen (the
+    // spinner); each extra notify rebuilt the whole TV home, and a big
+    // playlist opens hundreds of rows (300k-channel user, 2026-11-03).
+    final first = loadingCategoryNames.isEmpty;
     loadingCategoryNames.add(key);
     isLoading = true;
-    onNotify();
+    if (first) onNotify();
 
     try {
       if (tabCategory == 'vod') {
@@ -1100,9 +1104,33 @@ class PlaylistSession {
       categoryFailureCounts[key] = (categoryFailureCounts[key] ?? 0) + 1;
     } finally {
       loadingCategoryNames.remove(key);
-      isLoading = false;
-      onNotify();
+      isLoading = loadingCategoryNames.isNotEmpty;
+      _notifyCategoryLoaded();
     }
+  }
+
+  DateTime? _lastCategoryNotify;
+  Timer? _categoryNotifyTimer;
+
+  /// A loaded row at most every 400 ms; the last one always arrives (a
+  /// trailing notify), so no row is left unshown.
+  void _notifyCategoryLoaded() {
+    if (_categoryNotifyTimer != null) return;
+    final now = DateTime.now();
+    final since = _lastCategoryNotify == null
+        ? null
+        : now.difference(_lastCategoryNotify!);
+    const window = Duration(milliseconds: 400);
+    if (since == null || since >= window) {
+      _lastCategoryNotify = now;
+      onNotify();
+      return;
+    }
+    _categoryNotifyTimer = Timer(window - since, () {
+      _categoryNotifyTimer = null;
+      _lastCategoryNotify = DateTime.now();
+      onNotify();
+    });
   }
 
   String _loadKey(String tabCategory, String categoryName) =>
@@ -1451,9 +1479,7 @@ class PlaylistSession {
       byTitle[title] = M3uGroup(
         title: title,
         playlistId: profile.id,
-        channels: prev == null
-            ? g.channels
-            : [...prev.channels, ...g.channels],
+        channels: prev == null ? g.channels : [...prev.channels, ...g.channels],
         isHidden: hiddenGroups.contains(title),
       );
     }

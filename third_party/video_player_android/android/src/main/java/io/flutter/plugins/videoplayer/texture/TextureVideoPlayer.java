@@ -34,6 +34,8 @@ import io.flutter.view.TextureRegistry.SurfaceProducer;
 public final class TextureVideoPlayer extends VideoPlayer implements SurfaceProducer.Callback {
   // True when the ExoPlayer instance has a null surface.
   private boolean needsSurface = true;
+  // VesperTV patch: output goes to a MultiviewTiles SurfaceView, not the texture.
+  private boolean tile = false;
 
   /**
    * Creates a texture video player.
@@ -157,6 +159,16 @@ public final class TextureVideoPlayer extends VideoPlayer implements SurfaceProd
 
     surfaceProducer.setCallback(this);
 
+    // VesperTV patch: a native Multiview tile (MultiviewTiles) already drew into its own
+    // SurfaceView, bound by VideoPlayer before prepare; the texture is never used.
+    tile = options.nativeSurfaceHolder != null;
+    if (tile) {
+      // Created but unused: the producer's release() calls Surface.release() on it and threw
+      // a NullPointerException when it was never asked for (+585, LOG-YFGHLM).
+      surfaceProducer.getSurface();
+      needsSurface = false;
+      return;
+    }
     Surface surface = surfaceProducer.getSurface();
     this.exoPlayer.setVideoSurface(surface);
     needsSurface = surface == null;
@@ -178,7 +190,7 @@ public final class TextureVideoPlayer extends VideoPlayer implements SurfaceProd
 
   @RestrictTo(RestrictTo.Scope.LIBRARY)
   public void onSurfaceAvailable() {
-    if (needsSurface) {
+    if (needsSurface && !tile) {
       // TextureVideoPlayer must always set a surfaceProducer.
       assert surfaceProducer != null;
       exoPlayer.setVideoSurface(surfaceProducer.getSurface());
@@ -188,6 +200,7 @@ public final class TextureVideoPlayer extends VideoPlayer implements SurfaceProd
 
   @RestrictTo(RestrictTo.Scope.LIBRARY)
   public void onSurfaceCleanup() {
+    if (tile) return;
     exoPlayer.setVideoSurface(null);
     needsSurface = true;
   }

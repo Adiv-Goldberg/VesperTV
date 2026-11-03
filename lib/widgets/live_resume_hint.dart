@@ -262,7 +262,7 @@ class _LiveResumeHintState extends State<LiveResumeHint> {
     final channel = _resumableChannel;
     if (channel == null) return;
     widget.navigatorKey.currentState?.push(
-      MaterialPageRoute(builder: (_) => PlayerScreen(channel: channel)),
+      PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)),
     );
   }
 

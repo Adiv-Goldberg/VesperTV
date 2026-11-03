@@ -636,6 +636,12 @@ class StorageService {
   Future<void> setArchiveAutoLargest(bool value) =>
       _prefs.setBool(_vk('vesper_archive_auto_largest'), value);
 
+  /// Sports Trak's league rail shows the names (device-only).
+  bool getSportsRailExpanded() =>
+      _prefs.getBool('vesper_sports_rail_expanded') ?? false;
+  Future<void> setSportsRailExpanded(bool value) =>
+      _prefs.setBool('vesper_sports_rail_expanded', value);
+
   bool getSportsHideScores() =>
       _prefs.getBool(_vk(AppConstants.keySportsHideScores)) ?? false;
   bool getSportsMode() =>

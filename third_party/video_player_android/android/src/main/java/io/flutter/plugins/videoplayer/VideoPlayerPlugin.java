@@ -38,6 +38,8 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
   @Nullable private VideoLayering videoLayering;
   // VesperTV patch: Native video surface (beta), see NativeVideoSurface.
   @Nullable private NativeVideoSurface nativeVideoSurface;
+  // VesperTV patch: native Multiview tiles, see MultiviewTiles.
+  @Nullable private MultiviewTiles multiviewTiles;
 
   /** Register this with the v2 embedding for the plugin to respond to lifecycle callbacks. */
   public VideoPlayerPlugin() {}
@@ -58,6 +60,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
     audioPassthrough = new AudioPassthrough(binding.getBinaryMessenger());
     videoLayering = new VideoLayering(binding.getBinaryMessenger());
     nativeVideoSurface = new NativeVideoSurface(binding.getBinaryMessenger(), videoPlayers);
+    multiviewTiles = new MultiviewTiles(binding.getBinaryMessenger());
 
     binding
         .getPlatformViewRegistry()
@@ -94,17 +97,23 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
       nativeVideoSurface = null;
     }
     onDestroy();
+    if (multiviewTiles != null) {
+      multiviewTiles.dispose();
+      multiviewTiles = null;
+    }
   }
 
   // VesperTV patch: the native video surface lives in the activity's content view.
   @Override
   public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
     if (nativeVideoSurface != null) nativeVideoSurface.setActivity(binding.getActivity());
+    if (multiviewTiles != null) multiviewTiles.setActivity(binding.getActivity());
   }
 
   @Override
   public void onDetachedFromActivityForConfigChanges() {
     if (nativeVideoSurface != null) nativeVideoSurface.setActivity(null);
+    if (multiviewTiles != null) multiviewTiles.setActivity(null);
   }
 
   @Override
@@ -115,6 +124,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
   @Override
   public void onDetachedFromActivity() {
     if (nativeVideoSurface != null) nativeVideoSurface.setActivity(null);
+    if (multiviewTiles != null) multiviewTiles.setActivity(null);
   }
 
   private void disposeAllPlayers() {
@@ -189,6 +199,10 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
     }
     VideoPlayerOptions playerOptions = new VideoPlayerOptions(sharedOptions);
     playerOptions.backBufferDurationMs = options.getBackBufferDurationMs();
+    // A native Multiview tile: the player draws into its own SurfaceView (bound before
+    // prepare); the texture above stays registered but receives no frames.
+    playerOptions.nativeSurfaceHolder =
+        multiviewTiles == null ? null : multiviewTiles.claimTile(id);
 
     VideoPlayer videoPlayer =
         TextureVideoPlayer.create(
@@ -265,8 +279,12 @@ public class VideoPlayerPlugin implements FlutterPlugin, ActivityAware, AndroidV
   public void dispose(long playerId) {
     VideoPlayer player = getPlayer(playerId);
     if (nativeVideoSurface != null) nativeVideoSurface.onPlayerDisposed(playerId);
-    player.dispose();
-    videoPlayers.remove(playerId);
+    try {
+      player.dispose();
+    } finally {
+      videoPlayers.remove(playerId);
+      if (multiviewTiles != null) multiviewTiles.onPlayerDisposed(playerId);
+    }
   }
 
   @Override

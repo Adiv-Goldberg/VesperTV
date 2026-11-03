@@ -400,7 +400,7 @@ class _SearchScreenState extends State<SearchScreen> {
     await context.read<PlaybackService>().play(channel);
     if (!mounted) return;
     Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PlayerScreen(channel: channel)));
+        PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)));
   }
 
   void _openSeries(XtreamSeries series) {

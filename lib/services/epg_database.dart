@@ -3,6 +3,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'perf_diagnostics.dart';
+
 /// One programme row as stored in [EpgDatabase] — times are epoch
 /// milliseconds (UTC), so reading a row back never goes through
 /// `DateTime.parse` (the old JSON cache paid ~430k of those per cold start).
@@ -291,7 +293,12 @@ class EpgDatabase {
   ///
   /// Keep batches small (~1000 rows): sqflite has one connection, so a
   /// long commit would stall the guide's reads behind it.
-  Future<void> insertBatch(List<EpgRow> rows, String sourceUrl, int gen) async {
+  Future<void> insertBatch(List<EpgRow> rows, String sourceUrl, int gen) =>
+      PerfDiagnostics.timed('epg insert n=${rows.length}',
+          () => _insertBatch(rows, sourceUrl, gen));
+
+  Future<void> _insertBatch(
+      List<EpgRow> rows, String sourceUrl, int gen) async {
     if (rows.isEmpty) return;
     final db = await _database;
     final batch = db.batch();
@@ -332,6 +339,14 @@ class EpgDatabase {
   /// [keep] (normalized id -> their own oldest kept end), which only lose
   /// rows older than that — catch-up channels keep days of past.
   Future<void> deleteEndedBefore(int minStopMs,
+          {Map<String, int> keep = const {}}) =>
+      PerfDiagnostics.timed('epg trim keep=${keep.length}',
+          () => _deleteEndedBefore(minStopMs, keep: keep));
+
+  /// A trivial query: how long it waits = the guide database's queue.
+  Future<void> ping() async => (await _database).rawQuery('SELECT 1');
+
+  Future<void> _deleteEndedBefore(int minStopMs,
       {Map<String, int> keep = const {}}) async {
     final db = await _database;
     _invalidateSports();

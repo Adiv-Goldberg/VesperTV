@@ -71,7 +71,7 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
   }
 
   Future<void> _push(Channel c) => Navigator.of(context)
-      .push(MaterialPageRoute(builder: (_) => PlayerScreen(channel: c)));
+      .push(PlayerPageRoute(builder: (_) => PlayerScreen(channel: c)));
 
   Future<void> _menu(RecordingEntry r) async {
     final action = await showDialog<String>(

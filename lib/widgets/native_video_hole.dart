@@ -266,3 +266,123 @@ class _RenderHole extends RenderBox {
         .drawRect(offset & size, Paint()..blendMode = BlendMode.clear);
   }
 }
+
+/// Native Multiview tiles (Android, only while [NativeVideoSurface.active]):
+/// each Multiview screen's player draws into its own SurfaceView behind
+/// Flutter (`MultiviewTiles.java`) instead of a Flutter texture, and a
+/// [NativeTileHole] marks where it shows. Through textures every frame of
+/// every tile went through Flutter's raster thread: 3 tiles played at ~7 fps
+/// each (LOG-C47KFD) on a box that decodes 4K60 full screen.
+///
+/// The surface belongs to the player, not to the grid slot: Swap mode and
+/// full screen only move it (no reconnect, no decoder restart).
+class NativeMultiviewTiles {
+  NativeMultiviewTiles._();
+
+  static const _channel = MethodChannel('vespertv/multiview_tiles');
+
+  static bool get enabled => NativeVideoSurface.active;
+
+  /// Call right before `initialize(viewType: textureView)`: that player gets
+  /// its own SurfaceView (bound before its decoder starts).
+  static Future<void> nextIsTile() => _channel.invokeMethod<void>('nextIsTile');
+
+  static final _holes = <_NativeTileHoleState>[];
+  static bool _hooked = false;
+  static String? _sent;
+
+  static void _register(_NativeTileHoleState hole) {
+    _holes.add(hole);
+    if (!_hooked) {
+      _hooked = true;
+      SchedulerBinding.instance.addPersistentFrameCallback(_afterFrame);
+    }
+    SchedulerBinding.instance.scheduleFrame();
+  }
+
+  static void _unregister(_NativeTileHoleState hole) {
+    _holes.remove(hole);
+    SchedulerBinding.instance.scheduleFrame();
+  }
+
+  static void _afterFrame(Duration _) {
+    if (_holes.isEmpty && (_sent == null || _sent == '')) return;
+    final tiles = <int, Map<String, int>>{};
+    // Later holes win for the same player (the pushed full-screen view over
+    // its grid tile). Holes on a covered route are left out: the native
+    // surfaces under an opaque route would otherwise overlap the full-screen
+    // one, and SurfaceViews have no order among themselves.
+    for (final hole in _holes) {
+      if (!hole.visible) continue;
+      final box = hole.renderBox;
+      if (box == null || !box.attached || !box.hasSize) continue;
+      final dpr = hole.devicePixelRatio;
+      final origin = box.localToGlobal(Offset.zero);
+      tiles[hole.widget.playerId] = {
+        'playerId': hole.widget.playerId,
+        'left': (origin.dx * dpr).round(),
+        'top': (origin.dy * dpr).round(),
+        'width': (box.size.width * dpr).round(),
+        'height': (box.size.height * dpr).round(),
+      };
+    }
+    final list = tiles.values.toList();
+    final key = list
+        .map((t) => '${t['playerId']}:${t['left']},${t['top']},'
+            '${t['width']}x${t['height']}')
+        .join(';');
+    if (key == _sent) return;
+    _sent = key;
+    unawaited(_channel
+        .invokeMethod<void>('setTiles', {'tiles': list}).catchError((Object e) {
+      debugPrint('Multiview: native tiles failed: $e');
+    }));
+  }
+}
+
+/// Where a native Multiview tile's video shows: a transparent hole its
+/// SurfaceView behind Flutter shows through. See [NativeMultiviewTiles].
+class NativeTileHole extends StatefulWidget {
+  const NativeTileHole({super.key, required this.playerId});
+
+  /// The plugin's player id (`VideoPlayerHdrController.textureId`).
+  final int playerId;
+
+  @override
+  State<NativeTileHole> createState() => _NativeTileHoleState();
+}
+
+class _NativeTileHoleState extends State<NativeTileHole> {
+  final _key = GlobalKey();
+  bool _tickerOn = true;
+  double devicePixelRatio = 1;
+
+  RenderBox? get renderBox =>
+      _key.currentContext?.findRenderObject() as RenderBox?;
+
+  bool get visible => mounted && _tickerOn;
+
+  @override
+  void initState() {
+    super.initState();
+    NativeMultiviewTiles._register(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _tickerOn = TickerMode.valuesOf(context).enabled;
+    devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    SchedulerBinding.instance.scheduleFrame();
+  }
+
+  @override
+  void dispose() {
+    NativeMultiviewTiles._unregister(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      RepaintBoundary(child: _Hole(key: _key));
+}

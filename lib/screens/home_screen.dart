@@ -481,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await playback.play(c);
     if (!context.mounted) return;
     await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => PlayerScreen(channel: c)));
+        .push(PlayerPageRoute(builder: (_) => PlayerScreen(channel: c)));
   }
 
   Future<void> _open(_HomeItem item) async {

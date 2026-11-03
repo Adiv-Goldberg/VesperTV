@@ -70,6 +70,7 @@ import 'services/archive_service.dart';
 import 'services/backup_service.dart';
 import 'services/tracker_sync.dart';
 import 'services/watch_tracker.dart';
+import 'services/perf_diagnostics.dart';
 
 // AppLog keeps print/errors for Settings > Send log; the binding must be
 // initialized inside its zone (same zone as runApp).
@@ -551,6 +552,14 @@ class _NoxIptvAppState extends State<NoxIptvApp>
       // Not awaited — the splash never waits on it; the post-splash chain
       // below awaits the same future.
       unawaited(_epgService.init());
+      // Send-log probes for very large playlists (stalls, database queue).
+      PerfDiagnostics.start({
+        'catalog': _playlistManager.pingCatalog,
+        'epg': _epgService.pingDatabase,
+      });
+      unawaited(Future<void>.delayed(const Duration(seconds: 90), () {
+        unawaited(_playlistManager.logCatalogSize().catchError((_) {}));
+      }));
       _playbackService = PlaybackService(_storage, _playlistManager)
         ..catchupGuide = ((live) => _epgService.getPrograms(live.epgId));
       if (RecordingService.supported) {
@@ -859,8 +868,8 @@ class _NoxIptvAppState extends State<NoxIptvApp>
           // (then only the pill below). Same push the pill's own resume
           // does; PlayerScreen.initState starts playback.
           if (_playbackService.isPlayingSomething) return;
-          _navigatorKey.currentState?.push(MaterialPageRoute(
-              builder: (_) => PlayerScreen(channel: channel)));
+          _navigatorKey.currentState?.push(
+              PlayerPageRoute(builder: (_) => PlayerScreen(channel: channel)));
         } else {
           _playbackService.setPendingResumeChannel(channel);
         }
