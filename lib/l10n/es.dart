@@ -10,8 +10,8 @@ const Map<String, String> kEs = {
   "Direct support through Discord": "Soporte directo en Discord",
   "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
       "Preguntas, ayuda con la configuración, ideas y novedades: únete a la comunidad de VesperTV en Discord.",
-  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
-      "VesperTV es gratis y sin anuncios. Un café o una membresía Supporter ayuda a cubrir sus costes.",
+  "VesperTV is free, with no ads. See how you can help keep it running.":
+      "VesperTV es gratis y sin anuncios. Descubre cómo ayudar a mantenerlo.",
   "Show a test popup": "Mostrar una ventana de prueba",
   "A sample goal alert for 8 seconds.":
       "Un aviso de gol de ejemplo durante 8 segundos.",
@@ -1809,9 +1809,10 @@ const Map<String, String> kEs = {
   "College": "Universitario",
   // Settings > General > Support VesperTV
   "Support VesperTV": "Apoyar VesperTV",
-  "Buy a coffee or become a Supporter": "Invita un café o hazte Supporter",
-  "VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.":
-      "VesperTV es gratis y siempre lo será: sin anuncios, sin rastreo, sin funciones de pago. Si te gusta, puedes invitar un café o hacerte Supporter para ayudar a pagar el servidor, el sitio web y el desarrollo.",
+  "How you can help":
+      "Cómo ayudar",
+  "VesperTV is free and always will be: no ads, no tracking, no paid features. The support page shows how you can help pay for the server, the website and development.":
+      "VesperTV es gratis y siempre lo será: sin anuncios, sin rastreo, sin funciones de pago. La página de apoyo explica cómo ayudar a pagar el servidor, el sitio web y el desarrollo.",
   "Supporting is a thank-you, never a paywall: everyone gets the same app.":
       "Apoyar es un agradecimiento, nunca un muro de pago: todos tienen la misma aplicación.",
   // Settings > General > Remote tips

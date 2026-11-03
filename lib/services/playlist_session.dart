@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' show ClientException;
 
 import '../models/channel.dart';
 import '../models/m3u_group.dart';
@@ -1176,13 +1177,15 @@ class PlaylistSession {
     }
   }
 
-  Future<void> _loadOneVodCategory(XtreamApiService api, XtreamCategory cat,
+  /// Returns true when the fetch failed because the server couldn't be
+  /// reached (see [_isHostUnreachable]).
+  Future<bool> _loadOneVodCategory(XtreamApiService api, XtreamCategory cat,
       {bool force = false}) async {
     final key = _loadKey('vod', cat.name);
     if ((!force && vodByCategoryName.containsKey(cat.name)) ||
         loadingCategoryNames.contains(key) ||
         (categoryFailureCounts[key] ?? 0) >= _maxCategoryFailures) {
-      return;
+      return false;
     }
     loadingCategoryNames.add(key);
     try {
@@ -1196,22 +1199,26 @@ class PlaylistSession {
           .take(_maxItemsPerCategory)
           .toList();
       vodCategoryTotalCount[cat.name] = items.length;
+      return false;
     } catch (e) {
       debugPrint(
           'PlaylistSession[${profile.id}]: background load failed for movies "${cat.name}": $e');
       categoryFailureCounts[key] = (categoryFailureCounts[key] ?? 0) + 1;
+      return _isHostUnreachable(e);
     } finally {
       loadingCategoryNames.remove(key);
     }
   }
 
-  Future<void> _loadOneSeriesCategory(XtreamApiService api, XtreamCategory cat,
+  /// Returns true when the fetch failed because the server couldn't be
+  /// reached (see [_isHostUnreachable]).
+  Future<bool> _loadOneSeriesCategory(XtreamApiService api, XtreamCategory cat,
       {bool force = false}) async {
     final key = _loadKey('series', cat.name);
     if ((!force && seriesByCategoryName.containsKey(cat.name)) ||
         loadingCategoryNames.contains(key) ||
         (categoryFailureCounts[key] ?? 0) >= _maxCategoryFailures) {
-      return;
+      return false;
     }
     loadingCategoryNames.add(key);
     try {
@@ -1225,10 +1232,12 @@ class PlaylistSession {
               .take(_maxItemsPerCategory)
               .toList();
       seriesCategoryTotalCount[cat.name] = items.length;
+      return false;
     } catch (e) {
       debugPrint(
           'PlaylistSession[${profile.id}]: background load failed for TV shows "${cat.name}": $e');
       categoryFailureCounts[key] = (categoryFailureCounts[key] ?? 0) + 1;
+      return _isHostUnreachable(e);
     } finally {
       loadingCategoryNames.remove(key);
     }
@@ -1253,6 +1262,14 @@ class PlaylistSession {
     _lastWarmupNotify = now;
     onNotify();
   }
+
+  /// No answer from the server at all (DNS, refused, reset, TLS, timeout),
+  /// as opposed to an HTTP error or a bad reply for one category.
+  static bool _isHostUnreachable(Object e) =>
+      e is SocketException ||
+      e is ClientException ||
+      e is TimeoutException ||
+      e is HandshakeException;
 
   /// Walks every VOD/series category that isn't cached yet and isn't
   /// hidden, one at a time, fetching its items in the background.
@@ -1300,6 +1317,11 @@ class PlaylistSession {
               !hiddenGroups.contains(c.name))
           .toList();
       final total = vodTodo.length + seriesTodo.length;
+      // Server unreachable: retry that category once, then give up the
+      // whole warm-up instead of timing out on every remaining category
+      // (a dead playlist kept the database busy for minutes on big lists).
+      var retriedUnreachable = false;
+      var hostDown = false;
       if (total > 0) {
         isWarmingCatalog = true;
         warmCatalogDone = 0;
@@ -1311,11 +1333,26 @@ class PlaylistSession {
         _notifyWarmupProgress(force: true);
 
         final maxConcurrent = _categoryConcurrency;
+        Future<void> load(XtreamCategory cat,
+            Future<bool> Function(XtreamCategory) one) async {
+          if (!await one(cat) || hostDown) return;
+          if (retriedUnreachable) {
+            hostDown = true;
+            return;
+          }
+          retriedUnreachable = true;
+          if (await one(cat)) {
+            hostDown = true;
+            debugPrint('PlaylistSession[${profile.id}]: server unreachable, '
+                'catalog warm-up stopped');
+          }
+        }
+
         var vodIndex = 0;
         Future<void> vodWorker() async {
-          while (vodIndex < vodTodo.length) {
+          while (!hostDown && vodIndex < vodTodo.length) {
             final cat = vodTodo[vodIndex++];
-            await _loadOneVodCategory(api, cat, force: force);
+            await load(cat, (c) => _loadOneVodCategory(api, c, force: force));
             vodCatalogDone++;
             warmCatalogDone++;
             _notifyWarmupProgress();
@@ -1324,9 +1361,10 @@ class PlaylistSession {
 
         var seriesIndex = 0;
         Future<void> seriesWorker() async {
-          while (seriesIndex < seriesTodo.length) {
+          while (!hostDown && seriesIndex < seriesTodo.length) {
             final cat = seriesTodo[seriesIndex++];
-            await _loadOneSeriesCategory(api, cat, force: force);
+            await load(
+                cat, (c) => _loadOneSeriesCategory(api, c, force: force));
             seriesCatalogDone++;
             warmCatalogDone++;
             _notifyWarmupProgress();
@@ -1344,7 +1382,10 @@ class PlaylistSession {
               (_) => seriesWorker()),
         ]);
       }
-      await storage.setLastFullSyncAt(profile.id, DateTime.now());
+      // Not a full sync when the server was down: try again next launch.
+      if (!hostDown) {
+        await storage.setLastFullSyncAt(profile.id, DateTime.now());
+      }
     } catch (e) {
       debugPrint('PlaylistSession[${profile.id}]: catalog warm-up failed: $e');
     } finally {

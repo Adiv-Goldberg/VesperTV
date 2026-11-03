@@ -25,7 +25,7 @@ class SupportScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Text(tr(
-              'VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.')),
+              'VesperTV is free and always will be: no ads, no tracking, no paid features. The support page shows how you can help pay for the server, the website and development.')),
           const SizedBox(height: 20),
           Wrap(
             spacing: 24,

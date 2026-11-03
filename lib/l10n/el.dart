@@ -10,8 +10,8 @@ const Map<String, String> kEl = {
   "Direct support through Discord": "Άμεση υποστήριξη μέσω Discord",
   "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
       "Ερωτήσεις, βοήθεια με τη ρύθμιση, ιδέες και νέα εκδόσεων: μπες στην κοινότητα του VesperTV στο Discord.",
-  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
-      "Το VesperTV είναι δωρεάν, χωρίς διαφημίσεις. Ένας καφές ή μια συνδρομή Supporter βοηθά να καλυφθούν τα έξοδά του.",
+  "VesperTV is free, with no ads. See how you can help keep it running.":
+      "Το VesperTV είναι δωρεάν, χωρίς διαφημίσεις. Δείτε πώς μπορείτε να βοηθήσετε.",
   "Show a test popup": "Δοκιμαστικό αναδυόμενο",
   "A sample goal alert for 8 seconds.":
       "Ένα δείγμα ειδοποίησης γκολ για 8 δευτερόλεπτα.",
@@ -1765,9 +1765,10 @@ const Map<String, String> kEl = {
   "College": "Κολεγιακά",
   // Settings > General > Support VesperTV
   "Support VesperTV": "Υποστηρίξτε το VesperTV",
-  "Buy a coffee or become a Supporter": "Κεράστε έναν καφέ ή γίνετε Supporter",
-  "VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.":
-      "Το VesperTV είναι δωρεάν και θα μείνει πάντα: χωρίς διαφημίσεις, χωρίς παρακολούθηση, χωρίς επί πληρωμή λειτουργίες. Αν σας αρέσει, μπορείτε να κεράσετε έναν καφέ ή να γίνετε Supporter για να βοηθήσετε στο κόστος του διακομιστή, του ιστότοπου και της ανάπτυξης.",
+  "How you can help":
+      "Πώς μπορείτε να βοηθήσετε",
+  "VesperTV is free and always will be: no ads, no tracking, no paid features. The support page shows how you can help pay for the server, the website and development.":
+      "Το VesperTV είναι δωρεάν και θα είναι πάντα: χωρίς διαφημίσεις, χωρίς παρακολούθηση, χωρίς επί πληρωμή λειτουργίες. Η σελίδα υποστήριξης δείχνει πώς μπορείτε να βοηθήσετε να καλυφθούν ο διακομιστής, ο ιστότοπος και η ανάπτυξη.",
   "Supporting is a thank-you, never a paywall: everyone gets the same app.":
       "Η υποστήριξη είναι ένα ευχαριστώ, ποτέ πληρωμή για πρόσβαση: όλοι έχουν την ίδια εφαρμογή.",
   // Settings > General > Remote tips

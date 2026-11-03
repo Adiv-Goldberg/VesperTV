@@ -364,15 +364,12 @@ class _SettingsMenuScreenState extends State<SettingsMenuScreen> {
           ],
         ),
         _Category(
-          Icons.local_cafe_outlined,
+          Icons.favorite_outline,
           tr('Support VesperTV'),
-          tr('VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.'),
+          tr('VesperTV is free, with no ads. See how you can help keep it running.'),
           [
-            _Entry(
-                Icons.local_cafe_outlined,
-                tr('Support VesperTV'),
-                tr('Buy a coffee or become a Supporter'),
-                (_) => const SupportScreen()),
+            _Entry(Icons.favorite_outline, tr('Support VesperTV'),
+                tr('How you can help'), (_) => const SupportScreen()),
           ],
         ),
       ];

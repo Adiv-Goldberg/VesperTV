@@ -9,8 +9,8 @@ const Map<String, String> kFr = {
   "Direct support through Discord": "Aide directe sur Discord",
   "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
       "Questions, aide à la configuration, idées et nouvelles versions : rejoignez la communauté VesperTV sur Discord.",
-  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
-      "VesperTV est gratuit et sans publicité. Un café ou un abonnement Supporter aide à couvrir ses frais.",
+  "VesperTV is free, with no ads. See how you can help keep it running.":
+      "VesperTV est gratuit, sans publicité. Découvrez comment aider à le faire vivre.",
   "Show a test popup": "Afficher une fenêtre test",
   "A sample goal alert for 8 seconds.":
       "Un exemple d'alerte de but pendant 8 secondes.",
@@ -1821,9 +1821,10 @@ const Map<String, String> kFr = {
   "College": "Universitaire",
   // Settings > General > Support VesperTV
   "Support VesperTV": "Soutenir VesperTV",
-  "Buy a coffee or become a Supporter": "Offrir un café ou devenir Supporter",
-  "VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.":
-      "VesperTV est gratuit et le restera : pas de pub, pas de pistage, aucune fonction payante. Si vous l'aimez, vous pouvez offrir un café ou devenir Supporter pour aider à payer le serveur, le site et le développement.",
+  "How you can help":
+      "Comment aider",
+  "VesperTV is free and always will be: no ads, no tracking, no paid features. The support page shows how you can help pay for the server, the website and development.":
+      "VesperTV est gratuit et le restera : sans publicité, sans pistage, sans fonctions payantes. La page de soutien explique comment aider à payer le serveur, le site et le développement.",
   "Supporting is a thank-you, never a paywall: everyone gets the same app.":
       "Soutenir est un merci, jamais un accès payant : tout le monde a la même application.",
   // Settings > General > Remote tips

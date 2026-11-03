@@ -10,8 +10,8 @@ const Map<String, String> kIt = {
   "Direct support through Discord": "Supporto diretto su Discord",
   "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
       "Domande, aiuto con la configurazione, idee e novità sulle versioni: unisciti alla community di VesperTV su Discord.",
-  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
-      "VesperTV è gratuito e senza pubblicità. Un caffè o un abbonamento Supporter aiuta a coprirne i costi.",
+  "VesperTV is free, with no ads. See how you can help keep it running.":
+      "VesperTV è gratuito, senza pubblicità. Scopri come aiutarlo ad andare avanti.",
   "Show a test popup": "Mostra un popup di prova",
   "A sample goal alert for 8 seconds.":
       "Un avviso gol di esempio per 8 secondi.",
@@ -1818,9 +1818,10 @@ const Map<String, String> kIt = {
   "College": "Universitario",
   // Settings > General > Support VesperTV
   "Support VesperTV": "Sostieni VesperTV",
-  "Buy a coffee or become a Supporter": "Offri un caffè o diventa Supporter",
-  "VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.":
-      "VesperTV è gratuito e lo sarà sempre: niente pubblicità, niente tracciamento, nessuna funzione a pagamento. Se ti piace, puoi offrire un caffè o diventare Supporter per aiutare a pagare il server, il sito e lo sviluppo.",
+  "How you can help":
+      "Come aiutare",
+  "VesperTV is free and always will be: no ads, no tracking, no paid features. The support page shows how you can help pay for the server, the website and development.":
+      "VesperTV è gratuito e lo sarà sempre: niente pubblicità, niente tracciamento, nessuna funzione a pagamento. La pagina di supporto spiega come aiutare a pagare il server, il sito e lo sviluppo.",
   "Supporting is a thank-you, never a paywall: everyone gets the same app.":
       "Sostenere è un grazie, mai un accesso a pagamento: tutti hanno la stessa app.",
   // Settings > General > Remote tips

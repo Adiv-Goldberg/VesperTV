@@ -7,8 +7,8 @@ const Map<String, String> kDe = {
   "Direct support through Discord": "Direkter Support über Discord",
   "Questions, help with setup, feature ideas and release news: join the VesperTV community on Discord.":
       "Fragen, Hilfe bei der Einrichtung, Ideen für neue Funktionen und Neuigkeiten zu Releases: Tritt der VesperTV-Community auf Discord bei.",
-  "VesperTV is free, with no ads. A coffee or a Supporter membership helps cover its costs.":
-      "VesperTV ist kostenlos und werbefrei. Ein Kaffee oder eine Supporter-Mitgliedschaft hilft, die Kosten zu decken.",
+  "VesperTV is free, with no ads. See how you can help keep it running.":
+      "VesperTV ist kostenlos und werbefrei. So kannst du helfen, es am Laufen zu halten.",
   "Show a test popup": "Test-Popup anzeigen",
   "A sample goal alert for 8 seconds.":
       "Ein Beispiel für einen Toralarm, 8 Sekunden lang.",
@@ -1733,10 +1733,10 @@ const Map<String, String> kDe = {
   "TorBox API key": "TorBox-API-Schlüssel",
   "College": "College",
   "Support VesperTV": "VesperTV unterstützen",
-  "Buy a coffee or become a Supporter":
-      "Spendiere einen Kaffee oder werde Supporter",
-  "VesperTV is free and always will be: no ads, no tracking, no paid features. If you enjoy it, you can buy a coffee or become a Supporter to help pay for the server, the website and development.":
-      "VesperTV ist kostenlos und wird es immer bleiben: keine Werbung, kein Tracking, keine kostenpflichtigen Funktionen. Wenn es dir gefällt, kannst du einen Kaffee spendieren oder Supporter werden, um Server, Website und Entwicklung mitzufinanzieren.",
+  "How you can help":
+      "So kannst du helfen",
+  "VesperTV is free and always will be: no ads, no tracking, no paid features. The support page shows how you can help pay for the server, the website and development.":
+      "VesperTV ist kostenlos und bleibt es: keine Werbung, kein Tracking, keine kostenpflichtigen Funktionen. Die Support-Seite zeigt, wie du Server, Website und Entwicklung unterstützen kannst.",
   "Supporting is a thank-you, never a paywall: everyone gets the same app.":
       "Unterstützung ist ein Dankeschön, niemals eine Bezahlschranke: Alle bekommen dieselbe App.",
   "Language and clock, what plays when the app starts, Fast startup, clearing your history, and remote tips.":
