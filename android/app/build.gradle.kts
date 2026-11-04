@@ -22,7 +22,6 @@ if (hasReleaseKeystore) {
 android {
     namespace = "com.nox.nox_iptv"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.2.12479018"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
