@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -439,7 +440,6 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
     });
 
     _cells[initialTarget].focusNode.requestFocus();
-    _hideHeaderSoon(Duration.zero);
   }
 
   void _exitSwapMode() {
