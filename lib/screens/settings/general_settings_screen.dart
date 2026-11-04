@@ -696,6 +696,13 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   if (!Platform.isWindows)
                     _section('multiview', Icons.grid_view, tr('Multiview'),
                         children: [
+                          _MultiviewEnlargeFactorPicker(),
+                          _MultiviewEnlargedPositionPicker(),
+                          _MultiviewTwoScreenLayoutPicker(),
+
+
+
+                        children: [
                           TvSwitchListTile(
                             title: Text(tr('Show the Multiview tip')),
                             subtitle: Text(tr(
@@ -908,6 +915,186 @@ class _StartSectionPicker extends StatelessWidget {
           ),
         );
         if (picked != null) prefs.setStartSection(picked);
+      },
+    );
+  }
+}
+
+class _MultiviewEnlargeFactorPicker extends StatefulWidget {
+  @override
+  State<_MultiviewEnlargeFactorPicker> createState() =>
+      _MultiviewEnlargeFactorPickerState();
+}
+
+class _MultiviewEnlargeFactorPickerState
+    extends State<_MultiviewEnlargeFactorPicker> {
+  static const _factors = [
+    (1.5, '1.5x (50% larger)'),
+    (1.75, '1.75x (75% larger)'),
+    (2.0, '2.0x (Twice as large)'),
+    (2.5, '2.5x (2.5x larger)'),
+    (3.0, '3.0x (3x larger)'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final storage = context.read<StorageService>();
+    final current = storage.getMultiviewEnlargeFactor();
+    final name = _factors
+        .firstWhere((f) => (f.$1 - current).abs() < 0.05,
+            orElse: () => (current, '${current.toStringAsFixed(1)}x'))
+        .$2;
+    return TvMenuTile(
+      leading: const Icon(Icons.zoom_in),
+      title: tr('Enlarged screen size'),
+      subtitle: tr(
+          '{factor}. How much bigger an enlarged screen is compared to other screens.',
+          {'factor': tr(name)}),
+      onTap: () async {
+        final picked = await showDialog<double>(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            title: Text(tr('Enlarged screen size')),
+            children: [
+              for (final (factor, label) in _factors)
+                TvDialogOption(
+                  autofocus: (factor - current).abs() < 0.05,
+                  onPressed: () => Navigator.of(dialogContext).pop(factor),
+                  child: Row(
+                    children: [
+                      Icon((factor - current).abs() < 0.05
+                          ? Icons.check_circle
+                          : Icons.circle_outlined),
+                      const SizedBox(width: 12),
+                      Text(tr(label)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+        if (picked != null) {
+          await storage.setMultiviewEnlargeFactor(picked);
+          if (mounted) setState(() {});
+        }
+      },
+    );
+  }
+}
+
+class _MultiviewEnlargedPositionPicker extends StatefulWidget {
+  @override
+  State<_MultiviewEnlargedPositionPicker> createState() =>
+      _MultiviewEnlargedPositionPickerState();
+}
+
+class _MultiviewEnlargedPositionPickerState
+    extends State<_MultiviewEnlargedPositionPicker> {
+  static const _positions = [
+    ('top', 'Top'),
+    ('bottom', 'Bottom'),
+    ('left', 'Left'),
+    ('right', 'Right'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final storage = context.read<StorageService>();
+    final current = storage.getMultiviewEnlargedPosition();
+    final name = _positions
+        .firstWhere((p) => p.$1 == current, orElse: () => _positions.first)
+        .$2;
+    return TvMenuTile(
+      leading: const Icon(Icons.dashboard_customize),
+      title: tr('Enlarged screen position'),
+      subtitle: tr(
+          '{pos}. Where the enlarged screen is placed: top, bottom, left, or right.',
+          {'pos': tr(name)}),
+      onTap: () async {
+        final picked = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            title: Text(tr('Enlarged screen position')),
+            children: [
+              for (final (pos, label) in _positions)
+                TvDialogOption(
+                  autofocus: pos == current,
+                  onPressed: () => Navigator.of(dialogContext).pop(pos),
+                  child: Row(
+                    children: [
+                      Icon(pos == current
+                          ? Icons.check_circle
+                          : Icons.circle_outlined),
+                      const SizedBox(width: 12),
+                      Text(tr(label)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+        if (picked != null) {
+          await storage.setMultiviewEnlargedPosition(picked);
+          if (mounted) setState(() {});
+        }
+      },
+    );
+  }
+}
+
+class _MultiviewTwoScreenLayoutPicker extends StatefulWidget {
+  @override
+  State<_MultiviewTwoScreenLayoutPicker> createState() =>
+      _MultiviewTwoScreenLayoutPickerState();
+}
+
+class _MultiviewTwoScreenLayoutPickerState
+    extends State<_MultiviewTwoScreenLayoutPicker> {
+  static const _layouts = [
+    ('side_by_side', 'Side by side'),
+    ('stacked', 'Stacked (one on top of the other)'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final storage = context.read<StorageService>();
+    final current = storage.getMultiviewTwoScreenLayout();
+    final name = _layouts
+        .firstWhere((l) => l.$1 == current, orElse: () => _layouts.first)
+        .$2;
+    return TvMenuTile(
+      leading: const Icon(Icons.view_agenda),
+      title: tr('Two-screen layout'),
+      subtitle: tr(
+          '{layout}. How two screens are arranged when neither is enlarged.',
+          {'layout': tr(name)}),
+      onTap: () async {
+        final picked = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            title: Text(tr('Two-screen layout')),
+            children: [
+              for (final (layout, label) in _layouts)
+                TvDialogOption(
+                  autofocus: layout == current,
+                  onPressed: () => Navigator.of(dialogContext).pop(layout),
+                  child: Row(
+                    children: [
+                      Icon(layout == current
+                          ? Icons.check_circle
+                          : Icons.circle_outlined),
+                      const SizedBox(width: 12),
+                      Text(tr(label)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+        if (picked != null) {
+          await storage.setMultiviewTwoScreenLayout(picked);
+          if (mounted) setState(() {});
+        }
       },
     );
   }

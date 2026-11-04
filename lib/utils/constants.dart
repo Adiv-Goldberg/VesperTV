@@ -269,6 +269,12 @@ class AppConstants {
   static const String keyMultiviewHideTips = 'vesper_multiview_hide_tips';
   static const String keyMultiviewQuad = 'vesper_multiview_quad';
   static const String keyMultiviewMain = 'vesper_multiview_main';
+  static const String keyMultiviewEnlargeFactor =
+      'vesper_multiview_enlarge_factor';
+  static const String keyMultiviewEnlargedPosition =
+      'vesper_multiview_enlarged_pos';
+  static const String keyMultiviewTwoScreenLayout =
+      'vesper_multiview_two_screen_layout';
   static const String keyResumeLastChannelAtStartup =
       'vesper_resume_last_channel_at_startup';
 

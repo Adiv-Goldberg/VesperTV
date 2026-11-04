@@ -697,6 +697,24 @@ class StorageService {
   Future<void> setMultiviewMain(bool value) =>
       _prefs.setBool(AppConstants.keyMultiviewMain, value);
 
+  /// Enlarged screen size factor in Multiview (e.g. 1.5, 1.75, 2.0, 2.5, 3.0).
+  double getMultiviewEnlargeFactor() =>
+      _prefs.getDouble(AppConstants.keyMultiviewEnlargeFactor) ?? 2.0;
+  Future<void> setMultiviewEnlargeFactor(double value) =>
+      _prefs.setDouble(AppConstants.keyMultiviewEnlargeFactor, value);
+
+  /// Enlarged screen position in Multiview ('top', 'bottom', 'left', 'right').
+  String getMultiviewEnlargedPosition() =>
+      _prefs.getString(AppConstants.keyMultiviewEnlargedPosition) ?? 'top';
+  Future<void> setMultiviewEnlargedPosition(String value) =>
+      _prefs.setString(AppConstants.keyMultiviewEnlargedPosition, value);
+
+  /// Two-screen layout in Multiview ('side_by_side', 'stacked').
+  String getMultiviewTwoScreenLayout() =>
+      _prefs.getString(AppConstants.keyMultiviewTwoScreenLayout) ?? 'side_by_side';
+  Future<void> setMultiviewTwoScreenLayout(String value) =>
+      _prefs.setString(AppConstants.keyMultiviewTwoScreenLayout, value);
+
   /// Falls back to the first entry (Minimalist) when unset or when the
   /// stored id doesn't match a known palette — no migration attempted from
   /// the old single-seed-color storage, a fresh sensible default is simpler

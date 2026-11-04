@@ -56,12 +56,79 @@ void main() {
     final big = r[1]!;
     for (final i in [0, 2]) {
       expect(r[i]!.top, greaterThan(big.bottom));
-      expect(r[i]!.width, lessThan(big.width / 2));
+      expect(r[i]!.width, lessThanOrEqualTo(big.width / 2));
       expect(overlap(r[i]!, big), isFalse);
     }
     expect(r[0]!.left, lessThan(r[2]!.left));
     expect(big.bottom, lessThanOrEqualTo(tv.height));
     expect(r[0]!.bottom, lessThanOrEqualTo(tv.height));
+  });
+
+  test('enlarged (bottom): big on bottom, small row on top', () {
+    final r = multiviewSlotRects(tv, 3,
+        enlarged: 1, enlargedPosition: EnlargedPosition.bottom);
+    final big = r[1]!;
+    expect16x9(big);
+    for (final i in [0, 2]) {
+      expect(big.top, greaterThan(r[i]!.bottom));
+      expect(r[i]!.width, lessThanOrEqualTo(big.width / 2));
+      expect(overlap(r[i]!, big), isFalse);
+    }
+    expect(r[0]!.left, lessThan(r[2]!.left));
+    expect(big.bottom, lessThanOrEqualTo(tv.height));
+    expect(r[0]!.top, greaterThanOrEqualTo(0));
+  });
+
+  test('enlarged (left): big on left, small column on right', () {
+    final r = multiviewSlotRects(tv, 3,
+        enlarged: 0, enlargedPosition: EnlargedPosition.left);
+    final big = r[0]!;
+    expect16x9(big);
+    for (final i in [1, 2]) {
+      expect(r[i]!.left, greaterThan(big.right));
+      expect(overlap(r[i]!, big), isFalse);
+    }
+    expect(r[1]!.top, lessThan(r[2]!.top));
+    expect(big.right, lessThanOrEqualTo(tv.width));
+  });
+
+  test('enlarged (right): big on right, small column on left', () {
+    final r = multiviewSlotRects(tv, 3,
+        enlarged: 0, enlargedPosition: EnlargedPosition.right);
+    final big = r[0]!;
+    expect16x9(big);
+    for (final i in [1, 2]) {
+      expect(big.left, greaterThan(r[i]!.right));
+      expect(overlap(r[i]!, big), isFalse);
+    }
+    expect(r[1]!.top, lessThan(r[2]!.top));
+    expect(big.right, lessThanOrEqualTo(tv.width));
+  });
+
+  test('2 screens (stacked): one on top of the other', () {
+    final r = multiviewSlotRects(tv, 2,
+        twoScreenLayout: TwoScreenLayout.stacked);
+    final a = r[0]!, b = r[1]!;
+    expect16x9(a);
+    expect(a.size, b.size);
+    expect(a.left, b.left);
+    expect(b.top, greaterThan(a.bottom));
+    expect((a.top + b.bottom) / 2, closeTo(tv.height / 2, 0.5));
+  });
+
+  test('enlargeFactor: scales ratio between enlarged and small screens', () {
+    final rSmall = multiviewSlotRects(tv, 3,
+        enlarged: 0,
+        enlargedPosition: EnlargedPosition.top,
+        enlargeFactor: 1.5);
+    final rBig = multiviewSlotRects(tv, 3,
+        enlarged: 0,
+        enlargedPosition: EnlargedPosition.top,
+        enlargeFactor: 3.0);
+    final ratio1 = rSmall[0]!.width / rSmall[1]!.width;
+    final ratio2 = rBig[0]!.width / rBig[1]!.width;
+    expect(ratio1, closeTo(1.5, 0.05));
+    expect(ratio2, closeTo(3.0, 0.05));
   });
 
   test('full screen: only that screen, over the whole area', () {
