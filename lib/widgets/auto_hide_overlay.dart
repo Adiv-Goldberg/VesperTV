@@ -78,7 +78,7 @@ class _AutoHideOverlayState extends State<AutoHideOverlay> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          widget.video,
+          RepaintBoundary(child: widget.video),
           Positioned.fill(
             child: IgnorePointer(
               ignoring: !visible,
@@ -109,7 +109,9 @@ class _AutoHideOverlayState extends State<AutoHideOverlay> {
 /// The small "this tile has the sound" badge shown while the name bar is
 /// hidden: bottom-right, clear of the usual score-bug corners.
 class MultiviewAudioBadge extends StatelessWidget {
-  const MultiviewAudioBadge({super.key});
+  const MultiviewAudioBadge({super.key, this.color});
+
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +122,8 @@ class MultiviewAudioBadge extends StatelessWidget {
         padding: const EdgeInsets.all(4),
         decoration:
             const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-        child: const Icon(Icons.volume_up, color: Colors.amber, size: 14),
+        child: Icon(Icons.volume_up,
+            color: color ?? const Color(0xFF3B82F6), size: 14),
       ),
     );
   }

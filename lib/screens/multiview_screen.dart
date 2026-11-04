@@ -95,17 +95,25 @@ class MultiviewScreen extends StatefulWidget {
 // the audio-mixer overload was seen with 3-4 cells + PREFER mode, both
 // removed since (dbc88fc).
 
+/// Modern blue accent palette for Multiview
+const _mvBluePrimary = Color(0xFF2563EB); // Deep vivid blue
+const _mvBlueLight = Color(0xFF3B82F6);   // Bright electric blue for active borders
+const _mvBlueGlow = Color(0xFF60A5FA);    // Sky blue for audio icons & badges
+const _mvCyan = Color(0xFF38BDF8);        // Cyan accent for swap target
+
 /// Controllers whose player draws into a native tile (see
 /// [NativeMultiviewTiles]) instead of a Flutter texture.
 final _tileControllers = Expando<bool>();
 
-/// A screen's video: the native tile's hole, or the texture.
+/// A screen's video: the native tile's hole, or the texture, isolated in its own layer.
 Widget multiviewVideo(VideoPlayerHdrController controller) =>
-    _tileControllers[controller] == true
-        ? NativeTileHole(
-            playerId: SubtitleTracks.playerIdOf(controller),
-            key: ObjectKey(controller))
-        : VideoPlayerHdr(controller, key: ObjectKey(controller));
+    RepaintBoundary(
+      child: _tileControllers[controller] == true
+          ? NativeTileHole(
+              playerId: SubtitleTracks.playerIdOf(controller),
+              key: ObjectKey(controller))
+          : VideoPlayerHdr(controller, key: ObjectKey(controller)),
+    );
 
 class _MultiviewCell {
   Channel? channel;
@@ -377,59 +385,9 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
   /// Last layout, for "is this screen in the top row" (Up opens the header).
   List<Rect?> _rects = List.filled(4, null);
 
-  /// The header (back, the audio hint) is an overlay, not a row: it took
-  /// height from the grid (user report, 2026-10-19). It slides down on Up
-  /// from the top row (or a tap on the handle, touch/mouse), shows for a
-  /// few seconds on entering so it's discoverable, and slides away once
-  /// focus leaves it.
-  bool _headerShown = true;
-  Timer? _headerTimer;
-  final _headerScope = FocusScopeNode(debugLabel: 'multiview-header');
-  final _headerFirst = FocusNode(debugLabel: 'multiview-header-first');
-
-  void _revealHeader({bool focus = false}) {
-    _headerTimer?.cancel();
-    if (!_headerShown) setState(() => _headerShown = true);
-    if (focus) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _headerFirst.requestFocus();
-      });
-    } else {
-      _hideHeaderSoon(const Duration(seconds: 4));
-    }
-  }
-
-  void _hideHeaderSoon([Duration after = const Duration(milliseconds: 1500)]) {
-    _headerTimer?.cancel();
-    _headerTimer = Timer(after, () {
-      if (mounted && !_headerScope.hasFocus && _headerShown) {
-        setState(() => _headerShown = false);
-      }
-    });
-  }
-
-  void _onHeaderFocus() {
-    if (_headerScope.hasFocus) {
-      _headerTimer?.cancel();
-    } else {
-      _hideHeaderSoon();
-    }
-  }
-
-  /// Up from a top-row screen opens the header (nothing is above it).
   KeyEventResult _onGridKey(FocusNode node, KeyEvent e) {
     if (_swapMode) return _onSwapKey(e);
-    if (e is! KeyDownEvent ||
-        e.logicalKey != LogicalKeyboardKey.arrowUp ||
-        _fullscreen != null) {
-      return KeyEventResult.ignored;
-    }
-    final i = _cells.indexWhere((c) => c.focusNode.hasFocus);
-    if (i < 0 || _rects[i] == null) return KeyEventResult.ignored;
-    final top = _rects.whereType<Rect>().map((r) => r.top).reduce(math.min);
-    if (_rects[i]!.top > top + 1) return KeyEventResult.ignored;
-    _revealHeader(focus: true);
-    return KeyEventResult.handled;
+    return KeyEventResult.ignored;
   }
 
   /// Portrait phone: at most the first 2 screens, stacked (owner,
@@ -727,7 +685,14 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
   }
 
   void _toggleEnlarge(int index) {
-    if (_slots < 2 || _portrait || _fullscreen != null) return;
+    if (_fullscreen != null) return;
+    if (_slots < 2) {
+      setState(() {
+        _slots = 2;
+        _enlarged = index;
+      });
+      return;
+    }
     setState(() => _enlarged = _enlarged == index ? null : index);
   }
 
@@ -739,7 +704,6 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
       _fullscreen = index;
       _othersHidden = true;
     });
-    _hideHeaderSoon(Duration.zero);
   }
 
   void _exitFullscreen() {
@@ -779,7 +743,7 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
           backgroundColor: const Color(0xFF1A1A1A),
           title: Row(
             children: [
-              const Icon(Icons.info_outline, color: Colors.amber),
+              const Icon(Icons.info_outline, color: _mvBlueLight),
               const SizedBox(width: 8),
               Text(tr('Before you start'),
                   style: const TextStyle(color: Colors.white)),
@@ -1130,15 +1094,13 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
         if (_slots < _maxSlots && !full)
           RollDownMenuItem(
               value: 'add',
-              icon: Icons.add_box_outlined,
-              label: tr('Add screen')),
-        if (playingCount >= 2 && !full)
-          RollDownMenuItem(
-              value: 'swapMode',
-              icon: Icons.swap_horiz,
-              label: tr('Swap screens'),
-              subtitle: tr('Control screen positions')),
-        if (_slots >= 2 && !_portrait && !full) ...[
+              icon: Icons.add_to_photos_outlined,
+              label: tr('Add screen'),
+              subtitle: tr('{count} of {max} screens', {
+                'count': '$_slots',
+                'max': '$_maxSlots',
+              })),
+        if (!full) ...[
           RollDownMenuItem(
               value: 'enlarge',
               icon: isEnlarged ? Icons.grid_view : Icons.open_in_full,
@@ -1162,6 +1124,16 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
                     ? tr('Side by side')
                     : tr('Stacked (top & bottom)')),
         ],
+        if (playingCount >= 2 && !full)
+          RollDownMenuItem(
+              value: 'swapMode',
+              icon: Icons.swap_horiz,
+              label: tr('Swap screens'),
+              subtitle: tr('Control screen positions')),
+        RollDownMenuItem(
+            value: 'full',
+            icon: full ? Icons.fullscreen_exit : Icons.fullscreen,
+            label: full ? tr('Exit full screen') : tr('Full screen')),
         RollDownMenuItem(
             value: 'search', icon: Icons.search, label: tr('Search and add')),
         RollDownMenuItem(
@@ -1173,13 +1145,12 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
             icon: playing ? Icons.pause : Icons.play_arrow,
             label: playing ? tr('Pause') : tr('Play')),
         RollDownMenuItem(
-            value: 'full',
-            icon: full ? Icons.fullscreen_exit : Icons.fullscreen,
-            label: full ? tr('Exit full screen') : tr('Full screen')),
-        RollDownMenuItem(
             value: 'reload', icon: Icons.refresh, label: tr('Reload')),
+        if (_slots > 1)
+          RollDownMenuItem(
+              value: 'remove', icon: Icons.close, label: tr('Remove screen')),
         RollDownMenuItem(
-            value: 'remove', icon: Icons.close, label: tr('Remove screen')),
+            value: 'exit', icon: Icons.arrow_back, label: tr('Exit Multiview')),
       ],
     );
     if (!mounted) return;
@@ -1206,6 +1177,8 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
         await _reload(index);
       case 'remove':
         _removeScreen(index);
+      case 'exit':
+        Navigator.of(context).pop();
     }
   }
 
@@ -1217,10 +1190,10 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
     // player first (which releases its wakelock) — a Fire Stick fell into
     // its screensaver mid-test.
     unawaited(WakelockPlus.enable());
-    _statsTimer =
-        Timer.periodic(const Duration(seconds: 10), (_) => _logTiles());
-    _headerScope.addListener(_onHeaderFocus);
-    _hideHeaderSoon(const Duration(seconds: 4));
+    if (kDebugMode) {
+      _statsTimer =
+          Timer.periodic(const Duration(seconds: 10), (_) => _logTiles());
+    }
     // Opened from the player bar ("Open in Multiview"): always equal screens
     // first (owner, 2026-11-03); 1 + 3 only when chosen in the header.
     final initial = [
@@ -1256,10 +1229,6 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
   @override
   void dispose() {
     _statsTimer?.cancel();
-    _headerTimer?.cancel();
-    _headerScope.removeListener(_onHeaderFocus);
-    _headerScope.dispose();
-    _headerFirst.dispose();
     for (final cell in _cells) {
       cell.controller?.dispose();
       cell.focusNode.dispose();
@@ -1300,76 +1269,10 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _setPortrait(portrait));
     }
-    // Below a phone's status bar (the back arrow sat under the clock,
-    // owner 2026-11-02); the gradient still reaches the top edge.
-    final inset = MediaQuery.paddingOf(context);
-    final header = Container(
-      padding: EdgeInsets.fromLTRB(
-          4 + inset.left, 4 + inset.top, 12 + inset.right, 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.92),
-            Colors.black.withValues(alpha: 0.75),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.7, 1.0],
-        ),
-      ),
-      child: Focus(
-        // Listen-only (see the grid's Focus below).
-        canRequestFocus: false,
-        skipTraversal: true,
-        // Down from the header: back to the first screen.
-        onKeyEvent: (_, e) {
-          if (e is KeyDownEvent &&
-              e.logicalKey == LogicalKeyboardKey.arrowDown) {
-            _cells[0].focusNode.requestFocus();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Row(
-          children: [
-            IconButton(
-              tooltip: tr('Back'),
-              focusNode: _headerFirst,
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            Text(tr('Multiview'),
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600)),
-            const Spacer(),
-            const Icon(Icons.volume_up, color: Colors.amber, size: 16),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                  tr('= audio follows the selected screen Â· OK on screen for menu & options'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
-            ),
-          ],
-        ),
-      ),
-    );
-    final isTv = context.read<AppPreferences>().isTelevision;
     return Stack(
       children: [
-        // Every tile is placed by [multiviewSlotRects] and slides to its new
-        // place (Add / Remove / Enlarge / Full screen) instead of jumping;
-        // the native video views follow the tiles frame by frame.
         Positioned.fill(
           child: Focus(
-            // Listen-only: it only hears keys bubbling up from the focused
-            // tile. Focusable (the default), D-pad traversal could land on
-            // this invisible grid-sized node instead of the next tile, and
-            // the remote looked stuck (Fire Stick, 2026-10-20).
             canRequestFocus: false,
             skipTraversal: true,
             onKeyEvent: _onGridKey,
@@ -1386,13 +1289,11 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
                 enlargeFactor: _enlargeFactor,
               );
               if (_othersHidden && _fullscreen == null) {
-                // Shrinking back: only the former full-screen tile for now.
                 final keep = _shrinking;
                 for (var i = 0; i < _cellCount; i++) {
                   if (i != keep) _rects[i] = null;
                 }
               }
-              // The big / full-screen tile last, so it's painted on top.
               final order = [
                 for (var i = 0; i < _cellCount; i++)
                   if (i != (_fullscreen ?? _enlarged)) i,
@@ -1408,7 +1309,10 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
                         rect: _rects[i]!,
                         duration: _anim,
                         curve: Curves.easeInOutCubic,
-                        child: _buildCell(i, full: i == _fullscreen),
+                        child: RepaintBoundary(
+                          key: ValueKey('cell-paint-$i'),
+                          child: _buildCell(i, full: i == _fullscreen),
+                        ),
                       ),
                 ],
               );
@@ -1439,68 +1343,6 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
               ),
             ),
           ),
-        // Touch / mouse: a small handle opens the header (no Up key there).
-        if (!isTv && !_headerShown)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: _revealHeader,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius:
-                        BorderRadius.vertical(bottom: Radius.circular(12)),
-                  ),
-                  child: const Icon(Icons.expand_more,
-                      color: Colors.white70, size: 20),
-                ),
-              ),
-            ),
-          ),
-        // TV: the header is hidden on purpose, so a small Up arrow hints
-        // it's there. Up from a top-row screen opens it (_onGridKey).
-        if (isTv && !_headerShown && _fullscreen == null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius:
-                        BorderRadius.vertical(bottom: Radius.circular(12)),
-                  ),
-                  child: const Icon(Icons.keyboard_arrow_up,
-                      color: Colors.white70, size: 20),
-                ),
-              ),
-            ),
-          ),
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: IgnorePointer(
-            ignoring: !_headerShown,
-            child: AnimatedSlide(
-              offset: _headerShown ? Offset.zero : const Offset(0, -1),
-              duration: const Duration(milliseconds: 220),
-              child: ExcludeFocus(
-                excluding: !_headerShown,
-                child: FocusScope(node: _headerScope, child: header),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -1591,7 +1433,7 @@ List<int> swapRotation(List<int> slots, int step) {
   return [for (var k = 0; k < n; k++) slots[((k + step) % n + n) % n]];
 }
 
-/// Swap mode: gold flash and source badge over the tile.
+/// Swap mode: blue flash and source badge over the tile.
 class _SwapSourceBadge extends StatefulWidget {
   const _SwapSourceBadge({required this.swaps});
 
@@ -1628,28 +1470,34 @@ class _SwapSourceBadgeState extends State<_SwapSourceBadge>
             animation: _flash,
             builder: (_, __) => _flash.isAnimating
                 ? ColoredBox(
-                    color: Colors.amber
-                        .withValues(alpha: 0.35 * (1 - _flash.value)))
+                    color: _mvBlueLight
+                        .withValues(alpha: 0.4 * (1 - _flash.value)))
                 : const SizedBox.shrink(),
           ),
           Positioned(
             left: 8,
             top: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.8),
-                border: Border.all(color: Colors.amber, width: 1.5),
+                color: const Color(0xEB1E3A8A),
+                border: Border.all(color: _mvBlueLight, width: 1.5),
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: _mvBlueLight.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.swap_horiz, color: Colors.amber, size: 14),
+                  const Icon(Icons.swap_horiz, color: _mvBlueGlow, size: 14),
                   const SizedBox(width: 4),
                   Text(tr('SWAP FROM'),
                       style: const TextStyle(
-                          color: Colors.amber,
+                          color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.w700)),
                 ],
@@ -1675,20 +1523,26 @@ class _SwapTargetBadge extends StatelessWidget {
             left: 8,
             top: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.8),
-                border: Border.all(color: Colors.cyanAccent, width: 1.5),
+                color: const Color(0xEB0C4A6E),
+                border: Border.all(color: _mvCyan, width: 1.5),
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: _mvCyan.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.touch_app, color: Colors.cyanAccent, size: 14),
+                  const Icon(Icons.touch_app, color: _mvCyan, size: 14),
                   const SizedBox(width: 4),
                   Text(tr('SWAP TO'),
                       style: const TextStyle(
-                          color: Colors.cyanAccent,
+                          color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.w700)),
                 ],
@@ -1730,22 +1584,22 @@ class _SwapModePillState extends State<_SwapModePill>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.85),
-            border: Border.all(color: Colors.amber, width: 2),
+            color: const Color(0xF20F172A),
+            border: Border.all(color: _mvBlueLight, width: 2),
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
-                  color: Colors.black87, blurRadius: 12, spreadRadius: 3),
+                  color: Colors.black87, blurRadius: 14, spreadRadius: 3),
             ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.swap_horiz, color: Colors.amber, size: 20),
+              const Icon(Icons.swap_horiz, color: _mvBlueGlow, size: 20),
               const SizedBox(width: 8),
               Text(tr('SWAP MODE'),
                   style: const TextStyle(
-                      color: Colors.amber,
+                      color: _mvBlueGlow,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.5)),
@@ -1870,11 +1724,11 @@ class _MultiviewCellTileState extends State<_MultiviewCellTile> {
                   ? null
                   : Border.all(
                       color: widget.isSwapSource
-                          ? Colors.amber
+                          ? _mvBlueLight
                           : widget.isSwapTarget
-                              ? Colors.cyanAccent
+                              ? _mvCyan
                               : widget.active
-                                  ? Colors.amber
+                                  ? _mvBlueLight
                                   : (_focused ? Colors.white : Colors.white24),
                       width: widget.isSwapSource ||
                               widget.isSwapTarget ||
@@ -1884,6 +1738,15 @@ class _MultiviewCellTileState extends State<_MultiviewCellTile> {
                           : 1,
                     ),
               borderRadius: BorderRadius.circular(widget.bare ? 0 : 8),
+              boxShadow: widget.active && !widget.bare
+                  ? [
+                      BoxShadow(
+                        color: _mvBluePrimary.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
             ),
             clipBehavior: Clip.antiAlias,
             // The name bar fades after a few seconds (it covered the
@@ -1891,19 +1754,46 @@ class _MultiviewCellTileState extends State<_MultiviewCellTile> {
             // moves here, and when focus lands on the tile.
             child: _withBadge(AutoHideOverlay(
               flashKey: (widget.channel?.id, widget.active, _focused),
-              hidden: widget.active ? const MultiviewAudioBadge() : null,
+              hidden: widget.active
+                  ? const MultiviewAudioBadge(color: _mvBlueGlow)
+                  : null,
               video: widget.controller != null &&
                       widget.controller!.value.isInitialized
                   ? multiviewVideo(widget.controller!)
                   : ColoredBox(
-                      color: const Color(0xFF1A1A1A),
+                      color: const Color(0xFF111827),
                       child: Center(
-                        child: Icon(
-                            widget.channel == null
-                                ? Icons.add_circle_outline
-                                : Icons.hourglass_empty,
-                            color: Colors.white38,
-                            size: 36),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: _mvBluePrimary.withValues(alpha: 0.18),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: _mvBlueLight.withValues(alpha: 0.35),
+                                    width: 1.5),
+                              ),
+                              child: Icon(
+                                  widget.channel == null
+                                      ? Icons.add_circle_outline
+                                      : Icons.hourglass_empty,
+                                  color: _mvBlueLight,
+                                  size: 32),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.channel == null
+                                  ? tr('Add Channel')
+                                  : tr('Loading...'),
+                              style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
               overlay: widget.channel == null
@@ -1941,7 +1831,7 @@ class _MultiviewCellTileState extends State<_MultiviewCellTile> {
                           children: [
                             if (widget.active) ...[
                               const Icon(Icons.volume_up,
-                                  color: Colors.amber,
+                                  color: _mvBlueGlow,
                                   size: 15,
                                   shadows: [
                                     Shadow(color: Colors.black, blurRadius: 4)
