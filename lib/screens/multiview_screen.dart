@@ -1581,7 +1581,6 @@ class _MultiviewScreenState extends State<MultiviewScreen> {
       ),
     );
   }
-  }
 }
 
 /// The order Swap mode moves the playing [slots] (cell indices, big one

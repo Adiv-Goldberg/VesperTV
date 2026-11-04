@@ -696,13 +696,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   if (!Platform.isWindows)
                     _section('multiview', Icons.grid_view, tr('Multiview'),
                         children: [
-                          _MultiviewEnlargeFactorPicker(),
-                          _MultiviewEnlargedPositionPicker(),
-                          _MultiviewTwoScreenLayoutPicker(),
-
-
-
-                        children: [
+                          const _MultiviewEnlargeFactorPicker(),
+                          const _MultiviewEnlargedPositionPicker(),
+                          const _MultiviewTwoScreenLayoutPicker(),
                           TvSwitchListTile(
                             title: Text(tr('Show the Multiview tip')),
                             subtitle: Text(tr(
@@ -921,6 +917,7 @@ class _StartSectionPicker extends StatelessWidget {
 }
 
 class _MultiviewEnlargeFactorPicker extends StatefulWidget {
+  const _MultiviewEnlargeFactorPicker({super.key});
   @override
   State<_MultiviewEnlargeFactorPicker> createState() =>
       _MultiviewEnlargeFactorPickerState();
@@ -983,6 +980,7 @@ class _MultiviewEnlargeFactorPickerState
 }
 
 class _MultiviewEnlargedPositionPicker extends StatefulWidget {
+  const _MultiviewEnlargedPositionPicker({super.key});
   @override
   State<_MultiviewEnlargedPositionPicker> createState() =>
       _MultiviewEnlargedPositionPickerState();
@@ -1043,6 +1041,7 @@ class _MultiviewEnlargedPositionPickerState
 }
 
 class _MultiviewTwoScreenLayoutPicker extends StatefulWidget {
+  const _MultiviewTwoScreenLayoutPicker({super.key});
   @override
   State<_MultiviewTwoScreenLayoutPicker> createState() =>
       _MultiviewTwoScreenLayoutPickerState();
